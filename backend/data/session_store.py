@@ -1,25 +1,22 @@
-import os
 import sqlite3
 from typing import List
 
+from backend.data.db import DB_PATH, connect
 from backend.scoring.load_calculator import Session
-
-DB_PATH = os.environ.get("FEMFIT_DB_PATH", "femfit.db")
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS sessions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    player_id TEXT NOT NULL,
-    date TEXT NOT NULL,
-    duration_minutes REAL NOT NULL,
-    rpe REAL NOT NULL
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+player_id TEXT NOT NULL,
+date TEXT NOT NULL,
+duration_minutes REAL NOT NULL,
+rpe REAL NOT NULL
 );
-
 CREATE TABLE IF NOT EXISTS profiles (
-    player_id TEXT PRIMARY KEY,
-    menstruating INTEGER,
-    height_cm REAL,
-    height_cm_6mo_ago REAL
+player_id TEXT PRIMARY KEY,
+menstruating INTEGER,
+height_cm REAL,
+height_cm_6mo_ago REAL
 );
 """
 
@@ -27,16 +24,11 @@ CREATE TABLE IF NOT EXISTS profiles (
 class SessionStore:
     def __init__(self, db_path: str = DB_PATH):
         self._db_path = db_path
-        with self._connect() as conn:
+        with connect(self._db_path) as conn:
             conn.executescript(SCHEMA)
 
-    def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self._db_path)
-        conn.row_factory = sqlite3.Row
-        return conn
-
     def log_session(self, player_id: str, session: Session) -> None:
-        with self._connect() as conn:
+        with connect(self._db_path) as conn:
             conn.execute(
                 "INSERT INTO sessions (player_id, date, duration_minutes, rpe) "
                 "VALUES (?, ?, ?, ?)",
@@ -44,10 +36,12 @@ class SessionStore:
             )
 
     def get_sessions(self, player_id: str) -> List[Session]:
-        with self._connect() as conn:
+        # Ordering by id as a tiebreak makes same-day sessions deterministic
+        # for the walk-forward history computation.
+        with connect(self._db_path) as conn:
             rows = conn.execute(
                 "SELECT date, duration_minutes, rpe FROM sessions "
-                "WHERE player_id = ? ORDER BY date",
+                "WHERE player_id = ? ORDER BY date, id",
                 (player_id,),
             ).fetchall()
         return [
@@ -68,7 +62,7 @@ class SessionStore:
             "height_cm": height_cm if height_cm is not None else existing.get("height_cm"),
             "height_cm_6mo_ago": height_cm_6mo_ago if height_cm_6mo_ago is not None else existing.get("height_cm_6mo_ago"),
         }
-        with self._connect() as conn:
+        with connect(self._db_path) as conn:
             conn.execute(
                 "INSERT INTO profiles (player_id, menstruating, height_cm, height_cm_6mo_ago) "
                 "VALUES (?, ?, ?, ?) "
@@ -85,7 +79,7 @@ class SessionStore:
             )
 
     def get_profile(self, player_id: str) -> dict:
-        with self._connect() as conn:
+        with connect(self._db_path) as conn:
             row = conn.execute(
                 "SELECT menstruating, height_cm, height_cm_6mo_ago FROM profiles WHERE player_id = ?",
                 (player_id,),

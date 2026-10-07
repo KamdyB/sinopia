@@ -1,25 +1,25 @@
 // frontend/src/types.ts
-
 export interface SessionPayload {
   player_id: string;
   date_str: string;
   duration_minutes: number;
   rpe: number;
-  menstruating?: boolean;
-  height_cm?: number;
-  height_cm_6mo_ago?: number;
 }
 
-export interface ScoreResponse {
+export interface StatusResponse {
   player_id: string;
-  base_acwr: number;
-  cycle_modifier: number;
-  maturation_modifier: number;
-  adjusted_score: number;
-  previous_adjusted_score: number | null;
-  risk_band: string;
-  explanation: string[];
-  confidence: number;
+  level: string;
+  reasons: string[];
+  numbers: Record<string, number | boolean>;
+  previous_level: string | null;
+}
+
+export interface AthleteStatus {
+  player_id: string;
+  name: string;
+  level: string;
+  reasons: string[];
+  numbers: Record<string, number | boolean>;
 }
 
 export type TeamType = "girls" | "boys" | "mixed";
@@ -34,8 +34,17 @@ export interface Player {
 export interface HistoryPoint {
   date: string;
   session_load: number;
-  base_acwr: number | null;
-  adjusted_score: number | null;
-  risk_band: string | null;
-  confidence: number | null;
+  level: string;
+  reasons: string[];
+  numbers: Record<string, number | boolean>;
+}
+
+export interface CheckinPayload {
+  player_id: string;
+  sleep: number;
+  energy: number;
+  soreness: number;
+  stress: number;
+  pain: boolean;
+  pain_area?: string;
 }

@@ -1,4 +1,4 @@
-"""Player registration, team roster listing, and per-player history.
+"""Athlete registration, team roster listing, and per-athlete status history.
 Orchestration and HTTP concerns only; storage and scoring live below it."""
 from datetime import date
 from typing import Literal
@@ -11,7 +11,6 @@ from backend.data.session_store import session_store
 from backend.scoring.history import history_points
 
 router = APIRouter()
-
 TeamType = Literal["girls", "boys", "mixed"]
 
 
@@ -24,7 +23,7 @@ class PlayerRequest(BaseModel):
     def _clean_name(cls, value: str) -> str:
         cleaned = " ".join(value.split())
         if not cleaned:
-            raise ValueError("Player name cannot be blank.")
+            raise ValueError("Athlete name cannot be blank.")
         return cleaned
 
 
@@ -38,10 +37,9 @@ class PlayerResponse(BaseModel):
 class HistoryPoint(BaseModel):
     date: str
     session_load: float
-    base_acwr: float | None
-    adjusted_score: float | None
-    risk_band: str | None
-    confidence: float | None
+    level: str
+    reasons: list[str]
+    numbers: dict
 
 
 @router.post("/players", response_model=PlayerResponse, status_code=201)
@@ -51,7 +49,7 @@ def register_player(req: PlayerRequest) -> PlayerResponse:
     except DuplicatePlayerError:
         raise HTTPException(
             status_code=409,
-            detail=f'A player named "{req.name}" is already registered for this team.',
+            detail=f'An athlete named "{req.name}" is already registered for this team.',
         )
     return PlayerResponse(**player)
 
@@ -61,10 +59,17 @@ def list_players(team_type: TeamType) -> list[PlayerResponse]:
     return [PlayerResponse(**p) for p in player_store.list_for_team(team_type)]
 
 
+@router.get("/players/{player_id}", response_model=PlayerResponse)
+def get_player(player_id: str) -> PlayerResponse:
+    player = player_store.get(player_id)
+    if player is None:
+        raise HTTPException(status_code=404, detail="Athlete not found.")
+    return PlayerResponse(**player)
+
+
 @router.get("/players/{player_id}/history", response_model=list[HistoryPoint])
 def player_history(player_id: str) -> list[HistoryPoint]:
     if player_store.get(player_id) is None:
-        raise HTTPException(status_code=404, detail="Player not found.")
+        raise HTTPException(status_code=404, detail="Athlete not found.")
     sessions = session_store.get_sessions(player_id)
-    profile = session_store.get_profile(player_id)
-    return [HistoryPoint(**p) for p in history_points(sessions, profile)]
+    return [HistoryPoint(**p) for p in history_points(sessions)]

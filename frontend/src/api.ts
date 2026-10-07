@@ -1,5 +1,13 @@
 // frontend/src/api.ts
-import { HistoryPoint, Player, ScoreResponse, SessionPayload, TeamType } from "./types";
+import {
+  AthleteStatus,
+  CheckinPayload,
+  HistoryPoint,
+  Player,
+  SessionPayload,
+  StatusResponse,
+  TeamType,
+} from "./types";
 
 const API_BASE = "http://localhost:8000";
 
@@ -20,8 +28,14 @@ async function post<T>(path: string, payload: unknown): Promise<T> {
   return res.json();
 }
 
-export async function logSession(payload: SessionPayload): Promise<ScoreResponse> {
-  return post<ScoreResponse>("/sessions", payload);
+async function get<T>(path: string): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`);
+  if (!res.ok) throw await parseError(res);
+  return res.json();
+}
+
+export async function logSession(payload: SessionPayload): Promise<StatusResponse> {
+  return post<StatusResponse>("/sessions", payload);
 }
 
 export async function registerPlayer(name: string, teamType: TeamType): Promise<Player> {
@@ -29,13 +43,21 @@ export async function registerPlayer(name: string, teamType: TeamType): Promise<
 }
 
 export async function fetchPlayers(teamType: TeamType): Promise<Player[]> {
-  const res = await fetch(`${API_BASE}/players?team_type=${encodeURIComponent(teamType)}`);
-  if (!res.ok) throw await parseError(res);
-  return res.json();
+  return get<Player[]>(`/players?team_type=${encodeURIComponent(teamType)}`);
+}
+
+export async function fetchPlayer(playerId: string): Promise<Player> {
+  return get<Player>(`/players/${encodeURIComponent(playerId)}`);
 }
 
 export async function fetchPlayerHistory(playerId: string): Promise<HistoryPoint[]> {
-  const res = await fetch(`${API_BASE}/players/${encodeURIComponent(playerId)}/history`);
-  if (!res.ok) throw await parseError(res);
-  return res.json();
+  return get<HistoryPoint[]>(`/players/${encodeURIComponent(playerId)}/history`);
+}
+
+export async function fetchTeamStatuses(teamType: TeamType): Promise<AthleteStatus[]> {
+  return get<AthleteStatus[]>(`/statuses?team_type=${encodeURIComponent(teamType)}`);
+}
+
+export async function submitCheckin(payload: CheckinPayload): Promise<void> {
+  await post<unknown>("/checkins", payload);
 }

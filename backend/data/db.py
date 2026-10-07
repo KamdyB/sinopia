@@ -2,7 +2,7 @@
 import os
 import sqlite3
 
-DB_PATH = os.environ.get("FEMFIT_DB_PATH", "femfit.db")
+DB_PATH = os.environ.get("SINOPIA_DB_PATH", "sinopia.db")
 
 
 def connect(db_path: str = DB_PATH) -> sqlite3.Connection:

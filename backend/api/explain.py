@@ -1,33 +1,33 @@
+"""Turns an already-computed status into one plain-language sentence.
+
+The LLM never calculates or changes a level and never receives an
+athlete name. When no key is configured or the provider fails, a
+deterministic template produces the wording instead.
+"""
 import os
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from openai import OpenAI
 from pydantic import BaseModel
 
 router = APIRouter()
-
 _client: OpenAI | None = None
 
 
-def _get_client() -> OpenAI:
+def _get_client() -> OpenAI | None:
     global _client
     if _client is None:
         api_key = os.environ.get("GROQ_API_KEY")
         if not api_key:
-            raise HTTPException(
-                status_code=503,
-                detail="GROQ_API_KEY is not set, /explain is unavailable. "
-                "/sessions still returns the full explanation array on its own.",
-            )
+            return None
         _client = OpenAI(base_url="https://api.groq.com/openai/v1", api_key=api_key)
     return _client
 
 
 class ExplainRequest(BaseModel):
     player_id: str
-    risk_band: str
-    adjusted_score: float
-    explanation: list[str]
+    level: str
+    reasons: list[str]
 
 
 class ExplainResponse(BaseModel):
@@ -35,26 +35,37 @@ class ExplainResponse(BaseModel):
     summary: str
 
 
+def template_summary(level: str, reasons: list[str]) -> str:
+    """Deterministic wording, used whenever the LLM is unavailable."""
+    first = reasons[0] if reasons else "No flags raised from the current rules."
+    return f"Status is {level}. {first}"
+
+
 @router.post("/explain", response_model=ExplainResponse)
 def explain(req: ExplainRequest) -> ExplainResponse:
-    client = _get_client()
+    # The athlete name is never sent to the provider; only the level and
+    # the rule reasons leave this process.
     prompt = (
-        "Rephrase the following athlete workload assessment as one short, "
+        "Rephrase the following athlete workload status as one short, "
         "plain-language sentence a youth sports coach can read at a glance. "
-        "Do not invent a different risk level than the one given, and do not "
-        f"add medical claims beyond what's stated.\n\n"
-        f"Risk band: {req.risk_band}\n"
-        f"Adjusted score: {req.adjusted_score}\n"
-        f"Details: {' '.join(req.explanation)}"
+        "Do not change the level given, and do not add medical claims "
+        "beyond what is stated.\n\n"
+        f"Level: {req.level}\n"
+        f"Reasons: {' '.join(req.reasons)}"
     )
-    try:
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            max_tokens=120,
-            messages=[{"role": "user", "content": prompt}],
-        )
-    except Exception as api_error:
-        raise HTTPException(status_code=502, detail=f"Could not reach the explanation service: {api_error}")
-
-    summary = response.choices[0].message.content.strip()
-    return ExplainResponse(player_id=req.player_id, summary=summary)
+    summary: str | None = None
+    client = _get_client()
+    if client is not None:
+        try:
+            response = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                max_tokens=120,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            summary = response.choices[0].message.content.strip()
+        except Exception:
+            summary = None
+    return ExplainResponse(
+        player_id=req.player_id,
+        summary=summary if summary else template_summary(req.level, req.reasons),
+    )

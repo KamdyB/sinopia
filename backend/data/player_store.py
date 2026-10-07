@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS players (
     registered_date TEXT NOT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_players_team_name
-    ON players (team_type, name);
+ON players (team_type, name);
 """
 
 

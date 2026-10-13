@@ -1,5 +1,5 @@
 // frontend/src/DashboardTable.tsx
-// One row per athlete: name, level as text and colour, and the leading
+// One row per athlete: code, level as text and colour, and the leading
 // reason inline. The why view expands with every reason and the numbers.
 import { useState } from "react";
 import { AthleteStatus } from "./types";
@@ -28,7 +28,7 @@ export function DashboardTable({
               className="status-row__name"
               onClick={() => onSelect(entry.player_id)}
             >
-              {entry.name}
+              {entry.code}
             </button>
             <span className="status-row__level" data-level={entry.level}>
               {LEVEL_LABEL[entry.level] ?? entry.level}

@@ -27,7 +27,7 @@ export function SessionEntryForm({
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (!playerId) {
-      setError("Choose an athlete first. Register them in the directory if they are missing.");
+      setError("Choose an athlete first. Register their code in the directory if it is missing.");
       return;
     }
     if (durationMinutes <= 0 || rpe <= 0) {
@@ -77,7 +77,7 @@ export function SessionEntryForm({
             {players.length === 0 ? "No athletes registered yet" : "Choose an athlete"}
           </option>
           {players.map((p) => (
-            <option key={p.player_id} value={p.player_id}>{p.name}</option>
+            <option key={p.player_id} value={p.player_id}>{p.code}</option>
           ))}
         </select>
       </div>

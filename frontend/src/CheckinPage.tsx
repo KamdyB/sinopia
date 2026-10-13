@@ -103,7 +103,8 @@ export function CheckinPage({ playerId }: { playerId: string }) {
   }
   return (
     <div className="checkin">
-      <h1>Hi {player?.name ?? "there"}, check in for today</h1>
+      <h1>Check in for today</h1>
+      <p className="checkin__hello">{player?.code}</p>
       <p className="checkin__sub">
         Takes under 20 seconds. Your coach sees the answers.
       </p>

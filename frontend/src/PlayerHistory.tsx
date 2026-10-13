@@ -22,7 +22,7 @@ export function PlayerHistory({
       <div className="player-detail__head">
         <div>
           <p className="section-title">Athlete history</p>
-          <h2 className="player-detail__name">{player.name}</h2>
+          <h2 className="player-detail__name">{player.code}</h2>
           <p className="player-detail__meta">
             {history?.length ?? 0} sessions logged
           </p>

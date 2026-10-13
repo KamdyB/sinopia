@@ -1,6 +1,8 @@
 """Puts the repo root on sys.path for backend.* imports and gives every
 test a fresh throwaway database, patched into every store reference the
-API modules imported, so no test ever touches real data."""
+API modules and the auth module import, so no test ever touches real
+data. SQLite is used here because no test sets DATABASE_URL.
+"""
 import sys
 from pathlib import Path
 
@@ -10,16 +12,27 @@ import pytest
 from fastapi.testclient import TestClient
 
 import backend.api.checkins as checkins_api
+import backend.api.demo as demo_api
 import backend.api.players as players_api
 import backend.api.sessions as sessions_api
 import backend.api.statuses as statuses_api
+import backend.api.teams as teams_api
+import backend.auth as auth_module
 from backend.data.checkin_store import CheckinStore
 from backend.data.player_store import PlayerStore
 from backend.data.session_store import SessionStore
+from backend.data.team_store import TeamStore
 from backend.main import app
 
-_ROUTE_MODULES = (players_api, sessions_api, checkins_api, statuses_api)
-_STORE_TYPES = (PlayerStore, SessionStore, CheckinStore)
+_ROUTE_MODULES = (
+    players_api,
+    sessions_api,
+    checkins_api,
+    statuses_api,
+    teams_api,
+    auth_module,
+)
+_STORE_TYPES = (PlayerStore, SessionStore, CheckinStore, TeamStore)
 
 
 @pytest.fixture()

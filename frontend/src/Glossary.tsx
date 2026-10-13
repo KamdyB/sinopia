@@ -24,7 +24,7 @@ const TERMS: { term: string; definition: string }[] = [
   {
     term: "Baseline",
     definition:
-      "Her own recent weekly loads averaged. Every comparison uses her own numbers, never other athletes.",
+      "Their own recent weekly loads averaged. Every comparison uses their own numbers, never other athletes.",
   },
   {
     term: "Building baseline",

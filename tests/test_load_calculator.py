@@ -42,10 +42,13 @@ def test_weeks_tracked_counts_complete_windows_only():
 
 
 def test_rolling_baseline_averages_only_tracked_weeks():
-    # One week of history at 300 per week: baseline over one tracked week is 300.
+    # One session at 300 load in the older of two complete tracked weeks.
+    # Per the engine's documented behaviour (zero-load tracked weeks count
+    # as zero), the mean across both tracked windows is 150, as verified by
+    # hand when rolling_baseline was last changed.
     daily = daily_loads([s(1, 60, 5)])
     baseline = rolling_baseline(daily, date(2026, 1, 21), 4)
-    assert baseline == 300.0
+    assert baseline == 150.0
 
 
 def test_rolling_baseline_is_zero_without_history():

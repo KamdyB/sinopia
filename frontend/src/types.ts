@@ -1,4 +1,3 @@
-// frontend/src/types.ts
 export interface SessionPayload {
   player_id: string;
   date_str: string;
@@ -8,6 +7,7 @@ export interface SessionPayload {
 
 export interface StatusResponse {
   player_id: string;
+  code: string;
   level: string;
   reasons: string[];
   numbers: Record<string, number | boolean>;
@@ -16,18 +16,32 @@ export interface StatusResponse {
 
 export interface AthleteStatus {
   player_id: string;
-  name: string;
+  code: string;
   level: string;
   reasons: string[];
   numbers: Record<string, number | boolean>;
 }
 
-export type TeamType = "girls" | "boys" | "mixed";
+export interface Team {
+  team_id: string;
+  coach_email: string;
+  team_name: string;
+  sport: string;
+  age_band: string;
+  composition: string;
+  created_date: string;
+}
+
+export interface TeamProfilePayload {
+  team_name: string;
+  sport: string;
+  age_band: string;
+  composition: string;
+}
 
 export interface Player {
   player_id: string;
-  name: string;
-  team_type: TeamType;
+  code: string;
   registered_date: string;
 }
 

@@ -1,11 +1,13 @@
-"""Logs a single training session for a registered athlete, then returns
-her current status computed by the rules engine. HTTP orchestration only;
-storage and scoring live below it."""
+"""Logs a single training session for a registered athlete, then answers
+with the athlete's current status from the rules engine. Every query is
+scoped to the signed-in coach's team id; HTTP orchestration only.
+"""
 from datetime import date
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
+from backend.auth import CoachContext, get_coach, require_team
 from backend.data.player_store import player_store
 from backend.data.session_store import session_store
 from backend.scoring.athlete_status import status_from_sessions
@@ -18,6 +20,7 @@ MAX_SESSION_MINUTES = 180
 
 class StatusResponse(BaseModel):
     player_id: str
+    code: str
     level: str
     reasons: list[str]
     numbers: dict
@@ -32,11 +35,13 @@ class SessionRequest(BaseModel):
 
 
 @router.post("/sessions", response_model=StatusResponse)
-def log_session(req: SessionRequest) -> StatusResponse:
-    if player_store.get(req.player_id) is None:
+def log_session(req: SessionRequest, coach: CoachContext = Depends(get_coach)) -> StatusResponse:
+    team = require_team(coach)
+    player = player_store.get(req.player_id)
+    if player is None or player["team_id"] != team["team_id"]:
         raise HTTPException(
             status_code=404,
-            detail="Athlete not found. Register the athlete first, then log sessions against their id.",
+            detail="Athlete not found on this team. Register the athlete in the directory first.",
         )
 
     session_date = date.fromisoformat(req.date_str)
@@ -46,7 +51,8 @@ def log_session(req: SessionRequest) -> StatusResponse:
             detail="Session date cannot be in the future. Log a session after it happens, not before.",
         )
 
-    prior_sessions = session_store.get_sessions(req.player_id)
+    # Scoping below always carries the resolved team id, never the client's word.
+    prior_sessions = session_store.get_sessions(req.player_id, team["team_id"])
     previous_level: str | None = None
     if prior_sessions:
         last_prior_date = date.fromisoformat(max(s["date"] for s in prior_sessions))
@@ -54,14 +60,16 @@ def log_session(req: SessionRequest) -> StatusResponse:
 
     session_store.log_session(
         req.player_id,
+        team["team_id"],
         {"date": req.date_str, "duration_minutes": req.duration_minutes, "rpe": req.rpe},
     )
 
-    sessions = session_store.get_sessions(req.player_id)
+    sessions = session_store.get_sessions(req.player_id, team["team_id"])
     status = status_from_sessions(sessions, session_date)
 
     return StatusResponse(
         player_id=req.player_id,
+        code=player["code"],
         level=status["level"],
         reasons=status["reasons"],
         numbers=status["numbers"],

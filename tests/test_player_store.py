@@ -8,45 +8,39 @@ def store(tmp_path):
     return PlayerStore(str(tmp_path / "players.db"))
 
 
-def test_register_returns_a_complete_record(store):
-    record = store.register("Amaka", "girls", "2026-01-05")
-    assert set(record.keys()) == {"player_id", "name", "team_type", "registered_date"}
-    assert record["name"] == "Amaka"
-    assert record["team_type"] == "girls"
+def test_register_store_athlete_code_only(store):
+    record = store.register("ATH-01", "team-one", "2026-01-05")
+    assert set(record.keys()) == {"player_id", "code", "team_id", "registered_date"}
+    assert record["code"] == "ATH-01"
+    assert record["team_id"] == "team-one"
 
 
 def test_registered_player_is_retrievable_by_id(store):
-    record = store.register("Amaka", "girls", "2026-01-05")
+    record = store.register("ATH-01", "team-one", "2026-01-05")
     fetched = store.get(record["player_id"])
     assert fetched is not None
-    assert fetched["name"] == "Amaka"
+    assert fetched["code"] == "ATH-01"
 
 
 def test_unknown_id_returns_none(store):
     assert store.get("no-such-id") is None
 
 
-def test_same_name_on_different_teams_is_two_players(store):
-    girls_amaka = store.register("Amaka", "girls", "2026-01-05")
-    boys_amaka = store.register("Amaka", "boys", "2026-01-05")
-    assert girls_amaka["player_id"] != boys_amaka["player_id"]
+def test_same_code_on_different_teams_is_two_players(store):
+    one = store.register("ATH-01", "team-one", "2026-01-05")
+    two = store.register("ATH-01", "team-two", "2026-01-05")
+    assert one["player_id"] != two["player_id"]
 
 
-def test_duplicate_name_on_same_team_is_rejected(store):
-    store.register("Amaka", "girls", "2026-01-05")
+def test_duplicate_code_on_same_team_is_rejected(store):
+    store.register("ATH-01", "team-one", "2026-01-05")
     with pytest.raises(DuplicatePlayerError):
-        store.register("Amaka", "girls", "2026-01-06")
+        store.register("ATH-01", "team-one", "2026-01-06")
 
 
-def test_duplicate_name_is_case_insensitive(store):
-    store.register("Amaka", "girls", "2026-01-05")
-    with pytest.raises(DuplicatePlayerError):
-        store.register("AMAKA", "girls", "2026-01-06")
-
-
-def test_team_listing_is_scoped_and_name_sorted(store):
-    store.register("Zainab", "girls", "2026-01-05")
-    store.register("Amaka", "girls", "2026-01-05")
-    store.register("Tunde", "boys", "2026-01-05")
-    names = [p["name"] for p in store.list_for_team("girls")]
-    assert names == ["Amaka", "Zainab"]
+def test_list_for_team_scopes_by_team_id(store):
+    store.register("ATH-01", "team-one", "2026-01-05")
+    store.register("ATH-02", "team-one", "2026-01-05")
+    store.register("ATH-09", "team-two", "2026-01-05")
+    codes = [p["code"] for p in store.list_for_team("team-one")]
+    assert codes == ["ATH-01", "ATH-02"]

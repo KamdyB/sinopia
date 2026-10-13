@@ -3,3 +3,5 @@ uvicorn
 pydantic
 pytest
 openai
+google-auth
+psycopg2-binary

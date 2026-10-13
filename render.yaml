@@ -1,0 +1,19 @@
+# Render free tier deployment for the Sinopia FastAPI backend.
+# The database is deliberately NOT Render's: DATABASE_URL points at an
+# external free Postgres (Tiger Cloud). Leave those env vars as
+# sync:false so the Render dashboard prompts for the real values.
+services:
+  - type: web
+    name: sinopia-backend
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /demo/statuses
+    envVars:
+      - key: DATABASE_URL
+        sync: false          # postgresql://... from the external free Postgres
+      - key: GOOGLE_CLIENT_ID
+        sync: false          # Google OAuth client id for the ID token check
+      - key: SINOPIA_ALLOWED_ORIGINS
+        sync: false          # e.g. https://your-landing.vercel.app,https://your-app.vercel.app

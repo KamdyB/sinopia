@@ -1,5 +1,7 @@
-"""Athlete check-in endpoint. No accounts: the athlete id comes from the
-link the coach shared. The date is set by the server, never the client."""
+"""Athlete check-in endpoint. No accounts: the athlete reaches it from
+the link the coach shared. The team id is derived server side from the
+athlete's own record, so the request itself cannot cross teams. The
+date is set by the server, never the client."""
 from datetime import date
 
 from fastapi import APIRouter, HTTPException
@@ -32,10 +34,13 @@ class CheckinRequest(BaseModel):
 
 @router.post("/checkins", status_code=201)
 def log_checkin(req: CheckinRequest) -> None:
-    if player_store.get(req.player_id) is None:
+    player = player_store.get(req.player_id)
+    if player is None:
         raise HTTPException(status_code=404, detail="Athlete not found.")
+    # The team id comes from the athlete's record on the server side.
     checkin_store.log_checkin(
         req.player_id,
+        player["team_id"],
         {
             "date": date.today().isoformat(),
             "sleep": req.sleep,

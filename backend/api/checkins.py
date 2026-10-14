@@ -37,9 +37,23 @@ class CheckinRequest(BaseModel):
         return self
 
 
-@router.get("/checkin/{token}")
-def validate_checkin_link(token: str) -> dict:
-    if len(token) < 30 or len(token) > 128 or player_store.get_by_checkin_token(token) is None:
+class CheckinTokenValidationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    token: str = Field(min_length=30, max_length=128)
+
+
+@router.post("/checkin/validate")
+def validate_checkin_link(payload: CheckinTokenValidationRequest, request: Request) -> dict:
+    ip = client_ip(request)
+    token_digest = hashlib.sha256(payload.token.encode()).hexdigest()
+    retry_after = enforce_rate_limit(("checkin-token-validation", ip, token_digest), 10, 60)
+    if retry_after is not None:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many link validation attempts. Try again later.",
+            headers={"Retry-After": str(retry_after)},
+        )
+    if player_store.get_by_checkin_token(payload.token) is None:
         raise HTTPException(status_code=404, detail="Check-in link is not valid.")
     return {"valid": True}
 

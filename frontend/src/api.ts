@@ -65,7 +65,7 @@ export async function createCheckinToken(playerId: string): Promise<string> {
 }
 
 export async function validateCheckinToken(token: string): Promise<void> {
-  await get<{ valid: boolean }>(`/checkin/${encodeURIComponent(token)}`);
+  await post<{ valid: boolean }>("/checkin/validate", { token });
 }
 
 export async function fetchPlayerHistory(playerId: string): Promise<HistoryPoint[]> {

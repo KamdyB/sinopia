@@ -202,12 +202,12 @@ def test_coach_cannot_access_another_team_athlete(client):
 def test_regenerating_checkin_token_invalidates_previous_link(client):
     player_id = register(client, "Token rotation")
     old_token = checkin_token(client, player_id)
-    assert client.get(f"/checkin/{old_token}").status_code == 200
+    assert client.post("/checkin/validate", json={"token": old_token}).status_code == 200
 
     new_token = checkin_token(client, player_id)
     assert new_token != old_token
     assert client.get(f"/checkin/{old_token}").status_code == 404
-    assert client.get(f"/checkin/{new_token}").status_code == 200
+    assert client.post("/checkin/validate", json={"token": new_token}).status_code == 200
 
 
 

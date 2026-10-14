@@ -7,12 +7,11 @@ import { AuthGate } from "./AuthGate";
 import { CheckinPage } from "./CheckinPage";
 import { ThemeStage } from "./ThemeStage";
 
-// Two entries in one bundle: the coach dashboard at any path, and the
-// athlete check-in at /checkin/{token}. No router dependency needed.
-const path = window.location.pathname;
-const CHECKIN_PREFIX = "/checkin/";
-const checkinToken = path.startsWith(CHECKIN_PREFIX)
-  ? path.slice(CHECKIN_PREFIX.length)
+// Keep the athlete token in the URL fragment. Browsers do not send fragments
+// to the server in HTTP requests or referrer headers, reducing access-log leakage.
+const CHECKIN_PREFIX = "#checkin/";
+const checkinToken = window.location.hash.startsWith(CHECKIN_PREFIX)
+  ? window.location.hash.slice(CHECKIN_PREFIX.length)
   : null;
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

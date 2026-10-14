@@ -54,7 +54,7 @@ def _rate_limit(request: Request) -> tuple[int, int] | None:
         return (5, 60)
     if path == "/checkins" and request.method == "POST":
         return (10, 60)
-    if path.startswith("/checkin/") and request.method == "GET":
+    if path == "/checkin/validate" and request.method == "POST":
         return (10, 60)
     if path == "/explain" and request.method == "POST":
         return (20, 3600)

@@ -7,6 +7,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import Response
 
+from backend.api.auth import router as auth_router
 from backend.api.checkins import router as checkins_router
 from backend.api.explain import router as explain_router
 from backend.api.players import router as players_router
@@ -31,6 +32,8 @@ def _client_ip(request: Request) -> str:
 
 def _rate_limit(request: Request) -> tuple[int, int] | None:
     path = request.url.path
+    if path == "/auth/google" and request.method == "POST":
+        return (5, 60)
     if path == "/checkins" and request.method == "POST":
         return (10, 60)
     if path == "/explain" and request.method == "POST":
@@ -115,6 +118,7 @@ async def security_headers(request: Request, call_next) -> Response:
     return response
 
 
+app.include_router(auth_router)
 app.include_router(sessions_router)
 app.include_router(checkins_router)
 app.include_router(statuses_router)

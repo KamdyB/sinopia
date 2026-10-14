@@ -2,9 +2,10 @@
 from datetime import date
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from backend.api.auth import require_accepted_coach
 from backend.data.checkin_store import DuplicateCheckinError, checkin_store
 from backend.data.player_store import player_store
 
@@ -63,3 +64,15 @@ def log_checkin(req: CheckinRequest) -> dict:
     except DuplicateCheckinError:
         raise HTTPException(status_code=409, detail="A check-in has already been submitted today.")
     return {"status": "recorded"}
+
+
+
+@router.delete("/players/{player_id}/checkins/{checkin_id}")
+def delete_checkin(
+    player_id: str, checkin_id: int, coach: dict = Depends(require_accepted_coach)
+) -> dict[str, bool]:
+    if player_store.get(player_id, coach["team_id"]) is None:
+        raise HTTPException(status_code=404, detail="Athlete not found.")
+    if not checkin_store.delete_checkin(checkin_id, player_id, coach["team_id"]):
+        raise HTTPException(status_code=404, detail="Check-in not found.")
+    return {"deleted": True}

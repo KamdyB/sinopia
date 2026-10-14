@@ -120,3 +120,20 @@ export async function signOut(): Promise<void> {
 export async function deleteCoachAccount(credential: string): Promise<void> {
   await post<unknown>("/privacy/delete-account", { credential, confirm: true });
 }
+
+export async function exportTeamData(format: "csv" | "json"): Promise<void> {
+  const res = await fetch(`${API_BASE}/privacy/export?format=${format}`, {
+    credentials: "include",
+    headers: { "X-Sinopia-Request": "1" },
+  });
+  if (!res.ok) throw await parseError(res);
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = format === "csv" ? "sinopia-team-export.csv" : "sinopia-team-export.json";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}

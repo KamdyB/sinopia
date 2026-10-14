@@ -137,3 +137,12 @@ export async function exportTeamData(format: "csv" | "json"): Promise<void> {
   link.remove();
   URL.revokeObjectURL(url);
 }
+
+export async function deletePlayer(playerId: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/players/${encodeURIComponent(playerId)}`, {
+    method: "DELETE",
+    credentials: "include",
+    headers: { "X-Sinopia-Request": "1" },
+  });
+  if (!res.ok) throw await parseError(res);
+}

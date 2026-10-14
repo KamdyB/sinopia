@@ -63,6 +63,8 @@ def log_checkin(req: CheckinRequest) -> dict:
         )
     except DuplicateCheckinError:
         raise HTTPException(status_code=409, detail="A check-in has already been submitted today.")
+    from backend.data.auth_store import auth_store
+    auth_store.log_event("checkin_submitted", player["team_id"])
     return {"status": "recorded"}
 
 
@@ -75,4 +77,6 @@ def delete_checkin(
         raise HTTPException(status_code=404, detail="Athlete not found.")
     if not checkin_store.delete_checkin(checkin_id, player_id, coach["team_id"]):
         raise HTTPException(status_code=404, detail="Check-in not found.")
+    from backend.data.auth_store import auth_store
+    auth_store.log_event("checkin_deleted", coach["team_id"])
     return {"deleted": True}

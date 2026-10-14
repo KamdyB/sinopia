@@ -1,7 +1,7 @@
 // frontend/src/App.tsx
 import { useEffect, useState } from "react";
 import { AthleteStatus, HistoryPoint, Player, TeamType } from "./types";
-import { acknowledgePain, createCheckinToken, fetchPlayers, fetchTeamStatuses, registerPlayer } from "./api";
+import { acknowledgePain, createCheckinToken, exportTeamData, fetchPlayers, fetchTeamStatuses, registerPlayer } from "./api";
 import { SessionEntryForm } from "./SessionEntryForm";
 import { PlayerDirectory } from "./PlayerDirectory";
 import { PlayerHistory } from "./PlayerHistory";
@@ -33,6 +33,7 @@ export default function App() {
   const [history, setHistory] = useState<HistoryPoint[] | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -91,6 +92,15 @@ export default function App() {
     await refreshStatuses();
   };
 
+  const handleExport = async (format: "csv" | "json") => {
+    setExportError(null);
+    try {
+      await exportTeamData(format);
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : "Could not export team data.");
+    }
+  };
+
   const handleScored = () => {
     refreshStatuses();
   };
@@ -115,7 +125,11 @@ export default function App() {
             </select>
           </label>
         </div>
-        <p className="today-date">{TODAY}</p>
+        <div>
+          <p className="today-date">{TODAY}</p>
+          <button type="button" className="copy-link" onClick={() => void handleExport("csv")}>Export CSV</button>
+          <button type="button" className="copy-link" onClick={() => void handleExport("json")}>Export JSON</button>
+        </div>
       </div>
       <div className="dashboard">
         <div>
@@ -146,6 +160,7 @@ export default function App() {
           <Glossary />
         </div>
       </div>
+      {exportError && <p className="form-error">{exportError}</p>}
       <p className="disclaimer">
         Sinopia by KamdyB is a workload-monitoring tool for coaches, not a medical
         device. It does not diagnose, treat, or predict injury. All thresholds are

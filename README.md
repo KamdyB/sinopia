@@ -12,6 +12,7 @@ Install backend dependencies from the repository root.
 
 ```bash
 python -m pip install -r requirements.txt
+$env:SINOPIA_ENV = "development"
 python -m uvicorn backend.main:app --reload
 ```
 
@@ -31,7 +32,7 @@ npm install
 npm run dev
 ```
 
-Copy the example environment files to local environment files and configure the Google client ID if testing the production sign-in path. Local development uses a development coach and must never be exposed as a public service.
+The backend command above explicitly opts into local development mode. Set the frontend and landing environment variables from their example files as needed. Local development uses a development coach and must never be exposed as a public service. Production defaults to fail-closed mode and requires HTTPS origins, Google configuration, and the encryption key ring.
 
 ## Tests and builds
 
@@ -70,7 +71,7 @@ Operational drafts are in docs/data-map.md, docs/dpia.md, docs/breach-response.m
 
 ## Known gaps before production
 
-The Vercel first-party /api rewrite and exact production CSP still need the actual deployed backend hostname. The current branch does not yet implement scheduled 12-month retention, inactive-account warnings, or a PostgreSQL migration. Confirm actual subprocessors and processing regions, test deletion across backups, and complete an independent security and privacy review before collecting real athlete data.
+The Vercel first-party /api rewrite and exact production CSP still need the actual deployed backend hostname. The current branch does not yet implement scheduled 12-month retention, inactive-account warnings, a PostgreSQL migration, or a configured first-party /api rewrite. Those require a migration plan, scheduler/notification decision, and the actual deployed backend hostname. Confirm actual subprocessors and processing regions, test deletion across backups, and complete an independent security and privacy review before collecting real athlete data.
 
 
 ## Application-level encryption

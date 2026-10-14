@@ -287,3 +287,29 @@ def test_production_api_does_not_allow_development_coach_bypass(client, monkeypa
     monkeypatch.setenv("SINOPIA_ENV", "production")
     response = client.get("/players?team_type=girls")
     assert response.status_code == 401
+
+
+
+def test_policy_gate_and_version_bump_require_fresh_acceptance(client, tmp_path, monkeypatch):
+    import backend.api.auth as auth_api
+    from backend.data.auth_store import AuthStore
+
+    monkeypatch.setenv("SINOPIA_ENV", "production")
+    monkeypatch.setattr(auth_api, "TERMS_VERSION", "terms-v1")
+    monkeypatch.setattr(auth_api, "PRIVACY_VERSION", "privacy-v1")
+    store = AuthStore(str(tmp_path / "auth.db"))
+    monkeypatch.setattr(auth_api, "auth_store", store)
+    email = "coach-gate@example.com"
+    store.ensure_coach(email, "Coach")
+    client.cookies.set("sinopia_session", store.create_session(email))
+
+    assert client.get("/players?team_type=girls").status_code == 403
+    accepted = client.post(
+        "/auth/accept-policies",
+        json={"age_18_or_older": True, "authorised_and_parental_consent_obtained": True},
+    )
+    assert accepted.status_code == 200
+    assert client.get("/players?team_type=girls").status_code == 200
+
+    monkeypatch.setattr(auth_api, "TERMS_VERSION", "terms-v2")
+    assert client.get("/players?team_type=girls").status_code == 403

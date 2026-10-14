@@ -48,15 +48,15 @@ cd frontend && npm run build
 cd ../landing && npm run build
 ```
 
-GitHub Actions runs the backend test suite and both Vite builds on pushes to the security branch and on pull requests.
+GitHub Actions runs the backend test suite, dependency audits, secret scan, and both Vite builds for pull requests targeting main. It can also be run manually. Pushes to the working security branch do not trigger a second redundant CI run.
 
 ## Security behaviour in this branch
 
 Coach routes require a coach session and are scoped to the owning team. Google ID tokens are verified server-side, and the backend issues an opaque server-side session in an HttpOnly cookie. Production deployment must set SINOPIA_ENV=production, configure GOOGLE_CLIENT_ID and VITE_GOOGLE_CLIENT_ID, and set SINOPIA_ALLOWED_ORIGINS to exact trusted origins.
 
-Athlete check-in links use a separate random token, not the athlete's player ID. A coach can regenerate a token to invalidate an older link. The API allows one check-in per athlete per day. A pain flag remains active until a coach acknowledges it. Coach exports are team-scoped, and account deletion requires a fresh Google ID token.
+Athlete check-in links use a separate random token, not the athlete's player ID. The token is placed in the URL fragment, so it is not sent in HTTP requests or normal server access logs. A coach can regenerate a token to invalidate an older link. The API allows one check-in per athlete per day. A pain flag remains active until a coach acknowledges it. Coach exports are team-scoped, and account deletion requires a fresh Google ID token.
 
-The current IP throttles are process-local. They are not a substitute for shared rate limiting in a multi-worker deployment. Application-level encryption and automated retention enforcement are not implemented. The current store is SQLite; PostgreSQL migration and a controlled migration of legacy records remain outstanding. Do not deploy with sensitive athlete data until these gaps are closed.
+The current rate throttles are process-local. They are not a substitute for shared rate limiting in a multi-worker deployment. Athlete labels and pain-area values use application-level AES-GCM encryption when a key ring is configured; production refuses to start without it. Automated retention enforcement is not implemented. The current store is SQLite; PostgreSQL migration and a controlled migration of legacy records remain outstanding. Do not deploy with sensitive athlete data until these gaps are closed.
 
 ## Configuration
 
@@ -70,7 +70,7 @@ Operational drafts are in docs/data-map.md, docs/dpia.md, docs/breach-response.m
 
 ## Known gaps before production
 
-The Vercel first-party /api rewrite and exact production CSP still need the actual deployed backend hostname. The current branch does not yet implement application-level encryption, scheduled 12-month retention, inactive-account warnings, or a PostgreSQL migration. Confirm actual subprocessors and processing regions, test deletion across backups, and complete an independent security and privacy review before collecting real athlete data.
+The Vercel first-party /api rewrite and exact production CSP still need the actual deployed backend hostname. The current branch does not yet implement scheduled 12-month retention, inactive-account warnings, or a PostgreSQL migration. Confirm actual subprocessors and processing regions, test deletion across backups, and complete an independent security and privacy review before collecting real athlete data.
 
 
 ## Application-level encryption

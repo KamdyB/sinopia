@@ -15,7 +15,7 @@ The intended purpose is to help an authorised coach review workload history and 
 | Risk | Current mitigation | Remaining work |
 |---|---|---|
 | Cross-team disclosure | Team IDs on player, session, and check-in records; route-level team scoping; 404 for foreign IDs | Test every route and migration; complete PostgreSQL migration |
-| Link theft | Separate random check-in token, coach-only regeneration, old token invalidation | Add token-keyed rate limiting and monitoring |
+| Link theft | Separate random check-in token, hashed token storage, token in URL fragment rather than path, coach-only regeneration, token-aware throttling | Add shared rate limiting and monitoring |
 | Unauthorised coach access | Google ID token verification, server-side opaque sessions, HttpOnly cookie, policy gate | Configure real client IDs, production HTTPS, trusted origins, and Vercel first-party API rewrite |
 | Child data processed without authority | Coach declaration and athlete-registration consent checkbox | Verify consent workflow, records, notice delivery, and school/club authority |
 | Pain report remains unaddressed | Pain flag persists until coach acknowledgement | Define operational response expectations and audit acknowledgements |

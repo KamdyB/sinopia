@@ -6,10 +6,12 @@ export function PlayerDirectory({
   players,
   onAdd,
   onCreateCheckinLink,
+  onDeletePlayer,
 }: {
   players: Player[];
   onAdd: (name: string) => Promise<void>;
   onCreateCheckinLink: (playerId: string) => Promise<string>;
+  onDeletePlayer: (playerId: string) => Promise<void>;
 }) {
   const [query, setQuery] = useState("");
   const [newName, setNewName] = useState("");
@@ -103,6 +105,21 @@ export function PlayerDirectory({
                 <span className="directory-row__name">{p.name}</span>
                 <button type="button" className="copy-link" onClick={() => copyCheckinLink(p.player_id)}>
                   {copiedId === p.player_id ? "Create new link" : "Create/copy check-in link"}
+                </button>
+                <button
+                  type="button"
+                  className="copy-link"
+                  onClick={async () => {
+                    if (!window.confirm("Permanently delete this athlete and all training/check-in history?")) return;
+                    setError(null);
+                    try {
+                      await onDeletePlayer(p.player_id);
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : "Could not delete the athlete.");
+                    }
+                  }}
+                >
+                  Delete athlete
                 </button>
               </span>
             </li>

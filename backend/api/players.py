@@ -1,10 +1,9 @@
-"""Athlete registration, team roster listing, and per-athlete status history.
-Orchestration and HTTP concerns only; storage and scoring live below it."""
+"""Athlete registration, roster listing, and per-athlete history."""
 from datetime import date
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from backend.data.player_store import DuplicatePlayerError, player_store
 from backend.data.session_store import session_store
@@ -15,16 +14,25 @@ TeamType = Literal["girls", "boys", "mixed"]
 
 
 class PlayerRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     name: str = Field(min_length=1, max_length=80)
     team_type: TeamType
+    consent_confirmed: bool
 
     @field_validator("name")
     @classmethod
     def _clean_name(cls, value: str) -> str:
         cleaned = " ".join(value.split())
         if not cleaned:
-            raise ValueError("Athlete name cannot be blank.")
+            raise ValueError("Athlete label cannot be blank.")
         return cleaned
+
+    @field_validator("consent_confirmed")
+    @classmethod
+    def _consent_required(cls, value: bool) -> bool:
+        if value is not True:
+            raise ValueError("Consent confirmation is required.")
+        return value
 
 
 class PlayerResponse(BaseModel):
@@ -47,10 +55,7 @@ def register_player(req: PlayerRequest) -> PlayerResponse:
     try:
         player = player_store.register(req.name, req.team_type, date.today().isoformat())
     except DuplicatePlayerError:
-        raise HTTPException(
-            status_code=409,
-            detail=f'An athlete named "{req.name}" is already registered for this team.',
-        )
+        raise HTTPException(status_code=409, detail="An athlete label is already registered for this team.")
     return PlayerResponse(**player)
 
 
@@ -71,5 +76,4 @@ def get_player(player_id: str) -> PlayerResponse:
 def player_history(player_id: str) -> list[HistoryPoint]:
     if player_store.get(player_id) is None:
         raise HTTPException(status_code=404, detail="Athlete not found.")
-    sessions = session_store.get_sessions(player_id)
-    return [HistoryPoint(**p) for p in history_points(sessions)]
+    return [HistoryPoint(**p) for p in history_points(session_store.get_sessions(player_id))]

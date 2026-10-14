@@ -67,3 +67,6 @@ class PlayerStore:
         with connect(self._db_path) as conn:
             cursor = conn.execute("DELETE FROM players WHERE player_id = ?", (player_id,))
         return cursor.rowcount > 0
+
+
+player_store = PlayerStore()

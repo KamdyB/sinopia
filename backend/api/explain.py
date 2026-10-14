@@ -1,5 +1,6 @@
 """Produce a plain-language summary from a server-computed status."""
 import os
+from datetime import date
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
@@ -48,7 +49,7 @@ def explain(req: ExplainRequest) -> ExplainResponse:
     status = status_from_records(
         session_store.get_sessions(req.player_id),
         checkin_store.get_checkins(req.player_id),
-        __import__("datetime").date.today(),
+        date.today(),
     )
     level = status["level"]
     reasons = status["reasons"]

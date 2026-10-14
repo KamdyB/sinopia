@@ -48,8 +48,8 @@ def explain(req: ExplainRequest, coach: dict = Depends(require_accepted_coach)) 
         raise HTTPException(status_code=404, detail="Athlete not found.")
 
     status = status_from_records(
-        session_store.get_sessions(req.player_id),
-        checkin_store.get_checkins(req.player_id),
+        session_store.get_sessions(req.player_id, coach["team_id"]),
+        checkin_store.get_checkins(req.player_id, coach["team_id"]),
         date.today(),
     )
     level = status["level"]

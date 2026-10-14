@@ -1,4 +1,5 @@
 """Persistence for registered players, scoped to the owning team."""
+import hashlib
 import secrets
 import sqlite3
 import uuid
@@ -37,9 +38,11 @@ class PlayerStore:
                 "SELECT player_id FROM players WHERE checkin_token IS NULL"
             ).fetchall()
             for row in rows:
+                token = secrets.token_urlsafe(32)
+                digest = hashlib.sha256(token.encode()).hexdigest()
                 conn.execute(
                     "UPDATE players SET checkin_token = ? WHERE player_id = ?",
-                    (secrets.token_urlsafe(32), row["player_id"]),
+                    (digest, row["player_id"]),
                 )
             conn.execute("DROP INDEX IF EXISTS idx_players_team_name")
             conn.execute(
@@ -63,7 +66,7 @@ class PlayerStore:
                     "INSERT INTO players "
                     "(player_id, name, team_type, registered_date, team_id, checkin_token) "
                     "VALUES (?, ?, ?, ?, ?, ?)",
-                    (player_id, name, team_type, registered_date, team_id, checkin_token),
+                    (player_id, name, team_type, registered_date, team_id, hashlib.sha256(checkin_token.encode()).hexdigest()),
                 )
         except sqlite3.IntegrityError as exc:
             raise DuplicatePlayerError(name, team_type) from exc
@@ -89,19 +92,21 @@ class PlayerStore:
         return dict(row) if row else None
 
     def get_by_checkin_token(self, token: str) -> dict | None:
+        digest = hashlib.sha256(token.encode()).hexdigest()
         with connect(self._db_path) as conn:
             row = conn.execute(
                 "SELECT player_id, team_id FROM players WHERE checkin_token = ?",
-                (token,),
+                (digest,),
             ).fetchone()
         return dict(row) if row else None
 
     def regenerate_checkin_token(self, player_id: str, team_id: str) -> str | None:
         token = secrets.token_urlsafe(32)
+        digest = hashlib.sha256(token.encode()).hexdigest()
         with connect(self._db_path) as conn:
             cursor = conn.execute(
                 "UPDATE players SET checkin_token = ? WHERE player_id = ? AND team_id = ?",
-                (token, player_id, team_id),
+                (digest, player_id, team_id),
             )
         return token if cursor.rowcount else None
 

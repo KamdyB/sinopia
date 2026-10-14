@@ -20,6 +20,7 @@ from backend.data.checkin_store import CheckinStore
 from backend.data.player_store import PlayerStore
 from backend.data.session_store import SessionStore
 from backend.main import app
+from backend.security.rate_limit import _EVENTS, _LOCK
 
 _ROUTE_MODULES = (players_api, sessions_api, checkins_api, statuses_api, privacy_api)
 _STORE_TYPES = (PlayerStore, SessionStore, CheckinStore)
@@ -27,6 +28,8 @@ _STORE_TYPES = (PlayerStore, SessionStore, CheckinStore)
 
 @pytest.fixture()
 def client(tmp_path, monkeypatch):
+    with _LOCK:
+        _EVENTS.clear()
     db_path = str(tmp_path / "test.db")
     fresh = {store_type: store_type(db_path) for store_type in _STORE_TYPES}
     for module in _ROUTE_MODULES:

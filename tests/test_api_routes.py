@@ -267,3 +267,23 @@ def test_checkin_token_is_not_stored_in_plaintext(client, tmp_path):
         ).fetchone()[0]
     assert stored != token
     assert len(stored) == 64
+
+
+
+def test_checkin_attempts_are_rate_limited_with_retry_after(client):
+    player_id = register(client, "Rate limit test")
+    token = checkin_token(client, player_id)
+    payload = {
+        "token": token, "sleep": 3, "energy": 3,
+        "soreness": 3, "stress": 3, "pain": False,
+    }
+    responses = [client.post("/checkins", json=payload) for _ in range(11)]
+    limited = [response for response in responses if response.status_code == 429]
+    assert limited
+    assert limited[-1].headers.get("Retry-After")
+
+
+def test_production_api_does_not_allow_development_coach_bypass(client, monkeypatch):
+    monkeypatch.setenv("SINOPIA_ENV", "production")
+    response = client.get("/players?team_type=girls")
+    assert response.status_code == 401

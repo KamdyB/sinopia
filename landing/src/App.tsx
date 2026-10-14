@@ -100,7 +100,7 @@ export default function App() {
               Across 5,261 papers in six leading sports-science journals (2014\u20132020),
               only 6% of studies included female participants only, while 31% included
               males only. Of 12.5 million participants where sex was reported, 66% were male.
-              The load-monitoring thresholds used everywhere were mostly built on that base.
+              The field still has gaps in whose training histories are represented.
             </p>
             <span className="fact__source">Cowley et al., 2021</span>
           </article>

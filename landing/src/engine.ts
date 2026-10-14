@@ -1,109 +1,84 @@
 // landing/src/engine.ts
-// Mirrors backend/scoring/load_calculator.py and the composite banding so the
-// landing demo shows the same math the tool runs. Intentionally a small
-// duplicate: this is a separate app with no shared module boundary.
-
-export interface DemoSession {
-  date: string; // ISO yyyy-mm-dd
-  minutes: number;
-  rpe: number;
-}
-
+// Load-only demonstration matching backend/scoring/load_calculator.py and
+// backend/scoring/athlete_status.py. Wellness and pain flags are not simulated.
+export interface DemoSession { date: string; minutes: number; rpe: number; }
 export interface Assessment {
   date: string;
   sessionLoad: number;
-  acute: number;
-  chronic: number;
-  acwr: number;
-  band: "UNDERTRAINED" | "OPTIMAL" | "CAUTION" | "HIGH_RISK";
-  daysOfHistory: number;
+  weeklyLoad: number;
+  baseline: number;
+  level: "building" | "act" | "ok";
+  weeksAvailable: number;
 }
-
 const DAY_MS = 24 * 60 * 60 * 1000;
-
-function toUtc(iso: string): number {
-  return Date.parse(`${iso}T00:00:00Z`);
-}
-
-function toIso(ms: number): string {
-  return new Date(ms).toISOString().slice(0, 10);
-}
-
-export function sessionLoad(s: DemoSession): number {
-  return s.minutes * s.rpe;
-}
-
+const BASELINE_WEEKS = 4;
+const MIN_BASELINE_WEEKS = 3;
+const LOAD_JUMP_RATIO = 1.5;
+function toUtc(iso: string): number { return Date.parse(iso + "T00:00:00Z"); }
+function toIso(ms: number): string { return new Date(ms).toISOString().slice(0, 10); }
+export function sessionLoad(session: DemoSession): number { return session.minutes * session.rpe; }
 function dailyLoads(sessions: DemoSession[]): Map<string, number> {
   const daily = new Map<string, number>();
-  for (const s of sessions) {
-    daily.set(s.date, (daily.get(s.date) ?? 0) + sessionLoad(s));
+  for (const session of sessions) {
+    daily.set(session.date, (daily.get(session.date) ?? 0) + sessionLoad(session));
   }
   return daily;
 }
-
-function rollingAverage(
-  daily: Map<string, number>,
-  asOfMs: number,
-  windowDays: number,
-  daysAvailable: number,
-): number {
-  const effective = Math.min(windowDays, Math.max(daysAvailable, 1));
+function weeklyLoad(daily: Map<string, number>, asOfMs: number): number {
   let total = 0;
-  for (let i = 0; i < effective; i++) {
-    total += daily.get(toIso(asOfMs - i * DAY_MS)) ?? 0;
+  for (let day = 0; day < 7; day++) total += daily.get(toIso(asOfMs - day * DAY_MS)) ?? 0;
+  return total;
+}
+function weeksTracked(daily: Map<string, number>, asOfMs: number): number {
+  if (daily.size === 0) return 0;
+  const first = Math.min(...Array.from(daily.keys(), toUtc));
+  return Math.max(0, Math.floor((asOfMs - first) / (7 * DAY_MS)));
+}
+function rollingBaseline(daily: Map<string, number>, asOfMs: number): number {
+  if (daily.size === 0) return 0;
+  const first = Math.min(...Array.from(daily.keys(), toUtc));
+  const windows: number[] = [];
+  for (let week = 1; week <= BASELINE_WEEKS; week++) {
+    const end = asOfMs - 7 * week * DAY_MS;
+    if (end - 6 * DAY_MS < first) break;
+    windows.push(weeklyLoad(daily, end));
   }
-  return total / effective;
+  return windows.length ? windows.reduce((sum, value) => sum + value, 0) / windows.length : 0;
 }
-
-function band(acwr: number): Assessment["band"] {
-  if (acwr < 0.8) return "UNDERTRAINED";
-  if (acwr <= 1.3) return "OPTIMAL";
-  if (acwr <= 1.5) return "CAUTION";
-  return "HIGH_RISK";
-}
-
 export function assess(sessions: DemoSession[], asOf: string): Assessment {
   const daily = dailyLoads(sessions);
   const asOfMs = toUtc(asOf);
-  const earliest = Math.min(...sessions.map(s => toUtc(s.date)));
-  const daysAvailable = Math.floor((asOfMs - earliest) / DAY_MS) + 1;
-  const acute = rollingAverage(daily, asOfMs, 7, daysAvailable);
-  const chronic = rollingAverage(daily, asOfMs, 28, daysAvailable);
-  // The demo only feeds sessions with positive load, so chronic is never zero.
-  const acwr = acute / chronic;
-  return {
-    date: asOf,
-    sessionLoad: sessionLoad(sessions[sessions.length - 1]),
-    acute,
-    chronic,
-    acwr,
-    band: band(acwr),
-    daysOfHistory: daysAvailable,
-  };
+  const current = [...sessions].filter((session) => session.date <= asOf)
+    .sort((a, b) => b.date.localeCompare(a.date))[0];
+  const weekly = weeklyLoad(daily, asOfMs);
+  const baseline = rollingBaseline(daily, asOfMs);
+  const weeksAvailable = weeksTracked(daily, asOfMs);
+  const level: Assessment["level"] =
+    weeksAvailable < MIN_BASELINE_WEEKS || baseline <= 0 ? "building" :
+    weekly > baseline * LOAD_JUMP_RATIO ? "act" : "ok";
+  return { date: asOf, sessionLoad: current ? sessionLoad(current) : 0, weeklyLoad: weekly, baseline, level, weeksAvailable };
 }
-
 export function walkForward(sessions: DemoSession[]): Assessment[] {
-  const out: Assessment[] = [];
-  for (let i = 1; i <= sessions.length; i++) {
-    const prefix = sessions.slice(0, i);
-    out.push(assess(prefix, prefix[prefix.length - 1].date));
-  }
-  return out;
+  const ordered = [...sessions].sort((a, b) => a.date.localeCompare(b.date));
+  return ordered.map((session, index) => assess(ordered.slice(0, index + 1), session.date));
 }
-
-// Scripted example, same shape as the backend test scenario whose numbers were
-// hand-verified: a steady week, a layoff, then a spike past 1.5, then a deload.
-export const DEMO_PLAYER = "Amaka";
-
+export const DEMO_PLAYER = "Athlete code A01";
 export const DEMO_SESSIONS: DemoSession[] = [
   { date: "2026-01-01", minutes: 60, rpe: 5 },
+  { date: "2026-01-04", minutes: 60, rpe: 5 },
   { date: "2026-01-08", minutes: 60, rpe: 5 },
-  { date: "2026-01-09", minutes: 60, rpe: 5 },
-  { date: "2026-01-10", minutes: 60, rpe: 5 },
   { date: "2026-01-11", minutes: 60, rpe: 5 },
-  { date: "2026-01-12", minutes: 60, rpe: 5 },
-  { date: "2026-01-13", minutes: 60, rpe: 5 },
-  { date: "2026-01-14", minutes: 60, rpe: 5 },
-  { date: "2026-01-15", minutes: 30, rpe: 5 },
-  { date: "2026-01-16", minutes: 30, rpe: 5 },
+  { date: "2026-01-15", minutes: 60, rpe: 5 },
+  { date: "2026-01-18", minutes: 60, rpe: 5 },
+  { date: "2026-01-22", minutes: 60, rpe: 5 },
+  { date: "2026-01-25", minutes: 60, rpe: 5 },
+  { date: "2026-01-29", minutes: 60, rpe: 5 },
+  { date: "2026-02-01", minutes: 60, rpe: 5 },
+  { date: "2026-02-05", minutes: 60, rpe: 5 },
+  { date: "2026-02-08", minutes: 60, rpe: 5 },
+  { date: "2026-02-12", minutes: 60, rpe: 5 },
+  { date: "2026-02-15", minutes: 60, rpe: 5 },
+  { date: "2026-02-19", minutes: 60, rpe: 5 },
+  { date: "2026-02-22", minutes: 60, rpe: 5 },
+  { date: "2026-02-26", minutes: 120, rpe: 8 },
 ];

@@ -93,3 +93,6 @@ class CheckinStore:
     def delete_for_player(self, player_id: str) -> None:
         with connect(self._db_path) as conn:
             conn.execute("DELETE FROM checkins WHERE player_id = ?", (player_id,))
+
+
+checkin_store = CheckinStore()

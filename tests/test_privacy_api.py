@@ -35,7 +35,6 @@ def test_account_deletion_hard_deletes_team_data_and_coach_records(
     test_auth_store = AuthStore(db_path)
     monkeypatch.setattr(auth_api, "auth_store", test_auth_store)
     monkeypatch.setattr(privacy_api, "DB_PATH", db_path)
-    monkeypatch.setenv("SINOPIA_ENV", "production")
     monkeypatch.setenv("GOOGLE_CLIENT_ID", "test-client")
 
     email = "delete-me@example.com"
@@ -53,6 +52,7 @@ def test_account_deletion_hard_deletes_team_data_and_coach_records(
         coach["team_id"],
     )
     client.cookies.set("sinopia_session", test_auth_store.create_session(email))
+    monkeypatch.setenv("SINOPIA_ENV", "production")
     monkeypatch.setattr(
         privacy_api.id_token,
         "verify_oauth2_token",

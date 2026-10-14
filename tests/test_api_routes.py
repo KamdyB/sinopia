@@ -169,3 +169,30 @@ def test_explain_rejects_client_supplied_status_and_reasons(client):
         json={"player_id": player_id, "level": "ok", "reasons": ["trust me"]},
     )
     assert response.status_code == 422
+
+
+
+def test_pain_flag_clears_only_after_coach_acknowledges(client):
+    player_id = register(client, "Pain Ack")
+    token = checkin_token(client, player_id)
+    response = client.post(
+        "/checkins",
+        json={"token": token, "sleep": 3, "energy": 3, "soreness": 3,
+              "stress": 3, "pain": True, "pain_area": "Knee"},
+    )
+    assert response.status_code == 201
+    before = client.get("/statuses?team_type=girls").json()
+    assert next(item for item in before if item["player_id"] == player_id)["level"] == "refer"
+
+    acknowledged = client.post(f"/players/{player_id}/acknowledge-pain", json={})
+    assert acknowledged.status_code == 200
+    after = client.get("/statuses?team_type=girls").json()
+    entry = next(item for item in after if item["player_id"] == player_id)
+    assert entry["numbers"]["pain"] is False
+
+
+def test_coach_cannot_access_another_team_athlete(client):
+    from backend.api.players import player_store
+    foreign = player_store.register("Other team", "girls", "2026-01-01", "unowned-team")
+    response = client.get(f"/players/{foreign['player_id']}")
+    assert response.status_code == 404

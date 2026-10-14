@@ -31,7 +31,7 @@ class SessionRequest(BaseModel):
 
 @router.post("/sessions", response_model=StatusResponse)
 def log_session(req: SessionRequest, coach: dict = Depends(require_accepted_coach)) -> StatusResponse:
-    player = player_store.get(req.player_id)
+    player = player_store.get(req.player_id, coach["team_id"])
     if player is None:
         raise HTTPException(status_code=404, detail="Athlete not found.")
 
@@ -54,7 +54,7 @@ def log_session(req: SessionRequest, coach: dict = Depends(require_accepted_coac
         {"date": req.date_str, "duration_minutes": req.duration_minutes, "rpe": req.rpe},
         coach["team_id"],
     )
-    sessions = session_store.get_sessions(req.player_id)
+    sessions = session_store.get_sessions(req.player_id, coach["team_id"])
     status = status_from_sessions(sessions, session_date)
     return StatusResponse(
         player_id=req.player_id,

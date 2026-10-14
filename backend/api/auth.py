@@ -28,7 +28,7 @@ class PolicyAcceptance(BaseModel):
 
 
 def _secure_cookie() -> bool:
-    return os.environ.get("SINOPIA_ENV", "development").lower() == "production"
+    return os.environ.get("SINOPIA_ENV", "production").lower() == "production"
 
 
 def _public_coach(coach: dict[str, Any]) -> dict[str, Any]:

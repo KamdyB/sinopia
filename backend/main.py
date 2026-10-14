@@ -46,20 +46,27 @@ def _rate_limit(request: Request) -> tuple[int, int] | None:
     return None
 
 
-PRODUCTION = os.environ.get("SINOPIA_ENV", "development").lower() == "production"
+PRODUCTION = os.environ.get("SINOPIA_ENV", "production").lower() == "production"
 app = FastAPI(
     docs_url=None if PRODUCTION else "/docs",
     redoc_url=None if PRODUCTION else "/redoc",
     openapi_url=None if PRODUCTION else "/openapi.json",
 )
 
+allowed_origins_setting = os.environ.get("SINOPIA_ALLOWED_ORIGINS", "")
+if PRODUCTION and not allowed_origins_setting.strip():
+    raise RuntimeError("SINOPIA_ALLOWED_ORIGINS must contain exact trusted HTTPS origins in production.")
 allowed_origins = [
     origin.strip().rstrip("/")
-    for origin in os.environ.get(
-        "SINOPIA_ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:5174"
+    for origin in (
+        allowed_origins_setting
+        if allowed_origins_setting.strip()
+        else "http://localhost:5173,http://localhost:5174"
     ).split(",")
     if origin.strip()
 ]
+if PRODUCTION and any(not origin.startswith("https://") for origin in allowed_origins):
+    raise RuntimeError("Production allowed origins must use HTTPS.")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,

@@ -1,10 +1,12 @@
 """Puts the repo root on sys.path for backend.* imports and gives every
 test a fresh throwaway database, patched into every store reference the
 API modules imported, so no test ever touches real data."""
+import os
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
+os.environ.setdefault("SINOPIA_ENV", "development")
 
 import pytest
 from fastapi.testclient import TestClient

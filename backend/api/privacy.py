@@ -132,7 +132,7 @@ def delete_account(
         key=SESSION_COOKIE,
         path="/",
         httponly=True,
-        secure=os.environ.get("SINOPIA_ENV", "development").lower() == "production",
+        secure=os.environ.get("SINOPIA_ENV", "production").lower() == "production",
         samesite="lax",
     )
     return {"deleted": True}

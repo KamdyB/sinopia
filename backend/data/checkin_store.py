@@ -62,7 +62,7 @@ class CheckinStore:
 
     def get_checkins(self, player_id: str, team_id: str | None = None) -> list[dict]:
         query = (
-            "SELECT date, sleep, energy, soreness, stress, pain, pain_area "
+            "SELECT date, sleep, energy, soreness, stress, pain, pain_area, pain_acknowledged "
             "FROM checkins WHERE player_id = ?"
         )
         params: tuple = (player_id,)
@@ -77,6 +77,7 @@ class CheckinStore:
                 "date": row["date"], "sleep": row["sleep"], "energy": row["energy"],
                 "soreness": row["soreness"], "stress": row["stress"],
                 "pain": bool(row["pain"]), "pain_area": row["pain_area"],
+                "pain_acknowledged": bool(row["pain_acknowledged"]),
             }
             for row in rows
         ]

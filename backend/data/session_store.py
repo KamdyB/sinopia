@@ -1,10 +1,4 @@
-"""Persistence for logged training sessions.
-
-One responsibility: the sessions table. The old profiles table carried
-cycle and growth context that the current scoring spec no longer uses,
-so the schema migration drops it rather than leaving dormant data about
-minors in storage.
-"""
+"""Persistence for logged training sessions."""
 import sqlite3
 from typing import List
 
@@ -19,7 +13,6 @@ CREATE TABLE IF NOT EXISTS sessions (
     duration_minutes REAL NOT NULL,
     rpe REAL NOT NULL
 );
-DROP TABLE IF EXISTS profiles;
 """
 
 
@@ -38,8 +31,6 @@ class SessionStore:
             )
 
     def get_sessions(self, player_id: str) -> List[Session]:
-        # Ordering by id as a tiebreak makes same-day sessions deterministic
-        # for the walk-forward history computation.
         with connect(self._db_path) as conn:
             rows = conn.execute(
                 "SELECT date, duration_minutes, rpe FROM sessions "
@@ -55,5 +46,6 @@ class SessionStore:
             for row in rows
         ]
 
-
-session_store = SessionStore()
+    def delete_for_player(self, player_id: str) -> None:
+        with connect(self._db_path) as conn:
+            conn.execute("DELETE FROM sessions WHERE player_id = ?", (player_id,))

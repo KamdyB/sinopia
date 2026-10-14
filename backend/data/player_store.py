@@ -1,6 +1,4 @@
-"""Persistence for registered players. One row per real player, created once,
-independent of any session. Opaque ids keep names out of URLs and keep two
-same-named players on different teams structurally separate forever."""
+"""Persistence for registered players."""
 import sqlite3
 import uuid
 
@@ -65,5 +63,7 @@ class PlayerStore:
             ).fetchall()
         return [dict(row) for row in rows]
 
-
-player_store = PlayerStore()
+    def delete(self, player_id: str) -> bool:
+        with connect(self._db_path) as conn:
+            cursor = conn.execute("DELETE FROM players WHERE player_id = ?", (player_id,))
+        return cursor.rowcount > 0

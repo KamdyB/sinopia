@@ -43,7 +43,7 @@ def log_session(req: SessionRequest, coach: dict = Depends(require_accepted_coac
     if session_date > date.today():
         raise HTTPException(status_code=422, detail="Session date cannot be in the future.")
 
-    prior_sessions = session_store.get_sessions(req.player_id)
+    prior_sessions = session_store.get_sessions(req.player_id, coach["team_id"])
     previous_level: str | None = None
     if prior_sessions:
         last_prior_date = date.fromisoformat(max(s["date"] for s in prior_sessions))
@@ -52,6 +52,7 @@ def log_session(req: SessionRequest, coach: dict = Depends(require_accepted_coac
     session_store.log_session(
         req.player_id,
         {"date": req.date_str, "duration_minutes": req.duration_minutes, "rpe": req.rpe},
+        coach["team_id"],
     )
     sessions = session_store.get_sessions(req.player_id)
     status = status_from_sessions(sessions, session_date)

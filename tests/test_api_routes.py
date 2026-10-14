@@ -256,3 +256,14 @@ def test_deleting_athlete_hard_deletes_all_training_and_checkin_records(client, 
         assert conn.execute("SELECT COUNT(*) FROM players WHERE player_id = ?", (player_id,)).fetchone()[0] == 0
         assert conn.execute("SELECT COUNT(*) FROM sessions WHERE player_id = ?", (player_id,)).fetchone()[0] == 0
         assert conn.execute("SELECT COUNT(*) FROM checkins WHERE player_id = ?", (player_id,)).fetchone()[0] == 0
+
+
+def test_checkin_token_is_not_stored_in_plaintext(client, tmp_path):
+    player_id = register(client, "Token hash")
+    token = checkin_token(client, player_id)
+    with sqlite3.connect(tmp_path / "test.db") as conn:
+        stored = conn.execute(
+            "SELECT checkin_token FROM players WHERE player_id = ?", (player_id,)
+        ).fetchone()[0]
+    assert stored != token
+    assert len(stored) == 64

@@ -1,4 +1,5 @@
 """Persistence for registered players, scoped to the owning team."""
+import secrets
 import sqlite3
 import uuid
 
@@ -10,7 +11,8 @@ CREATE TABLE IF NOT EXISTS players (
     name TEXT NOT NULL COLLATE NOCASE,
     team_type TEXT NOT NULL,
     registered_date TEXT NOT NULL,
-    team_id TEXT
+    team_id TEXT,
+    checkin_token TEXT
 );
 """
 
@@ -28,11 +30,25 @@ class PlayerStore:
             columns = {row["name"] for row in conn.execute("PRAGMA table_info(players)")}
             if "team_id" not in columns:
                 conn.execute("ALTER TABLE players ADD COLUMN team_id TEXT")
-            # Replace the old team-type-only uniqueness rule with team ownership.
+            if "checkin_token" not in columns:
+                conn.execute("ALTER TABLE players ADD COLUMN checkin_token TEXT")
+            # Existing player rows get independent random tokens; player IDs are never check-in credentials.
+            rows = conn.execute(
+                "SELECT player_id FROM players WHERE checkin_token IS NULL"
+            ).fetchall()
+            for row in rows:
+                conn.execute(
+                    "UPDATE players SET checkin_token = ? WHERE player_id = ?",
+                    (secrets.token_urlsafe(32), row["player_id"]),
+                )
             conn.execute("DROP INDEX IF EXISTS idx_players_team_name")
             conn.execute(
                 "CREATE UNIQUE INDEX IF NOT EXISTS idx_players_team_name "
                 "ON players (team_id, team_type, name)"
+            )
+            conn.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS idx_players_checkin_token "
+                "ON players (checkin_token)"
             )
 
     def register(
@@ -40,12 +56,14 @@ class PlayerStore:
         team_id: str = "development-team",
     ) -> dict:
         player_id = uuid.uuid4().hex
+        checkin_token = secrets.token_urlsafe(32)
         try:
             with connect(self._db_path) as conn:
                 conn.execute(
-                    "INSERT INTO players (player_id, name, team_type, registered_date, team_id) "
-                    "VALUES (?, ?, ?, ?, ?)",
-                    (player_id, name, team_type, registered_date, team_id),
+                    "INSERT INTO players "
+                    "(player_id, name, team_type, registered_date, team_id, checkin_token) "
+                    "VALUES (?, ?, ?, ?, ?, ?)",
+                    (player_id, name, team_type, registered_date, team_id, checkin_token),
                 )
         except sqlite3.IntegrityError as exc:
             raise DuplicatePlayerError(name, team_type) from exc
@@ -69,6 +87,23 @@ class PlayerStore:
         with connect(self._db_path) as conn:
             row = conn.execute(query, params).fetchone()
         return dict(row) if row else None
+
+    def get_by_checkin_token(self, token: str) -> dict | None:
+        with connect(self._db_path) as conn:
+            row = conn.execute(
+                "SELECT player_id, team_id FROM players WHERE checkin_token = ?",
+                (token,),
+            ).fetchone()
+        return dict(row) if row else None
+
+    def regenerate_checkin_token(self, player_id: str, team_id: str) -> str | None:
+        token = secrets.token_urlsafe(32)
+        with connect(self._db_path) as conn:
+            cursor = conn.execute(
+                "UPDATE players SET checkin_token = ? WHERE player_id = ? AND team_id = ?",
+                (token, player_id, team_id),
+            )
+        return token if cursor.rowcount else None
 
     def list_for_team(self, team_type: str, team_id: str | None = None) -> list[dict]:
         query = (

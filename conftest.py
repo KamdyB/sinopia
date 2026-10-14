@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 
 import backend.api.checkins as checkins_api
 import backend.api.players as players_api
+import backend.api.privacy as privacy_api
 import backend.api.sessions as sessions_api
 import backend.api.statuses as statuses_api
 from backend.data.checkin_store import CheckinStore
@@ -18,7 +19,7 @@ from backend.data.player_store import PlayerStore
 from backend.data.session_store import SessionStore
 from backend.main import app
 
-_ROUTE_MODULES = (players_api, sessions_api, checkins_api, statuses_api)
+_ROUTE_MODULES = (players_api, sessions_api, checkins_api, statuses_api, privacy_api)
 _STORE_TYPES = (PlayerStore, SessionStore, CheckinStore)
 
 

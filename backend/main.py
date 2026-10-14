@@ -1,6 +1,6 @@
 import os
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import Response
 
@@ -31,6 +31,17 @@ app.add_middleware(
     allow_headers=["Content-Type", "X-Sinopia-Request"],
     allow_credentials=True,
 )
+
+
+@app.middleware("http")
+async def protect_state_changes(request: Request, call_next):
+    if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
+        if request.headers.get("x-sinopia-request") != "1":
+            return Response("Request rejected.", status_code=403)
+        origin = request.headers.get("origin")
+        if origin and origin.rstrip("/") not in allowed_origins:
+            return Response("Request rejected.", status_code=403)
+    return await call_next(request)
 
 
 @app.middleware("http")

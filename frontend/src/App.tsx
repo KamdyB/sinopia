@@ -1,7 +1,7 @@
 // frontend/src/App.tsx
 import { useEffect, useState } from "react";
 import { AthleteStatus, HistoryPoint, Player, TeamType } from "./types";
-import { fetchPlayers, fetchTeamStatuses, registerPlayer } from "./api";
+import { createCheckinToken, fetchPlayers, fetchTeamStatuses, registerPlayer } from "./api";
 import { SessionEntryForm } from "./SessionEntryForm";
 import { PlayerDirectory } from "./PlayerDirectory";
 import { PlayerHistory } from "./PlayerHistory";
@@ -82,6 +82,8 @@ export default function App() {
     await refreshStatuses();
   };
 
+  const handleCreateCheckinLink = async (playerId: string) => createCheckinToken(playerId);
+
   const handleScored = () => {
     refreshStatuses();
   };
@@ -119,7 +121,7 @@ export default function App() {
               onClose={() => setDetailId(null)}
             />
           )}
-          <PlayerDirectory players={players} onAdd={handleAddPlayer} />
+          <PlayerDirectory players={players} onAdd={handleAddPlayer} onCreateCheckinLink={handleCreateCheckinLink} />
           <div className="panel">
             <p className="section-title">Team status</p>
             {statuses.length === 0 ? (

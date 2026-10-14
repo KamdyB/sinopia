@@ -14,6 +14,8 @@ const TEAM_TITLES: Record<TeamType, string> = {
   mixed: "Mixed team status",
 };
 
+const LEGAL_BASE_URL = import.meta.env.VITE_LEGAL_BASE_URL ?? "http://localhost:5174";
+
 const TODAY = new Date().toLocaleDateString(undefined, {
   weekday: "long",
   month: "long",
@@ -152,7 +154,10 @@ export default function App() {
         medical professional.
       </p>
       <p className="footer-link">
-        <a href="http://localhost:5174">About Sinopia</a>
+        <a href={LEGAL_BASE_URL}>About Sinopia</a>
+        {" · "}<a href={LEGAL_BASE_URL + "/privacy"}>Privacy</a>
+        {" · "}<a href={LEGAL_BASE_URL + "/terms"}>Terms</a>
+        {" · "}<a href={LEGAL_BASE_URL + "/delete-account"}>Delete account</a>
       </p>
     </div>
   );

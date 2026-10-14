@@ -10,14 +10,14 @@ import { ThemeStage } from "./ThemeStage";
 // athlete check-in at /checkin/{player_id}. No router dependency needed.
 const path = window.location.pathname;
 const CHECKIN_PREFIX = "/checkin/";
-const checkinId = path.startsWith(CHECKIN_PREFIX)
+const checkinToken = path.startsWith(CHECKIN_PREFIX)
   ? path.slice(CHECKIN_PREFIX.length)
   : null;
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    {checkinId ? (
-      <CheckinPage playerId={decodeURIComponent(checkinId)} />
+    {checkinToken ? (
+      <CheckinPage token={decodeURIComponent(checkinToken)} />
     ) : (
       <ThemeStage>
         <App />

@@ -40,7 +40,7 @@ export interface HistoryPoint {
 }
 
 export interface CheckinPayload {
-  player_id: string;
+  token: string;
   sleep: number;
   energy: number;
   soreness: number;

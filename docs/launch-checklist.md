@@ -42,3 +42,18 @@
 - Add team-level session records so missed attendance is distinguishable from missing session data.
 - Complete deletion verification, encryption key backup/recovery, provider contracts/regions, and independent security/privacy review.
 - Confirm the school/club authority, parent/guardian consent and athlete notice process, and the legal basis for processing health-related information about children.
+
+
+## Short feedback script
+
+Use the same questions for each synthetic-data tester. Do not request or collect athlete names, health information, screenshots containing real records, or credentials.
+
+1. What did you think Sinopia was for before you used it?
+2. Could you complete Google sign-in and understand the consent/authority declarations?
+3. Could you add a fictional athlete code, create a check-in link, and understand what the athlete sees?
+4. Could you record a fictional session and understand the difference between a building baseline and a load flag?
+5. Could you find pain acknowledgement, export, and deletion controls without help?
+6. Where did you hesitate, get an error, or expect a different result?
+7. What is the single most important improvement before a small pilot?
+
+Record only the step, severity, browser/device category, and a short description. Use no names or health data. Treat any security issue or cross-team exposure as a stop-ship issue rather than ordinary feedback.

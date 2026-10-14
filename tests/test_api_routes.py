@@ -124,3 +124,39 @@ def test_statuses_orders_most_urgent_first(client):
                                    "pain_area": "Ankle or foot"})
     statuses = client.get("/statuses?team_type=girls").json()
     assert [s["player_id"] for s in statuses] == [hurt, calm]
+
+
+
+def test_registration_requires_explicit_consent_confirmation(client):
+    response = client.post(
+        "/players",
+        json={"name": "Consent Test", "team_type": "girls", "consent_confirmed": False},
+    )
+    assert response.status_code == 422
+
+
+def test_registration_rejects_unknown_fields(client):
+    response = client.post(
+        "/players",
+        json={"name": "Extra Field", "team_type": "girls",
+              "consent_confirmed": True, "is_admin": True},
+    )
+    assert response.status_code == 422
+
+
+def test_state_changing_request_requires_custom_header(client):
+    response = client.post(
+        "/players",
+        headers={"X-Sinopia-Request": ""},
+        json={"name": "Header Test", "team_type": "girls", "consent_confirmed": True},
+    )
+    assert response.status_code == 403
+
+
+def test_explain_rejects_client_supplied_status_and_reasons(client):
+    player_id = register(client, "Explain Test")
+    response = client.post(
+        "/explain",
+        json={"player_id": player_id, "level": "ok", "reasons": ["trust me"]},
+    )
+    assert response.status_code == 422

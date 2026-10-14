@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import {
   acceptCoachPolicies,
   CoachSession,
+  deleteCoachAccount,
   fetchCoachSession,
   signInWithGoogle,
   signOut,
@@ -31,6 +32,8 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [consentConfirmed, setConsentConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deletionMode, setDeletionMode] = useState(false);
+  const [deleted, setDeleted] = useState(false);
 
   const refreshSession = async () => {
     const current = await fetchCoachSession();
@@ -110,6 +113,22 @@ export function AuthGate({ children }: { children: ReactNode }) {
     }
   };
 
+  const handleDeleteAccount = async (credential: string) => {
+    setBusy(true);
+    setError(null);
+    try {
+      await deleteCoachAccount(credential);
+      setDeleted(true);
+      setCoach(null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not delete the account.";
+      setError(message);
+      throw err;
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleSignOut = async () => {
     setBusy(true);
     try {
@@ -123,6 +142,8 @@ export function AuthGate({ children }: { children: ReactNode }) {
       setBusy(false);
     }
   };
+
+  if (deleted) return <div className="page"><div className="panel"><h1>Account deleted</h1><p>Your coach account and team data have been deleted from the active database.</p></div></div>;
 
   if (loading) return <div className="page"><p>Checking your session…</p></div>;
 
@@ -172,9 +193,94 @@ export function AuthGate({ children }: { children: ReactNode }) {
       <div className="auth-toolbar">
         <span>{coach.display_name}</span>
         <button type="button" className="copy-link" disabled={busy} onClick={handleSignOut}>Sign out</button>
+        <button type="button" className="copy-link" disabled={busy} onClick={() => setDeletionMode(true)}>Delete account and team data</button>
       </div>
-      {children}
+      {deletionMode ? (
+        <DeleteAccountConfirmation
+          onCancel={() => setDeletionMode(false)}
+          onDelete={handleDeleteAccount}
+        />
+      ) : children}
       {error && <p className="form-error">{error}</p>}
+    </div>
+  );
+}
+
+function DeleteAccountConfirmation({
+  onCancel,
+  onDelete,
+}: {
+  onCancel: () => void;
+  onDelete: (credential: string) => Promise<void>;
+}) {
+  const buttonRef = useRef<HTMLDivElement>(null);
+  const callbackRef = useRef(onDelete);
+  const [confirmed, setConfirmed] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => { callbackRef.current = onDelete; }, [onDelete]);
+
+  useEffect(() => {
+    if (!confirmed || !buttonRef.current) return;
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
+    if (!clientId) {
+      setError("Google sign-in is not configured for this deployment.");
+      return;
+    }
+    let cancelled = false;
+    const renderDeleteButton = () => {
+      if (cancelled || !buttonRef.current || !window.google) return;
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: async (response) => {
+          setBusy(true);
+          setError(null);
+          try {
+            await callbackRef.current(response.credential);
+          } catch (err) {
+            setError(err instanceof Error ? err.message : "Deletion could not be confirmed.");
+          } finally {
+            setBusy(false);
+          }
+        },
+      });
+      window.google.accounts.id.renderButton(buttonRef.current, { theme: "outline", size: "large" });
+    };
+    if (window.google) {
+      renderDeleteButton();
+    } else {
+      const existing = document.getElementById(GOOGLE_SCRIPT_ID) as HTMLScriptElement | null;
+      if (existing) existing.addEventListener("load", renderDeleteButton, { once: true });
+      else {
+        const script = document.createElement("script");
+        script.id = GOOGLE_SCRIPT_ID;
+        script.src = "https://accounts.google.com/gsi/client";
+        script.async = true;
+        script.defer = true;
+        script.onload = renderDeleteButton;
+        script.onerror = () => setError("Could not load Google sign-in.");
+        document.head.appendChild(script);
+      }
+    }
+    return () => { cancelled = true; };
+  }, [confirmed]);
+
+  return (
+    <div className="page">
+      <div className="panel">
+        <h1>Delete account and all team data?</h1>
+        <p>This permanently deletes your coach account, team roster, training sessions, and check-ins from the active database. This cannot be undone.</p>
+        <label className="consent-confirmation">
+          <input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} />
+          I understand this deletion is permanent and want to continue.
+        </label>
+        {confirmed && <p>Complete a fresh Google sign-in below to confirm this deletion.</p>}
+        <div ref={buttonRef} />
+        {busy && <p>Deleting account and team data…</p>}
+        {error && <p className="form-error">{error}</p>}
+        <button type="button" className="copy-link" disabled={busy} onClick={onCancel}>Cancel</button>
+      </div>
     </div>
   );
 }

@@ -33,4 +33,4 @@ def client(tmp_path, monkeypatch):
             )
             if store_type is not None:
                 monkeypatch.setattr(module, attr, fresh[store_type])
-    return TestClient(app)
+    return TestClient(app, headers={"X-Sinopia-Request": "1"})

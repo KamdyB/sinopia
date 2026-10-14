@@ -81,7 +81,7 @@ def get_player(player_id: str, coach: dict = Depends(require_accepted_coach)) ->
 def player_history(player_id: str, coach: dict = Depends(require_accepted_coach)) -> list[HistoryPoint]:
     if player_store.get(player_id, coach["team_id"]) is None:
         raise HTTPException(status_code=404, detail="Athlete not found.")
-    return [HistoryPoint(**p) for p in history_points(session_store.get_sessions(player_id))]
+    return [HistoryPoint(**p) for p in history_points(session_store.get_sessions(player_id, coach["team_id"]))]
 
 
 

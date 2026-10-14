@@ -92,6 +92,7 @@ def google_sign_in(payload: GoogleCredential, response: Response) -> dict[str, A
         raise HTTPException(status_code=401, detail="Google account email is unavailable.")
     coach = auth_store.ensure_coach(email, str(claims.get("name") or email))
     token = auth_store.create_session(email)
+    auth_store.log_event("coach_signed_in", coach["team_id"])
     response.set_cookie(
         key=SESSION_COOKIE,
         value=token,
@@ -115,6 +116,7 @@ def accept_policies(payload: PolicyAcceptance, request: Request) -> dict[str, bo
     if not payload.age_18_or_older or not payload.authorised_and_parental_consent_obtained:
         raise HTTPException(status_code=422, detail="Both declarations must be accepted.")
     auth_store.accept_policies(coach["email"], TERMS_VERSION, PRIVACY_VERSION)
+    auth_store.log_event("policies_accepted", coach["team_id"])
     return {"accepted": True}
 
 

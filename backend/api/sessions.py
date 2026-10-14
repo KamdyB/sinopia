@@ -1,9 +1,10 @@
 """Logs a training session after validating the submitted values."""
 from datetime import date
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
+from backend.api.auth import require_accepted_coach
 from backend.data.player_store import player_store
 from backend.data.session_store import session_store
 from backend.scoring.athlete_status import status_from_sessions
@@ -29,7 +30,7 @@ class SessionRequest(BaseModel):
 
 
 @router.post("/sessions", response_model=StatusResponse)
-def log_session(req: SessionRequest) -> StatusResponse:
+def log_session(req: SessionRequest, coach: dict = Depends(require_accepted_coach)) -> StatusResponse:
     player = player_store.get(req.player_id)
     if player is None:
         raise HTTPException(status_code=404, detail="Athlete not found.")

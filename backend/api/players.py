@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from backend.api.auth import require_accepted_coach
+from backend.data.checkin_store import checkin_store
 from backend.data.player_store import DuplicatePlayerError, player_store
 from backend.data.session_store import session_store
 from backend.scoring.history import history_points
@@ -93,3 +94,14 @@ def regenerate_checkin_token(
     if token is None:
         raise HTTPException(status_code=404, detail="Athlete not found.")
     return CheckinTokenResponse(token=token)
+
+
+
+@router.post("/players/{player_id}/acknowledge-pain")
+def acknowledge_pain(
+    player_id: str, coach: dict = Depends(require_accepted_coach)
+) -> dict[str, bool]:
+    if player_store.get(player_id, coach["team_id"]) is None:
+        raise HTTPException(status_code=404, detail="Athlete not found.")
+    checkin_store.acknowledge_pain(player_id, coach["team_id"])
+    return {"acknowledged": True}

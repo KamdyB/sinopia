@@ -91,6 +91,14 @@ class CheckinStore:
         with connect(self._db_path) as conn:
             conn.execute(query, params)
 
+    def delete_checkin(self, checkin_id: int, player_id: str, team_id: str) -> bool:
+        with connect(self._db_path) as conn:
+            cursor = conn.execute(
+                "DELETE FROM checkins WHERE id = ? AND player_id = ? AND team_id = ?",
+                (checkin_id, player_id, team_id),
+            )
+        return cursor.rowcount > 0
+
     def delete_for_player(self, player_id: str, team_id: str | None = None) -> None:
         query = "DELETE FROM checkins WHERE player_id = ?"
         params: tuple = (player_id,)

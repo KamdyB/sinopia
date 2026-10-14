@@ -37,4 +37,6 @@ jobs:
             exit 0
           fi
           git commit -m "security: refresh npm lockfiles"
+          git fetch origin "${GITHUB_REF_NAME}"
+          git rebase "origin/${GITHUB_REF_NAME}"
           git push origin "HEAD:${GITHUB_REF_NAME}"

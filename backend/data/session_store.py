@@ -53,6 +53,14 @@ class SessionStore:
             for row in rows
         ]
 
+    def delete_session(self, session_id: int, player_id: str, team_id: str) -> bool:
+        with connect(self._db_path) as conn:
+            cursor = conn.execute(
+                "DELETE FROM sessions WHERE id = ? AND player_id = ? AND team_id = ?",
+                (session_id, player_id, team_id),
+            )
+        return cursor.rowcount > 0
+
     def delete_for_player(self, player_id: str, team_id: str | None = None) -> None:
         query = "DELETE FROM sessions WHERE player_id = ?"
         params: tuple = (player_id,)

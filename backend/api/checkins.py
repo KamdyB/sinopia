@@ -1,4 +1,4 @@
-"""Athlete check-in endpoint. The date is set by the server."""
+"""Token-authenticated athlete check-ins. The date is set by the server."""
 from datetime import date
 from typing import Literal
 
@@ -17,7 +17,7 @@ PainArea = Literal[
 
 class CheckinRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
-    player_id: str = Field(min_length=1, max_length=80)
+    token: str = Field(min_length=30, max_length=128)
     sleep: int = Field(ge=1, le=5)
     energy: int = Field(ge=1, le=5)
     soreness: int = Field(ge=1, le=5)
@@ -34,13 +34,21 @@ class CheckinRequest(BaseModel):
         return self
 
 
+@router.get("/checkin/{token}")
+def validate_checkin_link(token: str) -> dict:
+    if len(token) < 30 or len(token) > 128 or player_store.get_by_checkin_token(token) is None:
+        raise HTTPException(status_code=404, detail="Check-in link is not valid.")
+    return {"valid": True}
+
+
 @router.post("/checkins", status_code=201)
 def log_checkin(req: CheckinRequest) -> dict:
-    if player_store.get(req.player_id) is None:
-        raise HTTPException(status_code=404, detail="Athlete not found.")
+    player = player_store.get_by_checkin_token(req.token)
+    if player is None:
+        raise HTTPException(status_code=404, detail="Check-in link is not valid.")
     try:
         checkin_store.log_checkin(
-            req.player_id,
+            player["player_id"],
             {
                 "date": date.today().isoformat(),
                 "sleep": req.sleep,
@@ -50,6 +58,7 @@ def log_checkin(req: CheckinRequest) -> dict:
                 "pain": req.pain,
                 "pain_area": req.pain_area,
             },
+            player["team_id"],
         )
     except DuplicateCheckinError:
         raise HTTPException(status_code=409, detail="A check-in has already been submitted today.")

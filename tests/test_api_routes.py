@@ -6,6 +6,11 @@ def register(client, name, team="girls"):
     assert response.status_code == 201
     return response.json()["player_id"]
 
+def checkin_token(client, player_id):
+    response = client.post(f"/players/{player_id}/checkin-token", json={})
+    assert response.status_code == 200
+    return response.json()["token"]
+
 
 def test_register_and_log_returns_level_with_numbers(client):
     player_id = register(client, "Amaka")
@@ -84,9 +89,10 @@ def test_history_returns_walk_forward_levels(client):
 
 def test_pain_checkin_refers(client):
     player_id = register(client, "Efe")
+    token = checkin_token(client, player_id)
     pain = client.post(
         "/checkins",
-        json={"player_id": player_id, "sleep": 3, "energy": 2,
+        json={"token": token, "sleep": 3, "energy": 2,
               "soreness": 3, "stress": 3, "pain": True, "pain_area": "Knee"},
     )
     assert pain.status_code == 201
@@ -97,7 +103,8 @@ def test_pain_checkin_refers(client):
 
 def test_second_checkin_same_day_returns_409(client):
     player_id = register(client, "Efe")
-    payload = {"player_id": player_id, "sleep": 4, "energy": 3,
+    token = checkin_token(client, player_id)
+    payload = {"token": token, "sleep": 4, "energy": 3,
                "soreness": 2, "stress": 4, "pain": False}
     assert client.post("/checkins", json=payload).status_code == 201
     response = client.post("/checkins", json=payload)
@@ -106,9 +113,10 @@ def test_second_checkin_same_day_returns_409(client):
 
 def test_checkin_pain_without_area_422s(client):
     player_id = register(client, "Fola")
+    token = checkin_token(client, player_id)
     response = client.post(
         "/checkins",
-        json={"player_id": player_id, "sleep": 3, "energy": 3,
+        json={"token": token, "sleep": 3, "energy": 3,
               "soreness": 3, "stress": 3, "pain": True},
     )
     assert response.status_code == 422
@@ -117,9 +125,10 @@ def test_checkin_pain_without_area_422s(client):
 def test_statuses_orders_most_urgent_first(client):
     calm = register(client, "Gina")
     hurt = register(client, "Hauwa")
+    hurt_token = checkin_token(client, hurt)
     client.post("/sessions", json={"player_id": calm, "date_str": "2026-01-01",
                                    "duration_minutes": 60, "rpe": 5})
-    client.post("/checkins", json={"player_id": hurt, "sleep": 3, "energy": 3,
+    client.post("/checkins", json={"token": hurt_token, "sleep": 3, "energy": 3,
                                    "soreness": 3, "stress": 3, "pain": True,
                                    "pain_area": "Ankle or foot"})
     statuses = client.get("/statuses?team_type=girls").json()

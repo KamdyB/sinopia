@@ -3,7 +3,7 @@
 // question, mobile first. Reached by a link the coach shared.
 import { useEffect, useState } from "react";
 import { CheckinPayload } from "./types";
-import { fetchPlayer, submitCheckin } from "./api";
+import { submitCheckin, validateCheckinToken } from "./api";
 
 type AnswerKey = "sleep" | "energy" | "soreness" | "stress";
 
@@ -25,7 +25,7 @@ const AREAS = [
   "Other",
 ];
 
-export function CheckinPage({ playerId }: { playerId: string }) {
+export function CheckinPage({ token }: { token: string }) {
   const [linkValid, setLinkValid] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<AnswerKey, number>>({
@@ -42,7 +42,7 @@ export function CheckinPage({ playerId }: { playerId: string }) {
 
   useEffect(() => {
     let cancelled = false;
-    fetchPlayer(playerId)
+    validateCheckinToken(token)
       .then(() => {
         if (!cancelled) setLinkValid(true);
       })
@@ -52,7 +52,7 @@ export function CheckinPage({ playerId }: { playerId: string }) {
     return () => {
       cancelled = true;
     };
-  }, [playerId]);
+  }, [token]);
 
   const ready = QUESTIONS.every((q) => answers[q.key] > 0);
 
@@ -68,7 +68,7 @@ export function CheckinPage({ playerId }: { playerId: string }) {
     setSubmitting(true);
     setSubmitError(null);
     const payload: CheckinPayload = {
-      player_id: playerId,
+      token,
       ...answers,
       pain,
       ...(pain ? { pain_area: painArea } : {}),

@@ -1,13 +1,15 @@
 """Token-authenticated athlete check-ins. The date is set by the server."""
 from datetime import date
+import hashlib
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from backend.api.auth import require_accepted_coach
 from backend.data.checkin_store import DuplicateCheckinError, checkin_store
 from backend.data.player_store import player_store
+from backend.security.rate_limit import client_ip, enforce_rate_limit
 
 router = APIRouter()
 PainArea = Literal[
@@ -43,7 +45,16 @@ def validate_checkin_link(token: str) -> dict:
 
 
 @router.post("/checkins", status_code=201)
-def log_checkin(req: CheckinRequest) -> dict:
+def log_checkin(req: CheckinRequest, request: Request) -> dict:
+    ip = client_ip(request)
+    token_digest = hashlib.sha256(req.token.encode()).hexdigest()
+    retry_after = enforce_rate_limit(("checkin-token", ip, token_digest), 10, 60)
+    if retry_after is not None:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many check-in attempts. Try again later.",
+            headers={"Retry-After": str(retry_after)},
+        )
     player = player_store.get_by_checkin_token(req.token)
     if player is None:
         raise HTTPException(status_code=404, detail="Check-in link is not valid.")

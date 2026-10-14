@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { CheckinPayload } from "./types";
 import { submitCheckin, validateCheckinToken } from "./api";
 
+const LEGAL_BASE_URL = import.meta.env.VITE_LEGAL_BASE_URL ?? "http://localhost:5174";
+
 type AnswerKey = "sleep" | "energy" | "soreness" | "stress";
 
 const QUESTIONS: { key: AnswerKey; label: string; low: string; high: string }[] = [
@@ -193,6 +195,10 @@ export function CheckinPage({ token }: { token: string }) {
         {submitting ? "Sending..." : "Send check-in"}
       </button>
       {submitError && <p className="checkin__error">{submitError}</p>}
-    </div>
+      <p className="checkin__sub">
+        <a href={LEGAL_BASE_URL + "/privacy"}>Privacy</a>{" · "}
+        <a href={LEGAL_BASE_URL + "/terms"}>Terms</a>{" · "}
+        <a href={LEGAL_BASE_URL + "/delete-account"}>Deletion requests</a>
+      </p>
   );
 }

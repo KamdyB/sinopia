@@ -1,7 +1,7 @@
 // frontend/src/App.tsx
 import { useEffect, useState } from "react";
 import { AthleteStatus, HistoryPoint, Player, TeamType } from "./types";
-import { createCheckinToken, fetchPlayers, fetchTeamStatuses, registerPlayer } from "./api";
+import { acknowledgePain, createCheckinToken, fetchPlayers, fetchTeamStatuses, registerPlayer } from "./api";
 import { SessionEntryForm } from "./SessionEntryForm";
 import { PlayerDirectory } from "./PlayerDirectory";
 import { PlayerHistory } from "./PlayerHistory";
@@ -84,6 +84,11 @@ export default function App() {
 
   const handleCreateCheckinLink = async (playerId: string) => createCheckinToken(playerId);
 
+  const handleAcknowledgePain = async (playerId: string) => {
+    await acknowledgePain(playerId);
+    await refreshStatuses();
+  };
+
   const handleScored = () => {
     refreshStatuses();
   };
@@ -129,7 +134,7 @@ export default function App() {
                 No athletes registered yet. Add each athlete once in the directory.
               </p>
             ) : (
-              <DashboardTable entries={statuses} onSelect={setDetailId} />
+              <DashboardTable entries={statuses} onSelect={setDetailId} onAcknowledgePain={handleAcknowledgePain} />
             )}
           </div>
         </div>

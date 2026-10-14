@@ -5,6 +5,7 @@ import sqlite3
 import uuid
 
 from backend.data.db import DB_PATH, connect
+from backend.security.encryption import decrypt_text, encrypt_text, label_digest, reencrypt_text
 
 CREATE_PLAYERS = """
 CREATE TABLE IF NOT EXISTS players (
@@ -13,7 +14,8 @@ CREATE TABLE IF NOT EXISTS players (
     team_type TEXT NOT NULL,
     registered_date TEXT NOT NULL,
     team_id TEXT,
-    checkin_token TEXT
+    checkin_token TEXT,
+    name_hash TEXT
 );
 """
 
@@ -33,21 +35,26 @@ class PlayerStore:
                 conn.execute("ALTER TABLE players ADD COLUMN team_id TEXT")
             if "checkin_token" not in columns:
                 conn.execute("ALTER TABLE players ADD COLUMN checkin_token TEXT")
-            # Existing player rows get independent random tokens; player IDs are never check-in credentials.
+            if "name_hash" not in columns:
+                conn.execute("ALTER TABLE players ADD COLUMN name_hash TEXT")
+            # Token values are independent random credentials; only hashes are stored.
             rows = conn.execute(
-                "SELECT player_id FROM players WHERE checkin_token IS NULL"
+                "SELECT player_id, name, checkin_token FROM players"
             ).fetchall()
-            for row in rows:
-                token = secrets.token_urlsafe(32)
-                digest = hashlib.sha256(token.encode()).hexdigest()
-                conn.execute(
-                    "UPDATE players SET checkin_token = ? WHERE player_id = ?",
-                    (digest, row["player_id"]),
-                )
             conn.execute("DROP INDEX IF EXISTS idx_players_team_name")
+            conn.execute("DROP INDEX IF EXISTS idx_players_team_name_hash")
+            for row in rows:
+                token_hash = row["checkin_token"]
+                if token_hash is None:
+                    token_hash = hashlib.sha256(secrets.token_urlsafe(32).encode()).hexdigest()
+                label = decrypt_text(row["name"])
+                conn.execute(
+                    "UPDATE players SET name = ?, name_hash = ?, checkin_token = ? WHERE player_id = ?",
+                    (reencrypt_text(label), label_digest(label), token_hash, row["player_id"]),
+                )
             conn.execute(
-                "CREATE UNIQUE INDEX IF NOT EXISTS idx_players_team_name "
-                "ON players (team_id, team_type, name)"
+                "CREATE UNIQUE INDEX idx_players_team_name_hash "
+                "ON players (team_id, team_type, name_hash)"
             )
             conn.execute(
                 "CREATE UNIQUE INDEX IF NOT EXISTS idx_players_checkin_token "
@@ -64,9 +71,12 @@ class PlayerStore:
             with connect(self._db_path) as conn:
                 conn.execute(
                     "INSERT INTO players "
-                    "(player_id, name, team_type, registered_date, team_id, checkin_token) "
-                    "VALUES (?, ?, ?, ?, ?, ?)",
-                    (player_id, name, team_type, registered_date, team_id, hashlib.sha256(checkin_token.encode()).hexdigest()),
+                    "(player_id, name, team_type, registered_date, team_id, checkin_token, name_hash) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (
+                        player_id, encrypt_text(name), team_type, registered_date, team_id,
+                        hashlib.sha256(checkin_token.encode()).hexdigest(), label_digest(name),
+                    ),
                 )
         except sqlite3.IntegrityError as exc:
             raise DuplicatePlayerError(name, team_type) from exc
@@ -89,7 +99,11 @@ class PlayerStore:
             params += (team_id,)
         with connect(self._db_path) as conn:
             row = conn.execute(query, params).fetchone()
-        return dict(row) if row else None
+        if row is None:
+            return None
+        result = dict(row)
+        result["name"] = decrypt_text(result["name"])
+        return result
 
     def get_by_checkin_token(self, token: str) -> dict | None:
         digest = hashlib.sha256(token.encode()).hexdigest()
@@ -122,7 +136,10 @@ class PlayerStore:
         query += " ORDER BY name COLLATE NOCASE"
         with connect(self._db_path) as conn:
             rows = conn.execute(query, params).fetchall()
-        return [dict(row) for row in rows]
+        results = [dict(row) for row in rows]
+        for result in results:
+            result["name"] = decrypt_text(result["name"])
+        return results
 
     def delete(self, player_id: str, team_id: str | None = None) -> bool:
         query = "DELETE FROM players WHERE player_id = ?"

@@ -14,6 +14,7 @@ from backend.api.sessions import router as sessions_router
 from backend.api.statuses import router as statuses_router
 from backend.data.auth_store import auth_store
 from backend.security.rate_limit import client_ip, enforce_rate_limit
+from backend.security.encryption import validate_encryption_config
 
 # Fail closed: deployments must explicitly opt into development mode.
 PRODUCTION = os.environ.get("SINOPIA_ENV", "production").lower() == "production"
@@ -33,6 +34,8 @@ allowed_origins = [
 ]
 if PRODUCTION and any(not origin.startswith("https://") for origin in allowed_origins):
     raise RuntimeError("Production allowed origins must use HTTPS.")
+if PRODUCTION:
+    validate_encryption_config()
 
 app = FastAPI(
     docs_url=None if PRODUCTION else "/docs",

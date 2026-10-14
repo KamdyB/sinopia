@@ -2,6 +2,7 @@
 import sqlite3
 
 from backend.data.db import DB_PATH, connect
+from backend.security.encryption import decrypt_text, encrypt_text, reencrypt_text
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS checkins (
@@ -37,6 +38,13 @@ class CheckinStore:
                 conn.execute(
                     "ALTER TABLE checkins ADD COLUMN pain_acknowledged INTEGER NOT NULL DEFAULT 0"
                 )
+            for row in conn.execute(
+                "SELECT id, pain_area FROM checkins WHERE pain_area IS NOT NULL"
+            ).fetchall():
+                conn.execute(
+                    "UPDATE checkins SET pain_area = ? WHERE id = ?",
+                    (reencrypt_text(row["pain_area"]), row["id"]),
+                )
             conn.execute(
                 "CREATE UNIQUE INDEX IF NOT EXISTS idx_checkins_player_date "
                 "ON checkins (player_id, date)"
@@ -52,7 +60,8 @@ class CheckinStore:
                     (
                         player_id, checkin["date"], checkin["sleep"], checkin["energy"],
                         checkin["soreness"], checkin["stress"], int(checkin["pain"]),
-                        checkin["pain_area"], team_id,
+                        encrypt_text(checkin["pain_area"]) if checkin["pain_area"] is not None else None,
+                        team_id,
                     ),
                 )
         except sqlite3.IntegrityError as exc:
@@ -76,7 +85,7 @@ class CheckinStore:
             {
                 "date": row["date"], "sleep": row["sleep"], "energy": row["energy"],
                 "soreness": row["soreness"], "stress": row["stress"],
-                "pain": bool(row["pain"]), "pain_area": row["pain_area"],
+                "pain": bool(row["pain"]), "pain_area": decrypt_text(row["pain_area"]),
                 "pain_acknowledged": bool(row["pain_acknowledged"]),
             }
             for row in rows

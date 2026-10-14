@@ -71,3 +71,8 @@ Operational drafts are in docs/data-map.md, docs/dpia.md, docs/breach-response.m
 ## Known gaps before production
 
 The Vercel first-party /api rewrite and exact production CSP still need the actual deployed backend hostname. The current branch does not yet implement application-level encryption, scheduled 12-month retention, inactive-account warnings, or a PostgreSQL migration. Confirm actual subprocessors and processing regions, test deletion across backups, and complete an independent security and privacy review before collecting real athlete data.
+
+
+## Application-level encryption
+
+In production, Sinopia refuses to start without SINOPIA_ENCRYPTION_KEYS. Configure a comma-separated key ring in the host secret manager, with the active key first and any older decryption keys after it. Each value must be a unique key ID followed by a colon and a base64url-encoded 32-byte key. Generate a key locally with Python using secrets.token_bytes(32) and base64.urlsafe_b64encode; never commit it. Athlete labels and pain-area values are encrypted using AES-GCM. Startup migration re-encrypts legacy plaintext values and rotates values encrypted with older configured keys. Keep old keys available until migration has completed successfully and backups encrypted with those keys have expired. The label lookup digest is keyed by the active key and is rebuilt on startup during key rotation. This implementation still uses SQLite; PostgreSQL migration remains outstanding.

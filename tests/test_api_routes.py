@@ -2,7 +2,7 @@ from backend.main import app  # imported so conftest patches apply to its router
 
 
 def register(client, name, team="girls"):
-    response = client.post("/players", json={"name": name, "team_type": team})
+    response = client.post("/players", json={"name": name, "team_type": team, "consent_confirmed": True})
     assert response.status_code == 201
     return response.json()["player_id"]
 
@@ -62,7 +62,7 @@ def test_future_date_422s(client):
 
 def test_duplicate_name_409s(client):
     register(client, "Amaka")
-    response = client.post("/players", json={"name": "amaka", "team_type": "girls"})
+    response = client.post("/players", json={"name": "amaka", "team_type": "girls", "consent_confirmed": True})
     assert response.status_code == 409
 
 

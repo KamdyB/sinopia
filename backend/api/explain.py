@@ -43,7 +43,7 @@ def template_summary(level: str, reasons: list[str]) -> str:
 
 @router.post("/explain", response_model=ExplainResponse)
 def explain(req: ExplainRequest, coach: dict = Depends(require_accepted_coach)) -> ExplainResponse:
-    player = player_store.get(req.player_id)
+    player = player_store.get(req.player_id, coach["team_id"])
     if player is None:
         raise HTTPException(status_code=404, detail="Athlete not found.")
 

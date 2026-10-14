@@ -29,8 +29,8 @@ def team_statuses(team_type: TeamType, coach: dict = Depends(require_accepted_co
     today = date.today()
     statuses: list[AthleteStatus] = []
     for player in player_store.list_for_team(team_type, coach["team_id"]):
-        sessions = session_store.get_sessions(player["player_id"])
-        checkins = checkin_store.get_checkins(player["player_id"])
+        sessions = session_store.get_sessions(player["player_id"], coach["team_id"])
+        checkins = checkin_store.get_checkins(player["player_id"], coach["team_id"])
         status = status_from_records(sessions, checkins, today)
         statuses.append(
             AthleteStatus(

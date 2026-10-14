@@ -28,6 +28,12 @@ CREATE TABLE IF NOT EXISTS coach_sessions (
     created_at TEXT NOT NULL,
     FOREIGN KEY (coach_email) REFERENCES coaches(email) ON DELETE CASCADE
 );
+CREATE TABLE IF NOT EXISTS security_audit (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_type TEXT NOT NULL,
+    team_id TEXT,
+    created_at TEXT NOT NULL
+);
 """
 
 
@@ -113,6 +119,21 @@ class AuthStore:
                 "UPDATE coaches SET accepted_at = ?, terms_version = ?, privacy_version = ? "
                 "WHERE email = ?",
                 (now, terms_version, privacy_version, email.lower()),
+            )
+
+
+    def log_event(self, event_type: str, team_id: str | None = None) -> None:
+        allowed = {
+            "coach_signed_in", "policies_accepted", "checkin_token_regenerated",
+            "checkin_submitted", "pain_report_acknowledged", "athlete_deleted",
+            "session_deleted", "checkin_deleted", "team_exported", "account_deleted",
+        }
+        if event_type not in allowed:
+            raise ValueError("Unknown audit event type.")
+        with connect(self._db_path) as conn:
+            conn.execute(
+                "INSERT INTO security_audit (event_type, team_id, created_at) VALUES (?, ?, ?)",
+                (event_type, team_id, datetime.now(timezone.utc).isoformat()),
             )
 
 

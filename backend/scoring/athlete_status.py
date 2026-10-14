@@ -93,7 +93,7 @@ def status_from_records(
         for c in relevant
     ]
     # A no-pain entry does not resolve a previous report.
-    pain = any(c["pain"] for c in relevant)
+    pain = any(c["pain"] and not c.get("pain_acknowledged", False) for c in relevant)
 
     daily = daily_loads(sessions)
     return athlete_status(

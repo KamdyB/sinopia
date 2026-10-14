@@ -116,3 +116,7 @@ export async function acceptCoachPolicies(
 export async function signOut(): Promise<void> {
   await post<unknown>("/auth/logout", {});
 }
+
+export async function deleteCoachAccount(credential: string): Promise<void> {
+  await post<unknown>("/privacy/delete-account", { credential, confirm: true });
+}

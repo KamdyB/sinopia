@@ -1,14 +1,14 @@
-"""Turns an already-computed status into one plain-language sentence.
-
-The LLM never calculates or changes a level and never receives an
-athlete name. When no key is configured or the provider fails, a
-deterministic template produces the wording instead.
-"""
+"""Produce a plain-language summary from a server-computed status."""
 import os
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, ConfigDict, Field
 from openai import OpenAI
-from pydantic import BaseModel
+
+from backend.data.checkin_store import checkin_store
+from backend.data.player_store import player_store
+from backend.data.session_store import session_store
+from backend.scoring.athlete_status import status_from_records
 
 router = APIRouter()
 _client: OpenAI | None = None
@@ -25,9 +25,8 @@ def _get_client() -> OpenAI | None:
 
 
 class ExplainRequest(BaseModel):
-    player_id: str
-    level: str
-    reasons: list[str]
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    player_id: str = Field(min_length=1, max_length=80)
 
 
 class ExplainResponse(BaseModel):
@@ -36,22 +35,28 @@ class ExplainResponse(BaseModel):
 
 
 def template_summary(level: str, reasons: list[str]) -> str:
-    """Deterministic wording, used whenever the LLM is unavailable."""
     first = reasons[0] if reasons else "No flags raised from the current rules."
     return f"Status is {level}. {first}"
 
 
 @router.post("/explain", response_model=ExplainResponse)
 def explain(req: ExplainRequest) -> ExplainResponse:
-    # The athlete name is never sent to the provider; only the level and
-    # the rule reasons leave this process.
+    player = player_store.get(req.player_id)
+    if player is None:
+        raise HTTPException(status_code=404, detail="Athlete not found.")
+
+    status = status_from_records(
+        session_store.get_sessions(req.player_id),
+        checkin_store.get_checkins(req.player_id),
+        __import__("datetime").date.today(),
+    )
+    level = status["level"]
+    reasons = status["reasons"]
+    # Only server-computed generic status information is sent to the provider.
     prompt = (
-        "Rephrase the following athlete workload status as one short, "
-        "plain-language sentence a youth sports coach can read at a glance. "
-        "Do not change the level given, and do not add medical claims "
-        "beyond what is stated.\n\n"
-        f"Level: {req.level}\n"
-        f"Reasons: {' '.join(req.reasons)}"
+        "Rephrase this youth sports workload status as one short, plain-language "
+        "sentence for a coach. Do not change the level or add medical claims.\n"
+        f"Level: {level}\nReasons: {' '.join(reasons)}"
     )
     summary: str | None = None
     client = _get_client()
@@ -62,10 +67,12 @@ def explain(req: ExplainRequest) -> ExplainResponse:
                 max_tokens=120,
                 messages=[{"role": "user", "content": prompt}],
             )
-            summary = response.choices[0].message.content.strip()
+            summary = response.choices[0].message.content
+            if summary:
+                summary = summary.strip()
         except Exception:
             summary = None
     return ExplainResponse(
         player_id=req.player_id,
-        summary=summary if summary else template_summary(req.level, req.reasons),
+        summary=summary if summary else template_summary(level, reasons),
     )

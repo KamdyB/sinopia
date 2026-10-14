@@ -1,6 +1,6 @@
 from datetime import date
 
-from backend.scoring.athlete_status import athlete_status, status_from_sessions
+from backend.scoring.athlete_status import athlete_status, status_from_records, status_from_sessions
 
 
 def log(day, minutes, rpe):
@@ -69,3 +69,16 @@ def test_pain_outranks_load_jump():
     )
     assert status["level"] == "refer"
     assert len(status["reasons"]) == 2
+
+
+
+def test_later_no_pain_checkin_does_not_clear_pain_flag():
+    checkins = [
+        {"date": "2026-01-01", "sleep": 4, "energy": 4, "soreness": 4,
+         "stress": 4, "pain": True, "pain_area": "Knee"},
+        {"date": "2026-01-02", "sleep": 4, "energy": 4, "soreness": 4,
+         "stress": 4, "pain": False, "pain_area": None},
+    ]
+    status = status_from_records([], checkins, date(2026, 1, 2))
+    assert status["level"] == "refer"
+    assert status["numbers"]["pain"] is True

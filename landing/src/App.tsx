@@ -1,11 +1,12 @@
 // landing/src/App.tsx  — LANDING PAGE (imports LiveDemo, nothing from the coach tool)
 import { LiveDemo } from "./LiveDemo";
+import { LegalPage } from "./LegalPage";
 
 // Dev: the coach tool runs on 5173. In production, deploy the landing page at
 // "/" and the coach tool under "/app/", then set this to "/app/".
-const COACH_APP_URL = "http://localhost:5173";
+const COACH_APP_URL = import.meta.env.VITE_COACH_APP_URL ?? "http://localhost:5173";
 // Contact placeholder — replace with the real inbox before shipping.
-const CONTACT_EMAIL = "coach@fieldnote.app";
+const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL as string | undefined;
 
 const SOURCES: { text: string; url: string | null }[] = [
   {
@@ -39,10 +40,14 @@ const SOURCES: { text: string; url: string | null }[] = [
 ];
 
 export default function App() {
+  if (window.location.pathname === "/privacy") return <LegalPage kind="privacy" />;
+  if (window.location.pathname === "/terms") return <LegalPage kind="terms" />;
+  if (window.location.pathname === "/delete-account") return <LegalPage kind="delete-account" />;
+
   return (
     <div className="landing">
       <header className="nav">
-        <span className="nav__wordmark">Fieldnote</span>
+        <span className="nav__wordmark">Sinopia</span>
         <nav className="nav__links">
           <a href="#how">How it works</a>
           <a href="#evidence">The evidence</a>
@@ -62,7 +67,7 @@ export default function App() {
           <span className="hero-stat__source">Estimate as cited in van Loggerenberg et al., 2025, South African Journal of Sports Medicine.</span>
         </div>
         <p className="hero-sub">
-          Fieldnote gives a coach of a girls\u2019, boys\u2019, or mixed youth team the same
+          Sinopia gives a coach of a girls\u2019, boys\u2019, or mixed youth team the same
           load-monitoring math sports scientists use \u2014 duration \u00d7 effort, rolling
           workload ratios, plain language \u2014 on one phone, for zero budget.
         </p>
@@ -127,20 +132,19 @@ export default function App() {
           <div className="honesty__col">
             <h3>Established science</h3>
             <p>
-              Fieldnote\u2019s core math is the session-RPE method (duration \u00d7 effort,
+              Sinopia\u2019s core math is the session-RPE method (duration \u00d7 effort,
               Foster et al., 2001) and the acute:chronic workload ratio, with 0.8\u20131.3 as
               the commonly cited optimal range (Gabbett, 2016). Published critiques of the
-              ratio exist (e.g., Impellizzeri et al., 2020), so Fieldnote treats it as a
+              ratio exist (e.g., Impellizzeri et al., 2020), so Sinopia treats it as a
               screening prompt for a conversation \u2014 never a diagnosis.
             </p>
           </div>
           <div className="honesty__col honesty__col--flag">
             <h3>Not validated yet, and we say so</h3>
             <p>
-              The menstrual-cycle and growth-rate context layers multiply the score by exactly
-              1.0 today. They are placeholders pending validation against real season outcomes
-              \u2014 injury data that does not exist yet. No invented thresholds, anywhere,
-              in the tool or on this page. You will see this disclosure inside the tool too.
+              Current workload thresholds are provisional and have not been validated
+              against season outcomes. The app does not currently assess menstrual-cycle
+              or growth-rate context. Do not treat a band as a prediction or medical finding.
             </p>
           </div>
         </div>
@@ -153,16 +157,16 @@ export default function App() {
           with no budget for wearables or sports-science staff. One coach, one phone, one season.
         </p>
         <p className="who who--promise">
-          Everything entered stays between the coach and their team. There is no scout-facing
-          view, no export to third parties, and there never will be without a separate consent
-          framework. This is a workload tool for the person who trains the kids, not a
-          talent-evaluation feed.
+          Team records are intended to be accessible only to the authorised coach for that team.
+          Hosting and sign-in providers may process some information as described in the privacy notice.
+          Use initials or codes where possible. Sinopia does not currently provide a scout-facing
+          view or a talent-evaluation feed.
         </p>
       </section>
 
       <footer className="footer">
         <div className="footer__top">
-          <span className="nav__wordmark">Fieldnote</span>
+          <span className="nav__wordmark">Sinopia</span>
           <a className="btn btn--primary" href={COACH_APP_URL}>Open the coach tool</a>
         </div>
         <ol className="sources">
@@ -175,7 +179,7 @@ export default function App() {
         </ol>
         {/* TODO before ship: replace CONTACT_EMAIL with the real contact inbox. */}
         <div className="footer__bottom">
-          <span>&copy; 2026 Fieldnote. All rights reserved.</span>
+          <span>&copy; 2026 Sinopia. All rights reserved.</span>
           <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
         </div>
       </footer>

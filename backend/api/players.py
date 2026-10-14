@@ -2,7 +2,7 @@
 from datetime import date
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from backend.api.auth import require_accepted_coach
@@ -105,3 +105,14 @@ def acknowledge_pain(
         raise HTTPException(status_code=404, detail="Athlete not found.")
     checkin_store.acknowledge_pain(player_id, coach["team_id"])
     return {"acknowledged": True}
+
+
+
+@router.delete("/players/{player_id}", status_code=204)
+def delete_player(player_id: str, coach: dict = Depends(require_accepted_coach)) -> Response:
+    if player_store.get(player_id, coach["team_id"]) is None:
+        raise HTTPException(status_code=404, detail="Athlete not found.")
+    checkin_store.delete_for_player(player_id, coach["team_id"])
+    session_store.delete_for_player(player_id, coach["team_id"])
+    player_store.delete(player_id, coach["team_id"])
+    return Response(status_code=204)

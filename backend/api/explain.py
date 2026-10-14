@@ -2,10 +2,11 @@
 import os
 from datetime import date
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 from openai import OpenAI
 
+from backend.api.auth import require_accepted_coach
 from backend.data.checkin_store import checkin_store
 from backend.data.player_store import player_store
 from backend.data.session_store import session_store
@@ -41,7 +42,7 @@ def template_summary(level: str, reasons: list[str]) -> str:
 
 
 @router.post("/explain", response_model=ExplainResponse)
-def explain(req: ExplainRequest) -> ExplainResponse:
+def explain(req: ExplainRequest, coach: dict = Depends(require_accepted_coach)) -> ExplainResponse:
     player = player_store.get(req.player_id)
     if player is None:
         raise HTTPException(status_code=404, detail="Athlete not found.")

@@ -17,12 +17,12 @@ export function SessionEntryForm({
   // Duration is set once for the whole squad and carries across submissions,
   // since the team trains the same length of time together.
   const [durationMinutes, setDurationMinutes] = useState(0);
-  const [rpe, setRpe] = useState(0);
+  const [rpe, setRpe] = useState<number | "">("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const playerSelectRef = useRef<HTMLSelectElement>(null);
 
-  const calculatedLoad = durationMinutes * rpe;
+  const calculatedLoad = durationMinutes * (rpe === "" ? 0 : rpe);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -30,7 +30,7 @@ export function SessionEntryForm({
       setError("Choose an athlete first. Register them in the directory if they are missing.");
       return;
     }
-    if (durationMinutes <= 0 || rpe <= 0) {
+    if (durationMinutes <= 0 || rpe === "") {
       setError("Enter a duration and RPE greater than zero.");
       return;
     }
@@ -44,12 +44,12 @@ export function SessionEntryForm({
       player_id: playerId,
       date_str: dateStr,
       duration_minutes: durationMinutes,
-      rpe,
+      rpe: Number(rpe),
     };
     try {
       await logSession(payload);
       onScored();
-      setRpe(0); // next athlete, same sitting
+      setRpe(""); // next athlete, same sitting
       playerSelectRef.current?.focus(); // back to the top, no mouse needed
     } catch (err) {
       setError(
@@ -100,7 +100,7 @@ export function SessionEntryForm({
             id="duration"
             type="number"
             min={1}
-            max={180}
+            max={600}
             value={durationMinutes || ""}
             placeholder="0"
             onChange={(e) => setDurationMinutes(+e.target.value)}
@@ -113,9 +113,9 @@ export function SessionEntryForm({
             type="number"
             min={0}
             max={10}
-            value={rpe || ""}
+            value={rpe}
             placeholder="0"
-            onChange={(e) => setRpe(+e.target.value)}
+            onChange={(e) => setRpe(e.target.value === "" ? "" : +e.target.value)}
           />
         </div>
       </div>

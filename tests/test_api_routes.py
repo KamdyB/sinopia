@@ -196,3 +196,14 @@ def test_coach_cannot_access_another_team_athlete(client):
     foreign = player_store.register("Other team", "girls", "2026-01-01", "unowned-team")
     response = client.get(f"/players/{foreign['player_id']}")
     assert response.status_code == 404
+
+
+def test_regenerating_checkin_token_invalidates_previous_link(client):
+    player_id = register(client, "Token rotation")
+    old_token = checkin_token(client, player_id)
+    assert client.get(f"/checkin/{old_token}").status_code == 200
+
+    new_token = checkin_token(client, player_id)
+    assert new_token != old_token
+    assert client.get(f"/checkin/{old_token}").status_code == 404
+    assert client.get(f"/checkin/{new_token}").status_code == 200

@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS players (
     registered_date TEXT NOT NULL,
     team_id TEXT,
     checkin_token TEXT,
-    name_hash TEXT
+    name_hash TEXT,
+    consent_confirmed_at TEXT
 );
 """
 
@@ -37,6 +38,8 @@ class PlayerStore:
                 conn.execute("ALTER TABLE players ADD COLUMN checkin_token TEXT")
             if "name_hash" not in columns:
                 conn.execute("ALTER TABLE players ADD COLUMN name_hash TEXT")
+            if "consent_confirmed_at" not in columns:
+                conn.execute("ALTER TABLE players ADD COLUMN consent_confirmed_at TEXT")
             # Token values are independent random credentials; only hashes are stored.
             rows = conn.execute(
                 "SELECT player_id, name, checkin_token FROM players"
@@ -71,11 +74,12 @@ class PlayerStore:
             with connect(self._db_path) as conn:
                 conn.execute(
                     "INSERT INTO players "
-                    "(player_id, name, team_type, registered_date, team_id, checkin_token, name_hash) "
-                    "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    "(player_id, name, team_type, registered_date, team_id, checkin_token, name_hash, consent_confirmed_at) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                     (
                         player_id, encrypt_text(name), team_type, registered_date, team_id,
                         hashlib.sha256(checkin_token.encode()).hexdigest(), label_digest(name),
+                        __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
                     ),
                 )
         except sqlite3.IntegrityError as exc:

@@ -33,7 +33,7 @@ export function LegalPage({ kind }: { kind: LegalPageKind }) {
               <li>A team identifier and an athlete label or code, team category, and registration date.</li>
               <li>Training date, session duration, and perceived effort score.</li>
               <li>Daily self-reported sleep, energy, soreness, stress, pain response, and a selected pain-area category.</li>
-              <li>Consent and coach declaration confirmations, session security data, and team exports.</li>
+              <li>Consent and coach declaration confirmations, session security data, and team exports. Athlete registration stores the time at which the coach confirmed the required consent; it does not store or independently validate a parent/guardian's identity or consent document.</li>
             </ul>
             <p>Do not enter athlete dates of birth, photographs, phone numbers, home addresses, precise location, or free-text medical histories. Use initials or a code instead of a full name where possible.</p>
 

@@ -8,7 +8,7 @@
 |---|---|---|---|
 | Coach | Google email, display name, account and policy-acceptance timestamps | Sign-in, team ownership, declarations | SQLite coaches and coach_sessions; authenticated coach |
 | Team | Random team ID, team label, creation time | Isolate records by coach | SQLite teams; owning coach |
-| Athlete | Random player ID, encrypted athlete label/code, team category, registration date, hashed check-in token | Roster and history association | SQLite players; owning coach; token used by athlete for check-in |
+| Athlete | Random player ID, encrypted athlete label/code, team category, registration date, hashed check-in token, coach's consent-confirmation timestamp | Roster and history association | SQLite players; owning coach; token used by athlete for check-in |
 | Training | Date, duration, perceived effort, team ID | Workload history | SQLite sessions; owning coach |
 | Wellness check-in | Date, sleep, energy, soreness, stress, pain response, encrypted selected pain-area category, acknowledgement flag, team ID | Coach conversation prompt | SQLite checkins; owning coach |
 | Security | Hashed server-session token, expiry, session cookie, request IP for throttling | Session validation and abuse prevention | SQLite coach_sessions and process memory; not intended for analytics |

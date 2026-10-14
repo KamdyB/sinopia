@@ -45,8 +45,8 @@ export async function logSession(payload: SessionPayload): Promise<StatusRespons
   return post<StatusResponse>("/sessions", payload);
 }
 
-export async function registerPlayer(name: string, teamType: TeamType): Promise<Player> {
-  return post<Player>("/players", { name, team_type: teamType, consent_confirmed: true });
+export async function registerPlayer(name: string, teamType: TeamType, consentConfirmed: boolean): Promise<Player> {
+  return post<Player>("/players", { name, team_type: teamType, consent_confirmed: consentConfirmed });
 }
 
 export async function fetchPlayers(teamType: TeamType): Promise<Player[]> {

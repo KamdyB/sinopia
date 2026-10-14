@@ -99,3 +99,18 @@ def test_athlete_label_and_pain_area_are_encrypted_and_rotatable(tmp_path, monke
         ).fetchone()[0]
     assert rotated_name.startswith("enc:v1:new:")
     assert rotated_area.startswith("enc:v1:new:")
+
+
+
+def test_player_registration_records_consent_confirmation_timestamp(tmp_path):
+    db_path = str(tmp_path / "consent.db")
+    store = PlayerStore(db_path)
+    player = store.register("Athlete Code 01", "girls", "2026-01-05", "team-a")
+    with sqlite3.connect(db_path) as conn:
+        row = conn.execute(
+            "SELECT consent_confirmed_at FROM players WHERE player_id = ?",
+            (player["player_id"],),
+        ).fetchone()
+    assert row is not None
+    assert row[0]
+    assert row[0].endswith("+00:00")

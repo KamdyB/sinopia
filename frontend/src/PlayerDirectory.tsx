@@ -9,7 +9,7 @@ export function PlayerDirectory({
   onDeletePlayer,
 }: {
   players: Player[];
-  onAdd: (name: string) => Promise<void>;
+  onAdd: (name: string, consentConfirmed: boolean) => Promise<void>;
   onCreateCheckinLink: (playerId: string) => Promise<string>;
   onDeletePlayer: (playerId: string) => Promise<void>;
 }) {
@@ -35,7 +35,7 @@ export function PlayerDirectory({
     setAdding(true);
     setError(null);
     try {
-      await onAdd(newName.trim());
+      await onAdd(newName.trim(), consentConfirmed);
       setNewName("");
       setConsentConfirmed(false);
     } catch (err) {

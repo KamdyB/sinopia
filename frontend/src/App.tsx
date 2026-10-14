@@ -79,8 +79,8 @@ export default function App() {
     setDetailId(null); // never carry an athlete from one team into another
   };
 
-  const handleAddPlayer = async (name: string) => {
-    await registerPlayer(name, teamType);
+  const handleAddPlayer = async (name: string, consentConfirmed: boolean) => {
+    await registerPlayer(name, teamType, consentConfirmed);
     setPlayers(await fetchPlayers(teamType));
     await refreshStatuses();
   };

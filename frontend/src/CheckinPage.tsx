@@ -200,5 +200,6 @@ export function CheckinPage({ token }: { token: string }) {
         <a href={LEGAL_BASE_URL + "/terms"}>Terms</a>{" · "}
         <a href={LEGAL_BASE_URL + "/delete-account"}>Deletion requests</a>
       </p>
+    </div>
   );
 }

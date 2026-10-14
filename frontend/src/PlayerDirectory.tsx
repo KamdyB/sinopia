@@ -5,9 +5,11 @@ import { Player } from "./types";
 export function PlayerDirectory({
   players,
   onAdd,
+  onCreateCheckinLink,
 }: {
   players: Player[];
   onAdd: (name: string) => Promise<void>;
+  onCreateCheckinLink: (playerId: string) => Promise<string>;
 }) {
   const [query, setQuery] = useState("");
   const [newName, setNewName] = useState("");
@@ -42,13 +44,19 @@ export function PlayerDirectory({
   };
 
   const copyCheckinLink = async (playerId: string) => {
-    const url = `${window.location.origin}/checkin/${playerId}`;
+    setError(null);
     try {
-      await navigator.clipboard.writeText(url);
-    } catch {
-      window.prompt("Copy this link:", url);
+      const token = await onCreateCheckinLink(playerId);
+      const url = window.location.origin + "/checkin/" + token;
+      try {
+        await navigator.clipboard.writeText(url);
+      } catch {
+        window.prompt("Copy this check-in link:", url);
+      }
+      setCopiedId(playerId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not create a check-in link.");
     }
-    setCopiedId(playerId);
   };
 
   return (
@@ -57,7 +65,7 @@ export function PlayerDirectory({
       <div className="field-row">
         <div className="field-group">
           <label className="field-group__label" htmlFor="player-search">Search roster</label>
-          <input id="player-search" type="search" value={query} placeholder="Type a name or code"
+          <input id="player-search" type="search" value={query} placeholder="Type an initials label or code"
             onChange={(e) => setQuery(e.target.value)} />
         </div>
         <div className="field-group">
@@ -94,7 +102,7 @@ export function PlayerDirectory({
               <span className={`directory-row${copiedId === p.player_id ? " directory-row--active" : ""}`}>
                 <span className="directory-row__name">{p.name}</span>
                 <button type="button" className="copy-link" onClick={() => copyCheckinLink(p.player_id)}>
-                  {copiedId === p.player_id ? "Link copied" : "Copy check-in link"}
+                  {copiedId === p.player_id ? "Create new link" : "Create/copy check-in link"}
                 </button>
               </span>
             </li>

@@ -2,7 +2,7 @@
 // The athlete-facing page. No accounts, no navigation, four taps per
 // question, mobile first. Reached by a link the coach shared.
 import { useEffect, useState } from "react";
-import { CheckinPayload, Player } from "./types";
+import { CheckinPayload } from "./types";
 import { fetchPlayer, submitCheckin } from "./api";
 
 type AnswerKey = "sleep" | "energy" | "soreness" | "stress";
@@ -26,7 +26,7 @@ const AREAS = [
 ];
 
 export function CheckinPage({ playerId }: { playerId: string }) {
-  const [player, setPlayer] = useState<Player | null>(null);
+  const [linkValid, setLinkValid] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<AnswerKey, number>>({
     sleep: 0,
@@ -43,8 +43,8 @@ export function CheckinPage({ playerId }: { playerId: string }) {
   useEffect(() => {
     let cancelled = false;
     fetchPlayer(playerId)
-      .then((p) => {
-        if (!cancelled) setPlayer(p);
+      .then(() => {
+        if (!cancelled) setLinkValid(true);
       })
       .catch(() => {
         if (!cancelled) setLoadError("This check-in link is not valid.");
@@ -98,6 +98,14 @@ export function CheckinPage({ playerId }: { playerId: string }) {
       <div className="checkin">
         <h1>Link not valid</h1>
         <p>{loadError}</p>
+      </div>
+    );
+  }
+  if (!linkValid) {
+    return (
+      <div className="checkin">
+        <h1>Loading check-in</h1>
+        <p>Please wait.</p>
       </div>
     );
   }

@@ -9,7 +9,7 @@ import {
   TeamType,
 } from "./types";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = (import.meta.env.VITE_API_BASE ?? "http://localhost:8000").replace(/\/$/, "");
 
 async function parseError(res: Response): Promise<Error> {
   const body = (await res.json().catch(() => null)) as { detail?: unknown } | null;
@@ -21,7 +21,11 @@ async function parseError(res: Response): Promise<Error> {
 async function post<T>(path: string, payload: unknown): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "X-Sinopia-Request": "1",
+    },
+    credentials: "include",
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw await parseError(res);
@@ -29,7 +33,10 @@ async function post<T>(path: string, payload: unknown): Promise<T> {
 }
 
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`);
+  const res = await fetch(`${API_BASE}${path}`, {
+    credentials: "include",
+    headers: { "X-Sinopia-Request": "1" },
+  });
   if (!res.ok) throw await parseError(res);
   return res.json();
 }
@@ -39,7 +46,7 @@ export async function logSession(payload: SessionPayload): Promise<StatusRespons
 }
 
 export async function registerPlayer(name: string, teamType: TeamType): Promise<Player> {
-  return post<Player>("/players", { name, team_type: teamType });
+  return post<Player>("/players", { name, team_type: teamType, consent_confirmed: true });
 }
 
 export async function fetchPlayers(teamType: TeamType): Promise<Player[]> {

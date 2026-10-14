@@ -63,3 +63,15 @@ def log_session(req: SessionRequest, coach: dict = Depends(require_accepted_coac
         numbers=status["numbers"],
         previous_level=previous_level,
     )
+
+
+
+@router.delete("/players/{player_id}/sessions/{session_id}")
+def delete_session(
+    player_id: str, session_id: int, coach: dict = Depends(require_accepted_coach)
+) -> dict[str, bool]:
+    if player_store.get(player_id, coach["team_id"]) is None:
+        raise HTTPException(status_code=404, detail="Athlete not found.")
+    if not session_store.delete_session(session_id, player_id, coach["team_id"]):
+        raise HTTPException(status_code=404, detail="Session not found.")
+    return {"deleted": True}

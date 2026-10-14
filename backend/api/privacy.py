@@ -10,6 +10,7 @@ from google.auth.transport.requests import Request as GoogleRequest
 from google.oauth2 import id_token
 from pydantic import BaseModel, ConfigDict, Field
 
+import backend.api.auth as auth_api
 from backend.api.auth import SESSION_COOKIE, current_coach, require_accepted_coach
 from backend.data.checkin_store import checkin_store
 from backend.data.db import DB_PATH, connect
@@ -47,6 +48,7 @@ def export_team(format: str = "json", coach: dict = Depends(require_accepted_coa
     if format not in {"json", "csv"}:
         raise HTTPException(status_code=422, detail="Format must be json or csv.")
     data = _team_export(coach["team_id"])
+    auth_api.auth_store.log_event("team_exported", coach["team_id"])
     if format == "json":
         return data
 
@@ -122,6 +124,7 @@ def delete_account(
             (team_id, team_id),
         )
         conn.execute("DELETE FROM players WHERE team_id = ?", (team_id,))
+        conn.execute("DELETE FROM security_audit WHERE team_id = ?", (team_id,))
         conn.execute("DELETE FROM coach_sessions WHERE coach_email = ?", (email,))
         conn.execute("DELETE FROM teams WHERE team_id = ?", (team_id,))
         conn.execute("DELETE FROM coaches WHERE email = ?", (email,))

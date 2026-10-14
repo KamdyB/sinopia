@@ -43,6 +43,10 @@ class PlayerResponse(BaseModel):
     registered_date: str
 
 
+class CheckinTokenResponse(BaseModel):
+    token: str
+
+
 class HistoryPoint(BaseModel):
     date: str
     session_load: float
@@ -78,3 +82,14 @@ def player_history(player_id: str, coach: dict = Depends(require_accepted_coach)
     if player_store.get(player_id, coach["team_id"]) is None:
         raise HTTPException(status_code=404, detail="Athlete not found.")
     return [HistoryPoint(**p) for p in history_points(session_store.get_sessions(player_id))]
+
+
+
+@router.post("/players/{player_id}/checkin-token", response_model=CheckinTokenResponse)
+def regenerate_checkin_token(
+    player_id: str, coach: dict = Depends(require_accepted_coach)
+) -> CheckinTokenResponse:
+    token = player_store.regenerate_checkin_token(player_id, coach["team_id"])
+    if token is None:
+        raise HTTPException(status_code=404, detail="Athlete not found.")
+    return CheckinTokenResponse(token=token)

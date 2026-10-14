@@ -14,7 +14,7 @@ def test_every_session_appears_once_in_order():
 def test_early_points_build_baseline():
     sessions = [log(1, 60, 5), log(2, 60, 5)]
     points = history_points(sessions)
-    assert points[0]["level"] == "ok"
+    assert points[0]["level"] == "building"
     assert points[0]["numbers"]["building_baseline"] is True
 
 
@@ -22,7 +22,7 @@ def test_late_point_reflects_load_jump():
     sessions = [log(1, 60, 5), log(8, 60, 5), log(15, 60, 5), log(22, 120, 5)]
     points = history_points(sessions)
     assert points[-1]["level"] == "act"
-    assert points[-2]["level"] == "ok"
+    assert points[-2]["level"] == "building"
 
 
 def test_session_load_recorded_per_point():

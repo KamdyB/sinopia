@@ -49,7 +49,7 @@ def _public_coach(coach: dict[str, Any]) -> dict[str, Any]:
 
 
 def current_coach(request: Request) -> dict[str, Any]:
-    if os.environ.get("SINOPIA_ENV", "development").lower() != "production":
+    if os.environ.get("SINOPIA_ENV", "production").lower() != "production":
         return auth_store.ensure_coach("dev@localhost", "Local development coach")
     token = request.cookies.get(SESSION_COOKIE)
     if not token:
@@ -62,7 +62,7 @@ def current_coach(request: Request) -> dict[str, Any]:
 
 def require_accepted_coach(request: Request) -> dict[str, Any]:
     coach = current_coach(request)
-    if os.environ.get("SINOPIA_ENV", "development").lower() == "production":
+    if os.environ.get("SINOPIA_ENV", "production").lower() == "production":
         if (
             coach["accepted_at"] is None
             or coach["terms_version"] != TERMS_VERSION

@@ -31,7 +31,7 @@ export function SessionEntryForm({
       return;
     }
     if (durationMinutes <= 0 || rpe === "") {
-      setError("Enter a duration and RPE greater than zero.");
+      setError("Enter a duration and an RPE from 0 to 10.");
       return;
     }
     if (dateStr > TODAY_ISO) {

@@ -177,10 +177,14 @@ export default function App() {
             </li>
           ))}
         </ol>
-        {/* TODO before ship: replace CONTACT_EMAIL with the real contact inbox. */}
+        <nav className="nav__links">
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+          <a href="/delete-account">Delete account</a>
+        </nav>
         <div className="footer__bottom">
           <span>&copy; 2026 Sinopia. All rights reserved.</span>
-          <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+          {CONTACT_EMAIL ? <a href={"mailto:" + CONTACT_EMAIL}>{CONTACT_EMAIL}</a> : <span>Privacy contact to be published before launch</span>}
         </div>
       </footer>
     </div>

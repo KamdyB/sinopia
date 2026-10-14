@@ -3,11 +3,12 @@ import "./theme.css";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import { AuthGate } from "./AuthGate";
 import { CheckinPage } from "./CheckinPage";
 import { ThemeStage } from "./ThemeStage";
 
 // Two entries in one bundle: the coach dashboard at any path, and the
-// athlete check-in at /checkin/{player_id}. No router dependency needed.
+// athlete check-in at /checkin/{token}. No router dependency needed.
 const path = window.location.pathname;
 const CHECKIN_PREFIX = "/checkin/";
 const checkinToken = path.startsWith(CHECKIN_PREFIX)
@@ -20,7 +21,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <CheckinPage token={decodeURIComponent(checkinToken)} />
     ) : (
       <ThemeStage>
-        <App />
+        <AuthGate>
+          <App />
+        </AuthGate>
       </ThemeStage>
     )}
   </React.StrictMode>,

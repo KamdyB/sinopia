@@ -79,3 +79,7 @@ export async function fetchTeamStatuses(teamType: TeamType): Promise<AthleteStat
 export async function submitCheckin(payload: CheckinPayload): Promise<void> {
   await post<unknown>("/checkins", payload);
 }
+
+export async function acknowledgePain(playerId: string): Promise<void> {
+  await post<unknown>(`/players/${encodeURIComponent(playerId)}/acknowledge-pain`, {});
+}

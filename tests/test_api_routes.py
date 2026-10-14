@@ -26,7 +26,7 @@ def test_register_and_log_returns_level_with_numbers(client):
     )
     assert response.status_code == 200
     body = response.json()
-    assert body["level"] == "ok"
+    assert body["level"] == "building"
     assert body["previous_level"] is None
     assert body["numbers"]["building_baseline"] is True
     assert body["reasons"]
@@ -44,7 +44,7 @@ def test_log_again_reports_previous_level(client):
         json={"player_id": player_id, "date_str": "2026-01-02",
               "duration_minutes": 60, "rpe": 5},
     )
-    assert response.json()["previous_level"] == "ok"
+    assert response.json()["previous_level"] == "building"
 
 
 def test_unknown_player_404s(client):
@@ -84,7 +84,7 @@ def test_history_returns_walk_forward_levels(client):
     assert response.status_code == 200
     points = response.json()
     assert len(points) == 4
-    assert points[0]["level"] == "ok"
+    assert points[0]["level"] == "building"
     assert points[-1]["level"] == "act"
 
 

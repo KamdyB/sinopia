@@ -7,9 +7,9 @@ def log(day, minutes, rpe):
     return {"date": f"2026-01-{day:02d}", "duration_minutes": minutes, "rpe": rpe}
 
 
-def test_brand_new_athlete_builds_baseline_without_load_flag():
+def test_brand_new_athlete_has_building_level_without_load_flag():
     status = status_from_sessions([log(1, 60, 5)], date(2026, 1, 3))
-    assert status["level"] == "ok"
+    assert status["level"] == "building"
     assert status["numbers"]["building_baseline"] is True
 
 

@@ -484,3 +484,7 @@ input, select { border-radius: 12px; }
 .checkin__submit:disabled { opacity: 0.45; cursor: default; }
 .checkin__error { color: var(--elevated); font-size: 0.85rem; }
 
+
+
+.status-row__level[data-level="building"] { border-color: var(--line-strong); color: var(--muted); }
+.history-list li[data-level="building"] { border-left-color: var(--line-strong); }

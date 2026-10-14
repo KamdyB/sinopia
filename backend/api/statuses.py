@@ -39,6 +39,6 @@ def team_statuses(team_type: TeamType, coach: dict = Depends(require_accepted_co
                 **status,
             )
         )
-    order = {"refer": 0, "act": 1, "watch": 2, "ok": 3}
+    order = {"refer": 0, "act": 1, "watch": 2, "ok": 3, "building": 4}
     statuses.sort(key=lambda s: order.get(s.level, 9))
     return statuses

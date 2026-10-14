@@ -1,6 +1,6 @@
 """Rules engine: turns load and wellness signals into one level per athlete.
 
-Levels are ok, watch, act, refer. Every triggered rule contributes its
+Levels are building, ok, watch, act, refer. Every triggered rule contributes its
 reason; the level is the highest triggered one. Pain remains active until
 a coach explicitly acknowledges the report.
 """
@@ -20,7 +20,7 @@ from backend.scoring.load_calculator import (
 )
 from backend.scoring.wellness import wellness_drift
 
-LEVELS = ("ok", "watch", "act", "refer")
+LEVELS = ("building", "ok", "watch", "act", "refer")
 
 
 def athlete_status(
@@ -44,7 +44,7 @@ def athlete_status(
     if building_baseline:
         triggered.append(
             (
-                "ok",
+                "building",
                 f"Building baseline: fewer than {MIN_BASELINE_WEEKS} weeks of training "
                 "history, so no load flag is raised yet.",
             )

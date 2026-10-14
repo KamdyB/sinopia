@@ -57,6 +57,17 @@ export async function fetchPlayer(playerId: string): Promise<Player> {
   return get<Player>(`/players/${encodeURIComponent(playerId)}`);
 }
 
+export async function createCheckinToken(playerId: string): Promise<string> {
+  const result = await post<{ token: string }>(
+    `/players/${encodeURIComponent(playerId)}/checkin-token`, {},
+  );
+  return result.token;
+}
+
+export async function validateCheckinToken(token: string): Promise<void> {
+  await get<{ valid: boolean }>(`/checkin/${encodeURIComponent(token)}`);
+}
+
 export async function fetchPlayerHistory(playerId: string): Promise<HistoryPoint[]> {
   return get<HistoryPoint[]>(`/players/${encodeURIComponent(playerId)}/history`);
 }

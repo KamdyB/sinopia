@@ -10,7 +10,7 @@
 4. Use a durable, access-controlled database volume for a synthetic-data alpha only. The current application uses SQLite; do not treat ephemeral filesystem storage as durable.
 5. Set `SINOPIA_ENV=production`, `SINOPIA_ALLOWED_ORIGINS` to the exact HTTPS origin of the coach frontend, `GOOGLE_CLIENT_ID`, `SINOPIA_ENCRYPTION_KEYS`, `SINOPIA_TERMS_VERSION`, and `SINOPIA_PRIVACY_VERSION`. Set `SINOPIA_DB_PATH` to the durable volume path. Do not use the development coach in a public deployment.
 6. Generate a random 32-byte encryption key, base64url-encode it, and store it only in the host's secret manager. Never place the key in Git or a frontend variable.
-7. Verify the API health endpoint, Google OAuth audience and authorised origins, exact CORS origin, secure session cookie, and that missing production secrets make startup fail closed.
+7. Verify `GET /health` returns `{"status":"ok"}` as a basic process-liveness check only. Separately verify Google OAuth audience and authorised origins, exact CORS origin, secure session cookie, and that missing production secrets make startup fail closed. The health route does not verify database readiness.
 
 ## Deploy the coach frontend
 

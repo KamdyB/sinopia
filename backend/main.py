@@ -42,6 +42,12 @@ app = FastAPI(
     redoc_url=None if PRODUCTION else "/redoc",
     openapi_url=None if PRODUCTION else "/openapi.json",
 )
+@app.get("/health", include_in_schema=False)
+def health_check() -> dict[str, str]:
+    """Basic process liveness only; does not verify database readiness."""
+    return {"status": "ok"}
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,

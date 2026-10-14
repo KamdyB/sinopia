@@ -1,6 +1,9 @@
 import os
+import time
+from collections import defaultdict, deque
+from threading import Lock
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import Response
 
@@ -9,6 +12,33 @@ from backend.api.explain import router as explain_router
 from backend.api.players import router as players_router
 from backend.api.sessions import router as sessions_router
 from backend.api.statuses import router as statuses_router
+
+# Process-local emergency throttle. Production deployments with multiple workers
+# should also enforce limits at the edge/shared store.
+_RATE_EVENTS: dict[tuple[str, str], deque[float]] = defaultdict(deque)
+_RATE_LOCK = Lock()
+
+
+def _client_ip(request: Request) -> str:
+    if os.environ.get("SINOPIA_TRUST_PROXY", "").lower() == "true":
+        forwarded = request.headers.get("x-forwarded-for", "")
+        if forwarded.strip():
+            # Only enable this when the app is reachable exclusively through
+            # a trusted reverse proxy that overwrites this header.
+            return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+def _rate_limit(request: Request) -> tuple[int, int] | None:
+    path = request.url.path
+    if path == "/checkins" and request.method == "POST":
+        return (10, 60)
+    if path == "/explain" and request.method == "POST":
+        return (20, 3600)
+    if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
+        return (60, 60)
+    return None
+
 
 PRODUCTION = os.environ.get("SINOPIA_ENV", "development").lower() == "production"
 app = FastAPI(
@@ -31,6 +61,27 @@ app.add_middleware(
     allow_headers=["Content-Type", "X-Sinopia-Request"],
     allow_credentials=True,
 )
+
+
+@app.middleware("http")
+async def apply_rate_limits(request: Request, call_next):
+    rule = _rate_limit(request)
+    if rule:
+        maximum, window = rule
+        now = time.monotonic()
+        key = (request.url.path, _client_ip(request))
+        with _RATE_LOCK:
+            events = _RATE_EVENTS[key]
+            while events and events[0] <= now - window:
+                events.popleft()
+            if len(events) >= maximum:
+                retry_after = max(1, int(window - (now - events[0])))
+                return Response(
+                    "Too many requests.", status_code=429,
+                    headers={"Retry-After": str(retry_after)},
+                )
+            events.append(now)
+    return await call_next(request)
 
 
 @app.middleware("http")

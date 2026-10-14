@@ -103,9 +103,11 @@ export function CheckinPage({ playerId }: { playerId: string }) {
   }
   return (
     <div className="checkin">
-      <h1>Hi {player?.name ?? "there"}, check in for today</h1>
+      <h1>Check in for today</h1>
       <p className="checkin__sub">
-        Takes under 20 seconds. Your coach sees the answers.
+        Takes under 20 seconds. Your coach can see these answers, including any pain report.
+        Only continue if your coach has explained why this information is being collected.
+        For questions or a deletion request, contact your coach.
       </p>
       {QUESTIONS.map((q) => (
         <fieldset className="checkin__question" key={q.key}>

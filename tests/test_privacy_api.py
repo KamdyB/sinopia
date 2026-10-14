@@ -73,5 +73,5 @@ def test_account_deletion_hard_deletes_team_data_and_coach_records(
     assert response.json() == {"deleted": True}
 
     with sqlite3.connect(db_path) as conn:
-        for table in ("coaches", "teams", "coach_sessions", "players", "sessions", "checkins"):
+        for table in ("coaches", "teams", "coach_sessions", "security_audit", "players", "sessions", "checkins"):
             assert conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0] == 0

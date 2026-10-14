@@ -83,3 +83,36 @@ export async function submitCheckin(payload: CheckinPayload): Promise<void> {
 export async function acknowledgePain(playerId: string): Promise<void> {
   await post<unknown>(`/players/${encodeURIComponent(playerId)}/acknowledge-pain`, {});
 }
+
+export interface CoachSession {
+  email: string;
+  display_name: string;
+  team_id: string;
+  team_name: string;
+  accepted_at: string | null;
+  terms_version: string | null;
+  privacy_version: string | null;
+  needs_policy_acceptance: boolean;
+}
+
+export async function fetchCoachSession(): Promise<CoachSession> {
+  return get<CoachSession>("/auth/me");
+}
+
+export async function signInWithGoogle(credential: string): Promise<CoachSession> {
+  return post<CoachSession>("/auth/google", { credential });
+}
+
+export async function acceptCoachPolicies(
+  age18: boolean,
+  authorisedAndConsent: boolean,
+): Promise<void> {
+  await post<unknown>("/auth/accept-policies", {
+    age_18_or_older: age18,
+    authorised_and_parental_consent_obtained: authorisedAndConsent,
+  });
+}
+
+export async function signOut(): Promise<void> {
+  await post<unknown>("/auth/logout", {});
+}

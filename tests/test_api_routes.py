@@ -82,14 +82,8 @@ def test_history_returns_walk_forward_levels(client):
     assert points[-1]["level"] == "act"
 
 
-def test_checkin_logged_then_pain_refers(client):
+def test_pain_checkin_refers(client):
     player_id = register(client, "Efe")
-    ok = client.post(
-        "/checkins",
-        json={"player_id": player_id, "sleep": 4, "energy": 3,
-              "soreness": 2, "stress": 4, "pain": False},
-    )
-    assert ok.status_code == 201
     pain = client.post(
         "/checkins",
         json={"player_id": player_id, "sleep": 3, "energy": 2,
@@ -99,6 +93,15 @@ def test_checkin_logged_then_pain_refers(client):
     statuses = client.get("/statuses?team_type=girls").json()
     entry = next(s for s in statuses if s["player_id"] == player_id)
     assert entry["level"] == "refer"
+
+
+def test_second_checkin_same_day_returns_409(client):
+    player_id = register(client, "Efe")
+    payload = {"player_id": player_id, "sleep": 4, "energy": 3,
+               "soreness": 2, "stress": 4, "pain": False}
+    assert client.post("/checkins", json=payload).status_code == 201
+    response = client.post("/checkins", json=payload)
+    assert response.status_code == 409
 
 
 def test_checkin_pain_without_area_422s(client):

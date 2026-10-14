@@ -74,4 +74,6 @@ def delete_session(
         raise HTTPException(status_code=404, detail="Athlete not found.")
     if not session_store.delete_session(session_id, player_id, coach["team_id"]):
         raise HTTPException(status_code=404, detail="Session not found.")
+    from backend.data.auth_store import auth_store
+    auth_store.log_event("session_deleted", coach["team_id"])
     return {"deleted": True}

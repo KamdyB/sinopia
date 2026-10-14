@@ -1,3 +1,4 @@
+import sqlite3
 from backend.main import app  # imported so conftest patches apply to its routers
 
 
@@ -207,3 +208,51 @@ def test_regenerating_checkin_token_invalidates_previous_link(client):
     assert new_token != old_token
     assert client.get(f"/checkin/{old_token}").status_code == 404
     assert client.get(f"/checkin/{new_token}").status_code == 200
+
+
+
+def test_coach_can_delete_individual_session_and_checkin(client, tmp_path):
+    player_id = register(client, "Delete records")
+    client.post(
+        "/sessions",
+        json={"player_id": player_id, "date_str": "2026-01-01",
+              "duration_minutes": 60, "rpe": 5},
+    )
+    token = checkin_token(client, player_id)
+    client.post(
+        "/checkins",
+        json={"token": token, "sleep": 4, "energy": 4, "soreness": 4,
+              "stress": 4, "pain": False},
+    )
+    with sqlite3.connect(tmp_path / "test.db") as conn:
+        session_id = conn.execute(
+            "SELECT id FROM sessions WHERE player_id = ?", (player_id,)
+        ).fetchone()[0]
+        checkin_id = conn.execute(
+            "SELECT id FROM checkins WHERE player_id = ?", (player_id,)
+        ).fetchone()[0]
+
+    assert client.delete(f"/players/{player_id}/sessions/{session_id}").json() == {"deleted": True}
+    assert client.delete(f"/players/{player_id}/checkins/{checkin_id}").json() == {"deleted": True}
+
+
+def test_deleting_athlete_hard_deletes_all_training_and_checkin_records(client, tmp_path):
+    player_id = register(client, "Delete athlete")
+    client.post(
+        "/sessions",
+        json={"player_id": player_id, "date_str": "2026-01-01",
+              "duration_minutes": 60, "rpe": 5},
+    )
+    token = checkin_token(client, player_id)
+    client.post(
+        "/checkins",
+        json={"token": token, "sleep": 4, "energy": 4, "soreness": 4,
+              "stress": 4, "pain": False},
+    )
+
+    response = client.delete(f"/players/{player_id}")
+    assert response.status_code == 204
+    with sqlite3.connect(tmp_path / "test.db") as conn:
+        assert conn.execute("SELECT COUNT(*) FROM players WHERE player_id = ?", (player_id,)).fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM sessions WHERE player_id = ?", (player_id,)).fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM checkins WHERE player_id = ?", (player_id,)).fetchone()[0] == 0

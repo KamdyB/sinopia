@@ -10,7 +10,7 @@ def store(tmp_path):
 
 def test_register_returns_a_complete_record(store):
     record = store.register("Amaka", "girls", "2026-01-05")
-    assert set(record.keys()) == {"player_id", "name", "team_type", "registered_date"}
+    assert set(record.keys()) == {"player_id", "name", "team_type", "registered_date", "team_id"}
     assert record["name"] == "Amaka"
     assert record["team_type"] == "girls"
 

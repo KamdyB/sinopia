@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { CheckinPayload } from "./types";
 import { submitCheckin, validateCheckinToken } from "./api";
 
-const LEGAL_BASE_URL = import.meta.env.VITE_LEGAL_BASE_URL ?? "http://localhost:5174";
+const LEGAL_BASE_URL = (import.meta.env.VITE_LEGAL_BASE_URL ?? (import.meta.env.PROD ? "" : "http://localhost:5174")).replace(/\/$/, "");
 
 type AnswerKey = "sleep" | "energy" | "soreness" | "stress";
 

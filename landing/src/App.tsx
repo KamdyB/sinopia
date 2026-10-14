@@ -4,7 +4,7 @@ import { LegalPage } from "./LegalPage";
 
 // Dev: the coach tool runs on 5173. In production, deploy the landing page at
 // "/" and the coach tool under "/app/", then set this to "/app/".
-const COACH_APP_URL = import.meta.env.VITE_COACH_APP_URL ?? "http://localhost:5173";
+const COACH_APP_URL = import.meta.env.VITE_COACH_APP_URL ?? (import.meta.env.PROD ? "/app/" : "http://localhost:5173");
 // Contact placeholder — replace with the real inbox before shipping.
 const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL as string | undefined;
 

@@ -49,12 +49,26 @@ def _public_coach(coach: dict[str, Any]) -> dict[str, Any]:
 
 
 def current_coach(request: Request) -> dict[str, Any]:
+    if os.environ.get("SINOPIA_ENV", "development").lower() != "production":
+        return auth_store.ensure_coach("dev@localhost", "Local development coach")
     token = request.cookies.get(SESSION_COOKIE)
     if not token:
         raise HTTPException(status_code=401, detail="Sign-in required.")
     coach = auth_store.get_session(token)
     if coach is None:
         raise HTTPException(status_code=401, detail="Session expired. Sign in again.")
+    return coach
+
+
+def require_accepted_coach(request: Request) -> dict[str, Any]:
+    coach = current_coach(request)
+    if os.environ.get("SINOPIA_ENV", "development").lower() == "production":
+        if (
+            coach["accepted_at"] is None
+            or coach["terms_version"] != TERMS_VERSION
+            or coach["privacy_version"] != PRIVACY_VERSION
+        ):
+            raise HTTPException(status_code=403, detail="Accept the current declarations before continuing.")
     return coach
 
 

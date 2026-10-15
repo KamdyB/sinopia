@@ -49,7 +49,7 @@ export function PlayerDirectory({
     setError(null);
     try {
       const token = await onCreateCheckinLink(playerId);
-      const url = window.location.origin + window.location.pathname + "#checkin/" + encodeURIComponent(token);
+      const url = window.location.origin + "/check-in/#checkin/" + encodeURIComponent(token);
       try {
         await navigator.clipboard.writeText(url);
       } catch {

@@ -8,7 +8,7 @@ import { PlayerHistory } from "./PlayerHistory";
 import { DashboardTable } from "./DashboardTable";
 import { Glossary } from "./Glossary";
 
-const TEAM_TITLES: Record<TeamType, string> = {
+const LANDING_URL = import.meta.env.VITE_LEGAL_BASE_URL || "";\n\nconst TEAM_TITLES: Record<TeamType, string> = {
   girls: "Girls team status",
   boys: "Boys team status",
   mixed: "Mixed team status",

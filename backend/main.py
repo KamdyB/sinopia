@@ -103,8 +103,10 @@ app.add_middleware(
 
 def _rate_limit(request: Request) -> tuple[int, int] | None:
     path = request.url.path
-    if path == "/auth/google" and request.method == "POST":
+    if path in {"/auth/google", "/auth/email/request"} and request.method == "POST":
         return (5, 60)
+    if path == "/auth/email/verify" and request.method == "POST":
+        return (10, 60)
     if path == "/checkins" and request.method == "POST":
         return (10, 60)
     if path == "/checkin/validate" and request.method == "POST":

@@ -24,10 +24,10 @@ class PlayerStore:
             link = CheckinLink(token=uuid.uuid4().hex + uuid.uuid4().hex, player_id=p.player_id)
             db.add(link)
             db.flush()
-        return {"player_id":p.player_id,"name":p.name,"team_type":p.team_type,"registered_date":p.registered_date,"checkin_token":link.token}
+        return {"player_id":p.player_id,"name":p.name,"team_type":p.team_type,"registered_date":p.registered_date,"checkin_token":link.token,"team_id":p.team_id}
 
-    def register(self, name: str, team_type: str, registered_date: str) -> dict:
-        p = Player(player_id=uuid.uuid4().hex, name=name, team_type=team_type, registered_date=registered_date)
+    def register(self, name: str, team_type: str, registered_date: str, team_id: str | None = None) -> dict:
+        p = Player(player_id=uuid.uuid4().hex, name=name, team_type=team_type, registered_date=registered_date, team_id=team_id or f"legacy-{team_type}")
         try:
             with self._sessions.begin() as db:
                 db.add(p)
@@ -45,9 +45,10 @@ class PlayerStore:
             p = db.get(Player, player_id)
             return self._dict(p, db) if p else None
 
-    def list_for_team(self, team_type: str) -> list[dict]:
+    def list_for_team(self, team_type: str, team_id: str | None = None) -> list[dict]:
         with self._sessions.begin() as db:
-            rows = db.scalars(select(Player).where(Player.team_type == team_type).order_by(func.lower(Player.name))).all()
+            statement = select(Player).where(Player.team_id == team_id) if team_id else select(Player).where(Player.team_type == team_type)
+            rows = db.scalars(statement.order_by(func.lower(Player.name))).all()
             return [self._dict(p, db) for p in rows]
 
     def get_by_checkin_token(self, token: str) -> dict | None:

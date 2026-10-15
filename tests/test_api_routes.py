@@ -1,5 +1,6 @@
 import sqlite3
 import backend.api.players as players_api
+from backend.timeutil import service_date
 from backend.main import app  # imported so conftest patches apply to its routers
 
 
@@ -320,7 +321,7 @@ def test_policy_gate_and_version_bump_require_fresh_acceptance(client, tmp_path,
 def test_open_team_session_adds_effort_question_and_records_workload(client):
     player_id = register(client, "Effort Test")
     token = checkin_token(client, player_id)
-    opened = client.post("/team-sessions/open", json={"date_str": "2026-10-14", "duration_minutes": 75})
+    opened = client.post("/team-sessions/open", json={"date_str": service_date().isoformat(), "duration_minutes": 75})
     assert opened.status_code == 201
 
     context = client.post("/checkin/validate", json={"token": token}).json()

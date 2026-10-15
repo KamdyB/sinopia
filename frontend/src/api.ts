@@ -1,5 +1,5 @@
 // frontend/src/api.ts
-import { AthleteStatus, CheckinPayload, HistoryPoint, Player, SessionPayload, StatusResponse, TeamType } from "./types";
+import { AthleteStatus, CheckinContext, CheckinPayload, HistoryPoint, Player, SessionPayload, StatusResponse, TeamType } from "./types";
 const API_BASE = (import.meta.env.VITE_API_BASE || "/api").replace(/\/+$/, "");
 async function parseError(res: Response): Promise<Error> {
   const body = (await res.json().catch(() => null)) as { detail?: unknown } | null;
@@ -23,7 +23,7 @@ export async function logSession(payload: SessionPayload): Promise<StatusRespons
 export async function registerPlayer(name:string, teamType:TeamType):Promise<Player>{return post("/players",{name,team_type:teamType});}
 export async function fetchPlayers(teamType:TeamType):Promise<Player[]>{return get(`/players?team_type=${encodeURIComponent(teamType)}`);}
 export async function fetchPlayer(playerId:string):Promise<Player>{return get(`/players/${encodeURIComponent(playerId)}`);}
-export async function fetchCheckinPlayer(token:string):Promise<Player>{return get(`/check-in/${encodeURIComponent(token)}`);}
+export async function fetchCheckinPlayer(token:string):Promise<CheckinContext>{return get(`/check-in/${encodeURIComponent(token)}`);}
 export async function fetchPlayerHistory(playerId:string):Promise<HistoryPoint[]>{return get(`/players/${encodeURIComponent(playerId)}/history`);}
 export async function fetchTeamStatuses(teamType:TeamType):Promise<AthleteStatus[]>{return get(`/statuses?team_type=${encodeURIComponent(teamType)}`);}
 export async function submitCheckin(payload:CheckinPayload):Promise<void>{await post("/checkins",payload);}

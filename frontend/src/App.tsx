@@ -16,7 +16,7 @@ const TEAM_TITLES: Record<TeamType, string> = {
   mixed: "Mixed team status",
 };
 
-const LANDING_URL = import.meta.env.VITE_LEGAL_BASE_URL || "";
+
 
 const TODAY = new Date().toLocaleDateString(undefined, {
   weekday: "long",

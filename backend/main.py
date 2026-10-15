@@ -46,8 +46,6 @@ if PRODUCTION:
         raise RuntimeError("DATABASE_URL is required in production; SQLite is local-development only.")
     if not os.environ.get("GOOGLE_CLIENT_ID", "").strip():
         raise RuntimeError("GOOGLE_CLIENT_ID is required in production.")
-    if not os.environ.get("SINOPIA_COACH_ALLOWLIST", "").strip():
-        raise RuntimeError("SINOPIA_COACH_ALLOWLIST is required in production; pilot access fails closed.")
     if len(os.environ.get("SINOPIA_PROXY_SECRET", "")) < 32:
         raise RuntimeError("SINOPIA_PROXY_SECRET must be at least 32 characters in production.")
     validate_encryption_config()

@@ -1,5 +1,6 @@
 """Persistence for coach accounts and their single team."""
 import uuid
+from datetime import datetime, timezone
 from sqlalchemy import select
 from backend.data.db import SessionLocal, create_tables, make_session_factory
 from backend.data.models import Coach, Team
@@ -34,10 +35,10 @@ class AccountStore:
             existing = db.scalar(select(Team).where(Team.coach_id == coach_id))
             if existing:
                 raise ValueError("A team has already been created for this coach.")
-            team = Team(team_id=uuid.uuid4().hex, coach_id=coach_id, name=name, team_type=team_type)
+            team = Team(team_id=uuid.uuid4().hex, coach_id=coach_id, name=name, team_type=team_type, terms_accepted_at=datetime.now(timezone.utc).isoformat())
             db.add(team)
             db.flush()
-            return {"team_id":team.team_id,"coach_id":team.coach_id,"name":team.name,"team_type":team.team_type}
+            return {"team_id":team.team_id,"coach_id":team.coach_id,"name":team.name,"team_type":team.team_type,"terms_accepted_at":team.terms_accepted_at}
 
     def get_team(self, coach_id: str) -> dict | None:
         with self._sessions() as db:

@@ -301,12 +301,13 @@ def test_policy_gate_and_version_bump_require_fresh_acceptance(client, tmp_path,
     monkeypatch.setattr(auth_api, "auth_store", store)
     email = "coach-gate@example.com"
     store.ensure_coach(email, "Coach")
+    store.update_team(email, "Test team", "girls")
     client.cookies.set("sinopia_session", store.create_session(email))
 
     assert client.get("/players?team_type=girls").status_code == 403
     accepted = client.post(
         "/auth/accept-policies",
-        json={"age_18_or_older": True, "authorised_and_parental_consent_obtained": True},
+        json={"age_18_or_older": True, "authorised_and_parental_consent_obtained": True, "accept_terms_and_privacy": True},
     )
     assert accepted.status_code == 200
     assert client.get("/players?team_type=girls").status_code == 200

@@ -3,9 +3,11 @@ sorted most urgent first. Built for a slow connection: the dashboard
 needs a single call, not one per athlete."""
 from datetime import date
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
+from backend.api.auth import require_onboarded_coach
+from backend.timeutil import service_date
 from backend.api.players import TeamType
 from backend.data.checkin_store import checkin_store
 from backend.data.player_store import player_store
@@ -24,12 +26,12 @@ class AthleteStatus(BaseModel):
 
 
 @router.get("/statuses", response_model=list[AthleteStatus])
-def team_statuses(team_type: TeamType) -> list[AthleteStatus]:
-    today = date.today()
+def team_statuses(team_type: TeamType, coach: dict = Depends(require_onboarded_coach)) -> list[AthleteStatus]:
+    today = service_date()
     statuses: list[AthleteStatus] = []
-    for player in player_store.list_for_team(team_type):
-        sessions = session_store.get_sessions(player["player_id"])
-        checkins = checkin_store.get_checkins(player["player_id"])
+    for player in player_store.list_for_team(coach["team_type"], coach["team_id"]):
+        sessions = session_store.get_sessions(player["player_id"], coach["team_id"])
+        checkins = checkin_store.get_checkins(player["player_id"], coach["team_id"])
         status = status_from_records(sessions, checkins, today)
         statuses.append(
             AthleteStatus(
@@ -38,6 +40,6 @@ def team_statuses(team_type: TeamType) -> list[AthleteStatus]:
                 **status,
             )
         )
-    order = {"refer": 0, "act": 1, "watch": 2, "ok": 3}
+    order = {"refer": 0, "act": 1, "watch": 2, "ok": 3, "building": 4}
     statuses.sort(key=lambda s: order.get(s.level, 9))
     return statuses

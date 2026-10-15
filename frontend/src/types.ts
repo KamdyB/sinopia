@@ -34,17 +34,38 @@ export interface Player {
 export interface HistoryPoint {
   date: string;
   session_load: number;
+  session_count: number;
   level: string;
   reasons: string[];
   numbers: Record<string, number | boolean>;
+  pain: boolean;
+  pain_area: string | null;
+  pain_acknowledged: boolean;
+  wellness_score: number | null;
 }
 
 export interface CheckinPayload {
-  player_id: string;
+  token: string;
+  rpe?: number;
   sleep: number;
   energy: number;
   soreness: number;
   stress: number;
   pain: boolean;
   pain_area?: string;
+}
+
+export interface OpenTeamSession {
+  team_id: string;
+  session_date: string;
+  duration_minutes: number;
+  is_open: boolean;
+  created_at: string;
+}
+
+export interface CheckinValidationResponse {
+  valid: boolean;
+  session_open: boolean;
+  session_date: string | null;
+  session_duration_minutes: number | null;
 }

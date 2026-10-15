@@ -2,8 +2,10 @@
 // The athlete-facing page. No accounts, no navigation, four taps per
 // question, mobile first. Reached by a link the coach shared.
 import { useEffect, useState } from "react";
-import { CheckinPayload, Player } from "./types";
-import { fetchPlayer, submitCheckin } from "./api";
+import { CheckinPayload } from "./types";
+import { submitCheckin, validateCheckinToken } from "./api";
+
+const LEGAL_BASE_URL = (import.meta.env.VITE_LEGAL_BASE_URL ?? (import.meta.env.PROD ? "" : "http://localhost:5174")).replace(/\/$/, "");
 
 type AnswerKey = "sleep" | "energy" | "soreness" | "stress";
 
@@ -25,8 +27,12 @@ const AREAS = [
   "Other",
 ];
 
-export function CheckinPage({ playerId }: { playerId: string }) {
-  const [player, setPlayer] = useState<Player | null>(null);
+export function CheckinPage({ token }: { token: string }) {
+  const [linkValid, setLinkValid] = useState(false);
+  const [sessionOpen, setSessionOpen] = useState(false);
+  const [sessionDate, setSessionDate] = useState<string | null>(null);
+  const [sessionDuration, setSessionDuration] = useState<number | null>(null);
+  const [rpe, setRpe] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<AnswerKey, number>>({
     sleep: 0,
@@ -42,9 +48,14 @@ export function CheckinPage({ playerId }: { playerId: string }) {
 
   useEffect(() => {
     let cancelled = false;
-    fetchPlayer(playerId)
-      .then((p) => {
-        if (!cancelled) setPlayer(p);
+    validateCheckinToken(token)
+      .then((context) => {
+        if (!cancelled) {
+          setLinkValid(context.valid);
+          setSessionOpen(context.session_open);
+          setSessionDate(context.session_date);
+          setSessionDuration(context.session_duration_minutes);
+        }
       })
       .catch(() => {
         if (!cancelled) setLoadError("This check-in link is not valid.");
@@ -52,13 +63,13 @@ export function CheckinPage({ playerId }: { playerId: string }) {
     return () => {
       cancelled = true;
     };
-  }, [playerId]);
+  }, [token]);
 
-  const ready = QUESTIONS.every((q) => answers[q.key] > 0);
+  const ready = QUESTIONS.every((q) => answers[q.key] > 0) && (!sessionOpen || rpe !== null);
 
   const handleSubmit = async () => {
     if (!ready) {
-      setSubmitError("Answer all four questions first.");
+      setSubmitError("Answer all four questions and rate the session effort if prompted.");
       return;
     }
     if (pain && !painArea) {
@@ -68,7 +79,8 @@ export function CheckinPage({ playerId }: { playerId: string }) {
     setSubmitting(true);
     setSubmitError(null);
     const payload: CheckinPayload = {
-      player_id: playerId,
+      token,
+      ...(sessionOpen && rpe !== null ? { rpe } : {}),
       ...answers,
       pain,
       ...(pain ? { pain_area: painArea } : {}),
@@ -101,12 +113,35 @@ export function CheckinPage({ playerId }: { playerId: string }) {
       </div>
     );
   }
+  if (!linkValid) {
+    return (
+      <div className="checkin">
+        <h1>Loading check-in</h1>
+        <p>Please wait.</p>
+      </div>
+    );
+  }
   return (
     <div className="checkin">
-      <h1>Hi {player?.name ?? "there"}, check in for today</h1>
+      <h1>Check in for today</h1>
       <p className="checkin__sub">
-        Takes under 20 seconds. Your coach sees the answers.
+        Takes under 20 seconds. Your coach can see these answers, including any pain report.
+        Only continue if your coach has explained why this information is being collected.
+        For questions or a deletion request, contact your coach.
       </p>
+      {sessionOpen && (
+        <fieldset className="checkin__question">
+          <legend>How hard did the session feel? (0–10)</legend>
+          <p className="checkin__ends">{sessionDate ? `Session date: ${sessionDate}` : "Your team session is open"}{sessionDuration ? ` · ${sessionDuration} minutes` : ""}</p>
+          <p className="checkin__ends">0 = rest, 10 = hardest effort</p>
+          <div className="checkin__scale">
+            {Array.from({ length: 11 }, (_, value) => value).map((value) => (
+              <button type="button" key={value} className={rpe === value ? "checkin__pick is-chosen" : "checkin__pick"} onClick={() => setRpe(value)}>{value}</button>
+            ))}
+          </div>
+        </fieldset>
+      )}
+
       {QUESTIONS.map((q) => (
         <fieldset className="checkin__question" key={q.key}>
           <legend>{q.label}</legend>
@@ -183,6 +218,11 @@ export function CheckinPage({ playerId }: { playerId: string }) {
         {submitting ? "Sending..." : "Send check-in"}
       </button>
       {submitError && <p className="checkin__error">{submitError}</p>}
+      <p className="checkin__sub">
+        <a href={LEGAL_BASE_URL + "/privacy"}>Privacy</a>{" · "}
+        <a href={LEGAL_BASE_URL + "/terms"}>Terms</a>{" · "}
+        <a href={LEGAL_BASE_URL + "/delete-account"}>Deletion requests</a>
+      </p>
     </div>
   );
 }

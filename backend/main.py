@@ -12,6 +12,14 @@ from backend.api.sessions import router as sessions_router
 from backend.api.statuses import router as statuses_router
 
 logger = logging.getLogger("sinopia.api")
+
+def configured_cors_origins():
+    raw = os.getenv("CORS_ORIGINS")
+    if raw:
+        return [origin.strip() for origin in raw.split(",") if origin.strip()]
+    return [] if os.getenv("VERCEL") == "1" else ["*"]
+
+CORS_ORIGINS = configured_cors_origins()
 app = FastAPI()
 
 @app.on_event("startup")
@@ -22,11 +30,14 @@ def startup():
 async def unhandled_exception_handler(request: Request, exc: Exception):
     logger.error("Unhandled API exception on %s %s (%s)", request.method, request.url.path, type(exc).__name__)
     origin = request.headers.get("origin", "")
-    allowed = os.getenv("CORS_ORIGINS", "*").split(",")
-    headers = {"Access-Control-Allow-Origin": origin if origin and ("*" in allowed or origin in allowed) else (allowed[0] if allowed else "*"), "Vary": "Origin", "Access-Control-Allow-Credentials": "true"}
+    headers = {"Vary": "Origin", "Access-Control-Allow-Credentials": "true"}
+    if origin and ("*" in CORS_ORIGINS or origin in CORS_ORIGINS):
+        headers["Access-Control-Allow-Origin"] = origin
+    elif not origin and "*" in CORS_ORIGINS:
+        headers["Access-Control-Allow-Origin"] = "*"
     return JSONResponse(status_code=500, content={"detail":"Something went wrong. Please try again. If the problem continues, contact your coach."}, headers=headers)
 
-app.add_middleware(CORSMiddleware, allow_origins=os.getenv("CORS_ORIGINS","*").split(","), allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 app.include_router(auth_router)
 app.include_router(sessions_router)
 app.include_router(checkins_router)

@@ -46,6 +46,7 @@ export interface HistoryPoint {
 
 export interface CheckinPayload {
   token: string;
+  rpe?: number;
   sleep: number;
   energy: number;
   soreness: number;
@@ -60,4 +61,11 @@ export interface OpenTeamSession {
   duration_minutes: number;
   is_open: boolean;
   created_at: string;
+}
+
+export interface CheckinValidationResponse {
+  valid: boolean;
+  session_open: boolean;
+  session_date: string | null;
+  session_duration_minutes: number | null;
 }

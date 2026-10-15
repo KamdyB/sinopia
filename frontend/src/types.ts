@@ -30,6 +30,9 @@ export interface Player {
   team_type: TeamType;
   registered_date: string;
   checkin_token: string;
+  session_open: boolean;
+  session_date: string | null;
+  session_duration_minutes: number | null;
 }
 
 export interface HistoryPoint {
@@ -42,6 +45,7 @@ export interface HistoryPoint {
 
 export interface CheckinPayload {
   checkin_token: string;
+  rpe?: number;
   sleep: number;
   energy: number;
   soreness: number;

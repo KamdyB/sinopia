@@ -32,7 +32,7 @@ function ProtectedApp() {
     fetch(`${API_BASE}/auth/me`, { credentials: "include" })
       .then(async (response) => {
         const body = await response.json().catch(() => ({}));
-        if (response.status === 401) { window.location.replace("/sign-in?expired=1"); return; }
+        if (response.status === 401) { window.location.replace(String(body.detail || "").toLowerCase().includes("expired") ? "/sign-in?expired=1" : "/sign-in"); return; }
         if (!response.ok) throw new Error(body.detail || "Could not load your account.");
         if (!body.team) { window.location.replace("/onboarding"); return; }
         if (active) setTeamType(body.team.team_type);

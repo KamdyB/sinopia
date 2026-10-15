@@ -1,5 +1,5 @@
 """Database schema. All SQLAlchemy table definitions live here."""
-from sqlalchemy import Boolean, Column, Float, Index, Integer, String, Text
+from sqlalchemy import Boolean, Column, Float, Index, Integer, String, Text, func
 from sqlalchemy.orm import declarative_base
 Base = declarative_base()
 
@@ -9,7 +9,7 @@ class Player(Base):
     name = Column(String(80), nullable=False)
     team_type = Column(String(12), nullable=False)
     registered_date = Column(String(10), nullable=False)
-    __table_args__ = (Index("uq_players_team_name", "team_type", "name", unique=True),)
+    __table_args__ = (Index("uq_players_team_name_ci", team_type, func.lower(name), unique=True),)
 
 class TrainingSession(Base):
     __tablename__ = "sessions"

@@ -24,6 +24,13 @@ export function AuthPage({ intent }: { intent: "sign-in" | "sign-up" }) {
   const [expired] = useState(() => new URLSearchParams(window.location.search).get("expired") === "1");
 
   useEffect(() => {
+    fetch(`${API_BASE}/auth/me`, { credentials: "include" })
+      .then((response) => response.ok ? response.json() : null)
+      .then((body) => { if (body) window.location.replace(body.team ? "/app" : "/onboarding"); })
+      .catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
     if (!CLIENT_ID) {
       setError("Google sign-in is not configured. Set VITE_GOOGLE_CLIENT_ID in the coach app and GOOGLE_CLIENT_ID in the API.");
       return;

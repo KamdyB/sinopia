@@ -7,6 +7,7 @@ import {
   SessionPayload,
   StatusResponse,
   TeamType,
+  OpenTeamSession,
 } from "./types";
 
 const API_BASE = (import.meta.env.VITE_API_BASE ?? (import.meta.env.PROD ? "/api" : "http://localhost:8000")).replace(/\/$/, "");
@@ -153,4 +154,17 @@ export async function deletePlayer(playerId: string): Promise<void> {
     headers: { "X-Sinopia-Request": "1" },
   });
   if (!res.ok) throw await parseError(res);
+}
+
+export async function fetchOpenTeamSession(): Promise<OpenTeamSession | null> {
+  const result = await get<{ session: OpenTeamSession | null }>("/team-sessions/current");
+  return result.session;
+}
+
+export async function openTeamSession(dateStr: string, durationMinutes: number): Promise<OpenTeamSession> {
+  return post<OpenTeamSession>("/team-sessions/open", { date_str: dateStr, duration_minutes: durationMinutes });
+}
+
+export async function closeTeamSession(): Promise<OpenTeamSession> {
+  return post<OpenTeamSession>("/team-sessions/close", {});
 }

@@ -59,9 +59,39 @@ Athlete check-in links use a separate random token, not the athlete's player ID.
 
 Production rate-limit counters are stored in PostgreSQL so they are shared across function instances. Production API requests also require a server-only shared secret from the first-party Vercel proxy; a Cloudflare edge rule and production proxy/IP verification still need deployment testing. Athlete labels and pain-area values use application-level AES-GCM encryption when a key ring is configured; production refuses to start without it. Automated retention enforcement is not implemented. The security branch adds a SQLAlchemy PostgreSQL adapter and an owner-role schema/RLS migration command. CI tests RLS with a restricted non-owner role. Existing SQLite records are not automatically copied to PostgreSQL; any legacy data migration must be separately tested. Do not deploy with sensitive athlete data until these gaps are closed.
 
-## Configuration
+## Vercel environment variables
 
-The backend environment variables are listed in .env.example. The frontend and landing environment examples document the API URL, Google sign-in client ID, legal page URL, coach app URL, and privacy contact setting. Do not commit secrets or real credentials.
+Set these per project in Vercel. Do not put secrets in any `VITE_*` variable.
+
+### API project (repository root; `backend.main:app`)
+- `SINOPIA_ENV=production` — not secret.
+- `DATABASE_URL` — Neon pooled PostgreSQL URL using the restricted app role and `sslmode=require`. **Secret.**
+- `GOOGLE_CLIENT_ID` — Google OAuth web client ID. Public identifier, but configure on the API too.
+- `SINOPIA_COACH_ALLOWLIST` — approved pilot coach emails. **Sensitive.**
+- `SINOPIA_ALLOWED_ORIGINS` — exact HTTPS origins, comma-separated. Not secret.
+- `SINOPIA_PROXY_SECRET` — at least 32 random characters shared with the frontend proxy. **Secret.**
+- `SINOPIA_ENCRYPTION_KEYS` — active AES-GCM key first, optional older keys after it. **Secret.**
+- `TURNSTILE_SECRET_KEY` — Cloudflare Turnstile server secret. **Secret.**
+- `SINOPIA_TURNSTILE_HOSTNAMES` — approved hostnames. Not secret.
+- `SINOPIA_TERMS_VERSION`, `SINOPIA_PRIVACY_VERSION` — current document versions. Not secret.
+- `SINOPIA_TIMEZONE` — IANA timezone for server-assigned dates (e.g. `Africa/Lagos`). Not secret.
+
+Keep `DATABASE_OWNER_URL` out of the running API environment; it is for one-time owner migrations only.
+
+### Coach app project (root directory `frontend/`)
+- `VITE_API_BASE=/api` — public path to the same-origin Vercel proxy.
+- `SINOPIA_BACKEND_URL` — server-only API origin used by the proxy. **Do not prefix with `VITE_`.**
+- `SINOPIA_PROXY_SECRET` — server-only proxy secret matching the API project. **Secret.**
+- `VITE_GOOGLE_CLIENT_ID` — public Google OAuth client ID; must match `GOOGLE_CLIENT_ID`.
+- `VITE_TURNSTILE_SITE_KEY` — public Cloudflare Turnstile site key.
+- `VITE_LEGAL_BASE_URL` — public landing/legal site origin.
+
+### Landing/legal project (root directory `landing/`)
+- `VITE_COACH_APP_URL` — deployed coach-app origin, without a path suffix.
+- `VITE_CONTACT_EMAIL` — monitored public privacy contact.
+
+The repository's `.env.example`, `frontend/.env.example`, and `landing/.env.example` contain local templates. Replace example domains and verify every hosted setting before deployment.
+
 
 ## Privacy and operational documents
 
@@ -81,6 +111,6 @@ In production, Sinopia refuses to start without SINOPIA_ENCRYPTION_KEYS. Configu
 
 ## Hosting and user feedback
 
-Use [the launch checklist](docs/launch-checklist.md) to configure the backend, the coach frontend, and the landing/legal site. The coach frontend includes a same-origin Vercel Edge proxy at `/api/*`; configure the server-side `SINOPIA_BACKEND_URL` environment variable in Vercel and allow the exact coach frontend origin in the backend. The frontend project must set `VITE_API_BASE=/api`, the Google client ID, and the landing-site legal URL. The landing project must set the deployed coach URL and a monitored contact address. These deployment values are deliberately not guessed or committed.
+Use [the launch checklist](docs/launch-checklist.md) to configure the backend, the coach frontend, and the landing/legal site. The coach frontend includes a same-origin Vercel Edge proxy at `/api/*`; configure the server-side `SINOPIA_BACKEND_URL` environment variable in Vercel and allow the exact coach frontend origin in the backend. The coach project must set `VITE_API_BASE=/api`, Google/Turnstile public IDs, the server-only proxy origin/secret, and the legal URL. The landing project must set the deployed coach origin and a monitored contact address. These deployment values are deliberately not guessed or committed.
 
 The branch is suitable only for a synthetic-data preview after the latest CI passes and hosting configuration is verified. A short, privacy-preserving tester script is included in `docs/launch-checklist.md`. It is not cleared for real athlete or child health data while retention automation, hosted auth/RLS/deletion tests, key recovery, legal/privacy review, provider configuration, and the remaining operational controls are outstanding.

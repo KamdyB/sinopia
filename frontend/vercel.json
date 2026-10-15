@@ -3,16 +3,14 @@
     {
       "source": "/api/(.*)",
       "destination": "https://sinopia-eight.vercel.app/$1"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/check-in/(.*)",
-      "dest": "/index.html"
     },
     {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/check-in/(.*)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }

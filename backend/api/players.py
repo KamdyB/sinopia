@@ -83,14 +83,23 @@ def player_history(player_id: str, coach: dict = Depends(get_current_coach), tea
     return [HistoryPoint(**p) for p in history_points(sessions)]
 
 
-@router.get("/check-in/{token}", response_model=PlayerResponse)
-def resolve_checkin_link(token: str) -> PlayerResponse:
+class CheckinContext(BaseModel):
+    name: str
+    checkin_token: str
+    session_open: bool = False
+    session_date: str | None = None
+    session_duration_minutes: float | None = None
+
+
+@router.get("/check-in/{token}", response_model=CheckinContext)
+def resolve_checkin_link(token: str) -> CheckinContext:
     player = player_store.get_by_checkin_token(token)
     if player is None:
         raise HTTPException(status_code=404, detail="This check-in link is not valid.")
     session = team_session_store.current(player["team_id"])
-    return PlayerResponse(
-        **player,
+    return CheckinContext(
+        name=player["name"],
+        checkin_token=token,
         session_open=bool(session),
         session_date=session["date"] if session else None,
         session_duration_minutes=session["duration_minutes"] if session else None,

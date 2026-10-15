@@ -1,4 +1,5 @@
 import sqlite3
+import backend.api.players as players_api
 from backend.main import app  # imported so conftest patches apply to its routers
 
 
@@ -336,3 +337,18 @@ def test_open_team_session_adds_effort_question_and_records_workload(client):
 
     assert client.post("/team-sessions/close").status_code == 200
     assert client.post("/checkin/validate", json={"token": token}).json()["session_open"] is False
+
+
+def test_unhandled_api_error_is_safe_json_with_cors(client, monkeypatch):
+    def explode(_player_id):
+        raise RuntimeError("private athlete label must not be returned")
+
+    monkeypatch.setattr(players_api.player_store, "get", explode)
+    response = client.get(
+        "/players/private-id",
+        headers={"Origin": "http://localhost:5173"},
+    )
+    assert response.status_code == 500
+    assert response.json() == {"detail": "An unexpected error occurred. Please try again."}
+    assert response.headers.get("access-control-allow-origin") == "http://localhost:5173"
+    assert "private athlete label" not in response.text

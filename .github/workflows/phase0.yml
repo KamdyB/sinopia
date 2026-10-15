@@ -12,7 +12,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python -m pip install fastapi uvicorn pydantic openai 'SQLAlchemy>=2.0' 'psycopg[binary]>=3.1' google-auth requests cryptography pytest httpx
+      - run: python -m pip install fastapi uvicorn pydantic openai 'SQLAlchemy>=2.0' 'psycopg[binary]>=3.1' google-auth requests cryptography itsdangerous pytest httpx
       - run: pytest -q
         env:
           DATABASE_URL: sqlite:///./ci.db

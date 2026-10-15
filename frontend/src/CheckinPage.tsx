@@ -36,6 +36,7 @@ export function CheckinPage({ playerId: token }: { playerId: string }) {
   });
   const [pain, setPain] = useState(false);
   const [painArea, setPainArea] = useState("");
+  const [rpe, setRpe] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -54,7 +55,7 @@ export function CheckinPage({ playerId: token }: { playerId: string }) {
     };
   }, [token]);
 
-  const ready = Boolean(player) && QUESTIONS.every((q) => answers[q.key] > 0);
+  const ready = Boolean(player) && QUESTIONS.every((q) => answers[q.key] > 0) && (!player?.session_open || rpe !== null);
 
   const handleSubmit = async () => {
     if (!ready) {
@@ -69,6 +70,7 @@ export function CheckinPage({ playerId: token }: { playerId: string }) {
     setSubmitError(null);
     const payload: CheckinPayload = {
       checkin_token: token,
+      ...(player?.session_open && rpe !== null ? { rpe } : {}),
       ...answers,
       pain,
       ...(pain ? { pain_area: painArea } : {}),
@@ -111,6 +113,17 @@ export function CheckinPage({ playerId: token }: { playerId: string }) {
         Your answers help your coach check in on your training and wellbeing. This is not a medical diagnosis.
         Only answer what you feel comfortable sharing, and tell your coach or a trusted adult if you need help.
       </p>
+      {player?.session_open && (
+        <fieldset className="checkin__question">
+          <legend>How hard did today’s session feel? (0–10)</legend>
+          <p className="checkin__ends">0 = rest, 10 = hardest effort</p>
+          <div className="checkin__scale">
+            {Array.from({ length: 11 }, (_, value) => value).map((value) => (
+              <button type="button" key={value} className={rpe === value ? "checkin__pick is-chosen" : "checkin__pick"} onClick={() => setRpe(value)}>{value}</button>
+            ))}
+          </div>
+        </fieldset>
+      )}
       {QUESTIONS.map((q) => (
         <fieldset className="checkin__question" key={q.key}>
           <legend>{q.label}</legend>

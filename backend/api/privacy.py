@@ -173,6 +173,7 @@ def delete_account(
         )
         conn.execute("DELETE FROM players WHERE team_id = ?", (team_id,))
         conn.execute("DELETE FROM team_sessions WHERE team_id = ?", (team_id,))
+        conn.execute("DELETE FROM open_team_sessions WHERE team_id = ?", (team_id,))
         conn.execute("DELETE FROM audit_log WHERE team_id = ?", (team_id,))
         conn.execute("DELETE FROM coach_sessions WHERE coach_email = ?", (email,))
         conn.execute("DELETE FROM teams WHERE team_id = ?", (team_id,))

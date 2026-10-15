@@ -5,6 +5,7 @@ const API_BASE = (import.meta.env.VITE_API_BASE || "/api").replace(/\/+$/, "");
 export function OnboardingPage() {
   const [name, setName] = useState("");
   const [teamType, setTeamType] = useState<"girls" | "boys" | "mixed">("girls");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -16,7 +17,7 @@ export function OnboardingPage() {
       const response = await fetch(`${API_BASE}/teams`, {
         method: "POST", credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), team_type: teamType }),
+        body: JSON.stringify({ name: name.trim(), team_type: teamType, accepted_terms: acceptedTerms }),
       });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) {
@@ -43,7 +44,8 @@ export function OnboardingPage() {
       <label><input type="radio" name="team-type" checked={teamType === "boys"} onChange={() => setTeamType("boys")} /> Boys</label>
       <label><input type="radio" name="team-type" checked={teamType === "mixed"} onChange={() => setTeamType("mixed")} /> Mixed</label>
     </fieldset>
-    <button className="record-btn" onClick={submit} disabled={busy}>{busy ? "Saving…" : "Create team"}</button>
+    <label><input type="checkbox" checked={acceptedTerms} onChange={(e) => setAcceptedTerms(e.target.checked)} /> I have read and accept the <a href="/terms" target="_blank" rel="noreferrer">Terms</a> and <a href="/privacy" target="_blank" rel="noreferrer">Privacy notice</a>.</label>
+    <button className="record-btn" onClick={submit} disabled={busy || !acceptedTerms}>{busy ? "Saving…" : "Create team"}</button>
     {error && <p className="checkin__error" role="alert">{error}</p>}
   </section></main>;
 }

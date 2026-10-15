@@ -49,6 +49,8 @@ def test_google_signup_creates_secure_cookie_and_persists_team(client, tmp_path,
     me = client.get("/auth/me")
     assert me.status_code == 200
     assert me.json()["team"]["team_id"] == team_response.json()["team_id"]
+    assert me.json()["coach"]["adult_confirmed_at"]
+    assert me.json()["coach"]["authorization_confirmed_at"]
 
     logged_out = client.post("/auth/logout")
     assert logged_out.status_code == 200

@@ -3,9 +3,10 @@ her current status computed by the rules engine. HTTP orchestration only;
 storage and scoring live below it."""
 from datetime import date
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
+from backend.api.auth import get_current_coach, get_current_team
 from backend.data.player_store import player_store
 from backend.data.session_store import session_store
 from backend.scoring.athlete_status import status_from_sessions
@@ -32,8 +33,9 @@ class SessionRequest(BaseModel):
 
 
 @router.post("/sessions", response_model=StatusResponse)
-def log_session(req: SessionRequest) -> StatusResponse:
-    if player_store.get(req.player_id) is None:
+def log_session(req: SessionRequest, coach: dict = Depends(get_current_coach), team: dict = Depends(get_current_team)) -> StatusResponse:
+    player = player_store.get(req.player_id)
+    if player is None or player["team_id"] != team["team_id"]:
         raise HTTPException(
             status_code=404,
             detail="Athlete not found. Register the athlete first, then log sessions against their id.",

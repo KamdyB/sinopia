@@ -38,7 +38,9 @@ export function PlayerDirectory({
   };
 
   const copyCheckinLink = async (playerId: string) => {
-    const url = `${window.location.origin}/check-in/${playerId}`;
+    const player = players.find((p) => p.player_id === playerId);
+    if (!player) return;
+    const url = `${window.location.origin}/check-in/${player.checkin_token}`;
     try {
       await navigator.clipboard.writeText(url);
     } catch {

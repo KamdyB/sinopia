@@ -18,6 +18,7 @@ from backend.api.sessions import router as sessions_router
 from backend.api.statuses import router as statuses_router
 from backend.api.team_sessions import router as team_sessions_router
 from backend.data.auth_store import auth_store
+from backend.data.db import connect
 from backend.security.rate_limit import client_ip, enforce_rate_limit
 from backend.security.encryption import validate_encryption_config
 
@@ -57,8 +58,20 @@ app = FastAPI(
 )
 @app.get("/health", include_in_schema=False)
 def health_check() -> dict[str, str]:
-    """Basic process liveness only; does not verify database readiness."""
+    """Public process liveness endpoint; contains no deployment details."""
     return {"status": "ok"}
+
+
+@app.get("/ready", include_in_schema=False)
+def readiness_check():
+    """Public readiness endpoint: confirms the configured database accepts a query."""
+    try:
+        with connect() as conn:
+            conn.execute("SELECT 1").fetchone()
+    except Exception:
+        logging.getLogger("sinopia.api").warning("Readiness check failed: database unavailable")
+        return JSONResponse(status_code=503, content={"status": "not_ready"})
+    return {"status": "ready"}
 
 
 logger = logging.getLogger("sinopia.api")
@@ -97,6 +110,8 @@ def _rate_limit(request: Request) -> tuple[int, int] | None:
         return (10, 60)
     if path == "/checkin/validate" and request.method == "POST":
         return (10, 60)
+    if path == "/privacy/delete-account" and request.method == "POST":
+        return (3, 900)
     if path == "/explain" and request.method == "POST":
         return (20, 3600)
     if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
@@ -129,6 +144,9 @@ async def apply_rate_limits(request: Request, call_next):
 
 @app.middleware("http")
 async def require_trusted_proxy(request: Request, call_next):
+    # Liveness/readiness probes are intentionally public and disclose no secrets.
+    if request.url.path in {"/health", "/ready"}:
+        return await call_next(request)
     if PRODUCTION:
         configured = os.environ.get("SINOPIA_PROXY_SECRET", "")
         supplied = request.headers.get("x-sinopia-proxy-secret", "")

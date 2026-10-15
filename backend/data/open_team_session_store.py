@@ -24,13 +24,18 @@ class OpenTeamSessionStore:
             ).fetchone()
             if current and current["is_open"]:
                 raise ValueError("A team session is already open. Close it before opening another.")
-            conn.execute(
+            result = conn.execute(
                 "INSERT INTO open_team_sessions (team_id, session_date, duration_minutes, is_open, created_at) "
                 "VALUES (?, ?, ?, 1, ?) ON CONFLICT(team_id) DO UPDATE SET "
                 "session_date = excluded.session_date, duration_minutes = excluded.duration_minutes, "
-                "is_open = 1, created_at = excluded.created_at",
+                "is_open = 1, created_at = excluded.created_at "
+                "WHERE open_team_sessions.is_open = 0",
                 (team_id, session_date, duration_minutes, now),
             )
+            # The conditional upsert is the concurrency guard: even if two serverless
+            # requests pass the initial read simultaneously, only one can open the row.
+            if result.rowcount == 0:
+                raise ValueError("A team session is already open. Close it before opening another.")
         return {"team_id":team_id,"session_date":session_date,
                 "duration_minutes":duration_minutes,"is_open":True,"created_at":now}
 

@@ -5,6 +5,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import { AuthGate } from "./AuthGate";
 import { CheckinPage } from "./CheckinPage";
+import { LegalRoute } from "./LegalRoute";
 import { ThemeStage } from "./ThemeStage";
 
 // Keep the athlete token in the URL fragment. Browsers do not send fragments
@@ -18,6 +19,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     {checkinToken ? (
       <CheckinPage token={decodeURIComponent(checkinToken)} />
+    ) : window.location.pathname === "/privacy" ? (
+      <LegalRoute terms={false} />
+    ) : window.location.pathname === "/terms" ? (
+      <LegalRoute terms />
     ) : (
       <ThemeStage>
         <AuthGate>

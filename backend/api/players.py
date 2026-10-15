@@ -5,7 +5,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from backend.api.auth import require_accepted_coach
+from backend.api.auth import require_accepted_coach, require_onboarded_coach
 from backend.data.checkin_store import checkin_store
 from backend.data.player_store import DuplicatePlayerError, player_store
 from backend.data.session_store import session_store
@@ -62,9 +62,9 @@ class HistoryPoint(BaseModel):
 
 
 @router.post("/players", response_model=PlayerResponse, status_code=201)
-def register_player(req: PlayerRequest, coach: dict = Depends(require_accepted_coach)) -> PlayerResponse:
+def register_player(req: PlayerRequest, coach: dict = Depends(require_onboarded_coach)) -> PlayerResponse:
     try:
-        player = player_store.register(req.name, req.team_type, service_date().isoformat(), coach["team_id"])
+        player = player_store.register(req.name, coach["team_type"], service_date().isoformat(), coach["team_id"])
     except DuplicatePlayerError:
         raise HTTPException(status_code=409, detail="An athlete label is already registered for this team.")
     return PlayerResponse(**player)
@@ -72,7 +72,7 @@ def register_player(req: PlayerRequest, coach: dict = Depends(require_accepted_c
 
 @router.get("/players", response_model=list[PlayerResponse])
 def list_players(team_type: TeamType, coach: dict = Depends(require_accepted_coach)) -> list[PlayerResponse]:
-    return [PlayerResponse(**p) for p in player_store.list_for_team(team_type, coach["team_id"])]
+    return [PlayerResponse(**p) for p in player_store.list_for_team(coach["team_type"], coach["team_id"])]
 
 
 @router.get("/players/{player_id}", response_model=PlayerResponse)

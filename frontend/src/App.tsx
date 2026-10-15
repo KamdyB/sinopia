@@ -16,8 +16,6 @@ const TEAM_TITLES: Record<TeamType, string> = {
   mixed: "Mixed team status",
 };
 
-
-
 const TODAY = new Date().toLocaleDateString(undefined, {
   weekday: "long",
   month: "long",

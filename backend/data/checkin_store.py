@@ -59,6 +59,15 @@ class CheckinStore:
         with connect(self._db_path, team_id=team_id) as conn:
             conn.execute(query, params)
 
+    def purge_before(self, cutoff_date: str, team_id: str) -> int:
+        """Delete old wellness check-ins only within the specified team."""
+        with connect(self._db_path, team_id=team_id) as conn:
+            result = conn.execute(
+                "DELETE FROM checkins WHERE team_id = ? AND date < ?",
+                (team_id, cutoff_date),
+            )
+        return max(0, result.rowcount)
+
     def delete_checkin(self, checkin_id: int, player_id: str, team_id: str) -> bool:
         with connect(self._db_path, team_id=team_id) as conn:
             result = conn.execute(

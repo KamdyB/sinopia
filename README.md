@@ -57,7 +57,7 @@ Coach routes require a coach session and are scoped to the owning team. Google I
 
 Athlete check-in links use a separate random token, not the athlete's player ID. The token is placed in the URL fragment, so it is not sent in HTTP requests or normal server access logs. A coach can regenerate a token to invalidate an older link. The API allows one check-in per athlete per day. When a coach opens a team session, the athlete check-in also asks for effort on a 0–10 scale and records duration × effort in workload history; closing the session removes the prompt from newly opened links. A pain flag remains active until a coach acknowledges it. Coach exports are team-scoped, and account deletion requires a fresh Google ID token.
 
-Production rate-limit counters are stored in PostgreSQL so they are shared across function instances. Production API requests also require a server-only shared secret from the first-party Vercel proxy; a Cloudflare edge rule and production proxy/IP verification still need deployment testing. Athlete labels and pain-area values use application-level AES-GCM encryption when a key ring is configured; production refuses to start without it. Automated retention enforcement is not implemented. The security branch adds a SQLAlchemy PostgreSQL adapter and an owner-role schema/RLS migration command. CI tests RLS with a restricted non-owner role. Existing SQLite records are not automatically copied to PostgreSQL; any legacy data migration must be separately tested. Do not deploy with sensitive athlete data until these gaps are closed.
+Production rate-limit counters are stored in PostgreSQL so they are shared across function instances. Production API requests also require a server-only shared secret from the first-party Vercel proxy; a Cloudflare edge rule and production proxy/IP verification still need deployment testing. Athlete labels and pain-area values use application-level AES-GCM encryption when a key ring is configured; production refuses to start without it. Automated retention is configurable through the daily Vercel cron. It fails closed and deletes nothing until `CRON_SECRET` and an explicitly approved `SINOPIA_RETENTION_DAYS` value are configured. The security branch adds a SQLAlchemy PostgreSQL adapter and an owner-role schema/RLS migration command. CI tests RLS with a restricted non-owner role. Existing SQLite records are not automatically copied to PostgreSQL; any legacy data migration must be separately tested. Do not deploy with sensitive athlete data until these gaps are closed.
 
 ## Vercel environment variables
 
@@ -75,6 +75,8 @@ Set these per project in Vercel. Do not put secrets in any `VITE_*` variable.
 - `SINOPIA_TURNSTILE_HOSTNAMES` — approved hostnames. Not secret.
 - `SINOPIA_TERMS_VERSION`, `SINOPIA_PRIVACY_VERSION` — current document versions. Not secret.
 - `SINOPIA_TIMEZONE` — IANA timezone for server-assigned dates (e.g. `Africa/Lagos`). Not secret.
+- `CRON_SECRET` — bearer secret for the scheduled retention endpoint. **Secret.**
+- `SINOPIA_RETENTION_DAYS` — approved retention window in days (1–3650). Not secret; do not set until the retention policy is approved.
 
 Keep `DATABASE_OWNER_URL` out of the running API environment; it is for one-time owner migrations only.
 
@@ -101,7 +103,7 @@ Operational drafts are in docs/data-map.md, docs/dpia.md, docs/breach-response.m
 
 ## Known gaps before production
 
-The first-party `/api/*` Vercel proxy is present, and the athlete history view includes workload/wellness charts plus a self-reported pain-region map; the app collects no geographic coordinates, so it does not produce a geographic map. The custom proxy secret, domain, exact production CSP, Cloudflare edge rule, retention automation, inactivity warnings, PostgreSQL runtime configuration, and hosted preview tests still require verification. Confirm actual subprocessors and processing regions, test deletion across backups, and complete an independent security and privacy review before collecting real athlete data.
+The first-party `/api/*` Vercel proxy is present, and the athlete history view includes workload/wellness charts plus a self-reported pain-region map; the app collects no geographic coordinates, so it does not produce a geographic map. The custom proxy secret, domain, exact production CSP, Cloudflare edge rule, configured retention policy/cron secret, inactivity warnings, PostgreSQL runtime configuration, and hosted preview tests still require verification. Confirm actual subprocessors and processing regions, test deletion across backups, and complete an independent security and privacy review before collecting real athlete data.
 
 
 ## Application-level encryption

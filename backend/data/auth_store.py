@@ -62,6 +62,12 @@ class AuthStore:
             conn.execute("UPDATE players SET team_type = ? WHERE team_id = ?", (team_type, updated["team_id"]))
         return dict(updated)
 
+    def list_team_ids(self) -> list[str]:
+        """Return team IDs for maintenance jobs; callers must scope subsequent writes."""
+        with connect(self._db_path) as conn:
+            rows = conn.execute("SELECT team_id FROM teams WHERE team_id IS NOT NULL ORDER BY team_id").fetchall()
+        return [str(row["team_id"]) for row in rows]
+
     def create_session(self, email: str, lifetime_hours: int = 8) -> str:
         token = secrets.token_urlsafe(32)
         now = datetime.now(timezone.utc)

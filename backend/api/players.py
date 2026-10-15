@@ -3,9 +3,10 @@ Orchestration and HTTP concerns only; storage and scoring live below it."""
 from datetime import date
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, field_validator
 
+from backend.api.auth import get_current_coach, get_current_team
 from backend.data.player_store import DuplicatePlayerError, player_store
 from backend.data.session_store import session_store
 from backend.scoring.history import history_points
@@ -16,7 +17,7 @@ TeamType = Literal["girls", "boys", "mixed"]
 
 class PlayerRequest(BaseModel):
     name: str = Field(min_length=1, max_length=80)
-    team_type: TeamType
+    team_type: TeamType | None = None
 
     @field_validator("name")
     @classmethod
@@ -33,6 +34,7 @@ class PlayerResponse(BaseModel):
     team_type: TeamType
     registered_date: str
     checkin_token: str
+    team_id: str
 
 
 class HistoryPoint(BaseModel):
@@ -44,9 +46,9 @@ class HistoryPoint(BaseModel):
 
 
 @router.post("/players", response_model=PlayerResponse, status_code=201)
-def register_player(req: PlayerRequest) -> PlayerResponse:
+def register_player(req: PlayerRequest, coach: dict = Depends(get_current_coach), team: dict = Depends(get_current_team)) -> PlayerResponse:
     try:
-        player = player_store.register(req.name, req.team_type, date.today().isoformat())
+        player = player_store.register(req.name, team["team_type"], date.today().isoformat(), team["team_id"])
     except DuplicatePlayerError:
         raise HTTPException(
             status_code=409,
@@ -56,21 +58,22 @@ def register_player(req: PlayerRequest) -> PlayerResponse:
 
 
 @router.get("/players", response_model=list[PlayerResponse])
-def list_players(team_type: TeamType) -> list[PlayerResponse]:
-    return [PlayerResponse(**p) for p in player_store.list_for_team(team_type)]
+def list_players(team_type: TeamType | None = None, coach: dict = Depends(get_current_coach), team: dict = Depends(get_current_team)) -> list[PlayerResponse]:
+    return [PlayerResponse(**p) for p in player_store.list_for_team(team["team_type"], team["team_id"])]
 
 
 @router.get("/players/{player_id}", response_model=PlayerResponse)
-def get_player(player_id: str) -> PlayerResponse:
+def get_player(player_id: str, coach: dict = Depends(get_current_coach), team: dict = Depends(get_current_team)) -> PlayerResponse:
     player = player_store.get(player_id)
-    if player is None:
+    if player is None or player["team_id"] != team["team_id"]:
         raise HTTPException(status_code=404, detail="Athlete not found.")
     return PlayerResponse(**player)
 
 
 @router.get("/players/{player_id}/history", response_model=list[HistoryPoint])
-def player_history(player_id: str) -> list[HistoryPoint]:
-    if player_store.get(player_id) is None:
+def player_history(player_id: str, coach: dict = Depends(get_current_coach), team: dict = Depends(get_current_team)) -> list[HistoryPoint]:
+    player = player_store.get(player_id)
+    if player is None or player["team_id"] != team["team_id"]:
         raise HTTPException(status_code=404, detail="Athlete not found.")
     sessions = session_store.get_sessions(player_id)
     return [HistoryPoint(**p) for p in history_points(sessions)]

@@ -49,6 +49,7 @@ def create_tables(target_engine=None):
                 connection.execute(text("ALTER TABLE players ADD COLUMN team_id VARCHAR(64) NOT NULL DEFAULT 'legacy'"))
                 connection.execute(text("UPDATE players SET team_id = 'legacy-' || team_type"))
         with db_engine.begin() as connection:
+            connection.execute(text("DROP INDEX IF EXISTS idx_players_team_name"))
             connection.execute(text("DROP INDEX IF EXISTS uq_players_team_name"))
             connection.execute(text("DROP INDEX IF EXISTS uq_players_team_name_ci"))
     Base.metadata.create_all(bind=db_engine)

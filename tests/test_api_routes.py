@@ -353,3 +353,40 @@ def test_unhandled_api_error_is_safe_json_with_cors(client, monkeypatch):
     assert response.json() == {"detail": "An unexpected error occurred. Please try again."}
     assert response.headers.get("access-control-allow-origin") == "http://localhost:5173"
     assert "private athlete label" not in response.text
+
+
+def test_open_team_session_rejects_second_open_without_overwriting_first(client):
+    first = client.post(
+        "/team-sessions/open",
+        json={"date_str": service_date().isoformat(), "duration_minutes": 75},
+    )
+    assert first.status_code == 201
+    second = client.post(
+        "/team-sessions/open",
+        json={"date_str": service_date().isoformat(), "duration_minutes": 30},
+    )
+    assert second.status_code == 409
+    current = client.get("/team-sessions/current").json()["session"]
+    assert current["duration_minutes"] == 75
+
+
+def test_health_and_readiness_endpoints_are_available(client, monkeypatch):
+    import backend.main as main_api
+
+    assert client.get("/health").json() == {"status": "ok"}
+    monkeypatch.setattr(main_api, "connect", lambda: _FakeReadyConnection())
+    assert client.get("/ready").json() == {"status": "ready"}
+
+
+class _FakeReadyConnection:
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_args):
+        return False
+
+    def execute(self, _statement):
+        return self
+
+    def fetchone(self):
+        return (1,)

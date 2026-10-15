@@ -117,3 +117,43 @@ p { margin: 0 0 1rem; }
   .facts { grid-template-columns: repeat(3, 1fr); }
   .honesty { grid-template-columns: 1fr 1fr; }
 }
+
+
+/* Mobile layout pass: keep the public landing page comfortable on narrow screens. */
+html, body, #root { width: 100%; min-width: 320px; }
+body { overflow-x: hidden; }
+.landing { width: 100%; padding-inline: clamp(1rem, 4vw, 1.5rem); }
+.nav { align-items: flex-start; gap: .85rem; }
+.nav__links { min-width: 0; }
+.nav__cta { flex: 0 0 auto; }
+.hero, .section { min-width: 0; }
+.hero-cta { align-items: stretch; }
+.hero-cta .btn { text-align: center; }
+.btn { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.demo-controls button { min-height: 44px; }
+@media (max-width: 700px) {
+  .nav { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+  .nav__wordmark { grid-column: 1; }
+  .nav__cta { grid-column: 2; grid-row: 1; margin-left: 0; }
+  .nav__links { grid-column: 1 / -1; display: flex; gap: .5rem 1rem; }
+  .hero { padding-top: 1.5rem; }
+  .hero-stat { padding: 1rem; border-radius: 1rem; }
+  .hero-stat__number { font-size: clamp(2rem, 10vw, 3rem); }
+  .section { padding-block: 1.75rem; }
+  .section--tinted { padding: 1.25rem 1rem; border-radius: 1rem; }
+  .hero-cta { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .demo-session-card { align-items: flex-start; padding: .8rem; }
+  .demo-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .demo-controls button { min-width: 0; white-space: normal; }
+  .footer__top, .footer__bottom { align-items: flex-start; flex-direction: column; }
+  .sources { overflow-wrap: anywhere; }
+}
+@media (max-width: 380px) {
+  .landing { padding-inline: .85rem; }
+  .nav__links { gap: .45rem .75rem; }
+  .nav__links a { font-size: .82rem; }
+  .demo-controls { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

@@ -9,13 +9,15 @@ import backend.api.checkins as checkins_api
 import backend.api.players as players_api
 import backend.api.sessions as sessions_api
 import backend.api.statuses as statuses_api
+import backend.api.team_sessions as team_sessions_api
 from backend.data.checkin_store import CheckinStore
 from backend.data.player_store import PlayerStore
 from backend.data.session_store import SessionStore
+from backend.data.team_session_store import TeamSessionStore
 from backend.main import app
 
-_ROUTE_MODULES = (players_api, sessions_api, checkins_api, statuses_api)
-_STORE_TYPES = (PlayerStore, SessionStore, CheckinStore)
+_ROUTE_MODULES = (players_api, sessions_api, checkins_api, statuses_api, team_sessions_api)
+_STORE_TYPES = (PlayerStore, SessionStore, CheckinStore, TeamSessionStore)
 
 @pytest.fixture()
 def client(tmp_path, monkeypatch):

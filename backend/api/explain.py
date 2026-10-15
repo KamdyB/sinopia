@@ -1,6 +1,5 @@
 """Produce a plain-language summary from a server-computed status."""
 import os
-from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
@@ -10,6 +9,7 @@ from backend.api.auth import require_accepted_coach
 from backend.data.checkin_store import checkin_store
 from backend.data.player_store import player_store
 from backend.data.session_store import session_store
+from backend.timeutil import service_date
 from backend.scoring.athlete_status import status_from_records
 
 router = APIRouter()
@@ -50,7 +50,7 @@ def explain(req: ExplainRequest, coach: dict = Depends(require_accepted_coach)) 
     status = status_from_records(
         session_store.get_sessions(req.player_id, coach["team_id"]),
         checkin_store.get_checkins(req.player_id, coach["team_id"]),
-        date.today(),
+        service_date(),
     )
     level = status["level"]
     reasons = status["reasons"]

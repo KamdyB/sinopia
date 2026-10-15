@@ -14,7 +14,13 @@ from sqlalchemy import (
 )
 from sqlalchemy.engine import Connection, CursorResult, Engine
 
-DB_PATH = os.environ.get("DATABASE_URL", "").strip() or os.environ.get("SINOPIA_DB_PATH", "sinopia.db")
+# Production must never silently fall back to an ephemeral/local SQLite file.
+# Store constructors pass this value to init_schema during module import.
+_configured_database_url = os.environ.get("DATABASE_URL", "").strip()
+_is_development = os.environ.get("SINOPIA_ENV", "production").lower() != "production"
+DB_PATH = _configured_database_url or (
+    os.environ.get("SINOPIA_DB_PATH", "sinopia.db") if _is_development else None
+)
 _METADATA = MetaData()
 _ENGINES: dict[str, Engine] = {}
 _ENGINE_LOCK = Lock()

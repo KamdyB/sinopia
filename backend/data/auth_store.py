@@ -34,7 +34,7 @@ class AuthStore:
                     (team_id, email, "My team", now),
                 )
                 team = conn.execute(
-                    "SELECT team_id, team_name FROM teams WHERE coach_email = ?", (email,)
+                    "SELECT team_id, team_name, team_type FROM teams WHERE coach_email = ?", (email,)
                 ).fetchone()
         result = dict(row)
         result.update(dict(team))

@@ -159,6 +159,11 @@ export default function App() {
         </p>
       </section>
 
+      <section className="section section--tinted">
+        <h2>I’m an athlete</h2>
+        <p className="who">Use the personal check-in link your coach sends you. You do not need to create an account.</p>
+      </section>
+
       <footer className="footer">
         <div className="footer__top">
           <span className="nav__wordmark">Sinopia</span>

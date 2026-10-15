@@ -5,7 +5,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from backend.api.auth import require_onboarded_coach
+from backend.api.auth import require_accepted_coach, require_onboarded_coach
 from backend.data.checkin_store import checkin_store
 from backend.data.player_store import DuplicatePlayerError, player_store
 from backend.data.session_store import session_store

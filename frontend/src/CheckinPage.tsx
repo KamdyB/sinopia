@@ -69,7 +69,7 @@ export function CheckinPage({ token }: { token: string }) {
 
   const handleSubmit = async () => {
     if (!ready) {
-      setSubmitError("Answer all four questions first.");
+      setSubmitError("Answer all four questions and rate the session effort if prompted.");
       return;
     }
     if (pain && !painArea) {

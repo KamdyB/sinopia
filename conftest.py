@@ -25,5 +25,5 @@ def client(tmp_path, monkeypatch):
             store_type = next((t for t in _STORE_TYPES if isinstance(value, t)), None)
             if store_type is not None:
                 monkeypatch.setattr(module, attr, fresh[store_type])
-    with TestClient(app) as test_client:
+    with TestClient(app, raise_server_exceptions=False) as test_client:
         yield test_client

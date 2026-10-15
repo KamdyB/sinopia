@@ -33,6 +33,7 @@ teams = Table(
     Column("team_id", String(128), primary_key=True),
     Column("coach_email", String(320), nullable=False, unique=True),
     Column("team_name", String(120), nullable=False),
+    Column("team_type", String(16)),
     Column("created_at", Text, nullable=False),
 )
 coach_sessions = Table(
@@ -102,6 +103,14 @@ team_sessions = Table(
     Column("team_type", String(16), nullable=False),
     Column("duration_minutes", Float, nullable=False),
     Column("rpe", Float, nullable=False),
+    Column("created_at", Text, nullable=False),
+)
+open_team_sessions = Table(
+    "open_team_sessions", _METADATA,
+    Column("team_id", String(128), primary_key=True),
+    Column("session_date", String(10), nullable=False),
+    Column("duration_minutes", Float, nullable=False),
+    Column("is_open", Integer, nullable=False, server_default="1"),
     Column("created_at", Text, nullable=False),
 )
 
@@ -232,6 +241,7 @@ def init_schema(db_path: str | Path | None = None) -> None:
         "players": {"team_id": "TEXT", "checkin_token": "TEXT", "name_hash": "TEXT", "consent_confirmed_at": "TEXT"},
         "checkins": {"team_id": "TEXT", "pain_acknowledged": "INTEGER NOT NULL DEFAULT 0"},
         "sessions": {"team_id": "TEXT"},
+        "teams": {"team_type": "TEXT"},
     }
     with engine.begin() as connection:
         inspector = inspect(connection)

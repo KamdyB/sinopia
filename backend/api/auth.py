@@ -181,3 +181,10 @@ def setup_team(payload: TeamSetupRequest, request: Request) -> dict[str, Any]:
         raise HTTPException(status_code=401, detail="Session expired. Sign in again.")
     auth_store.log_event("team_created", updated["team_id"])
     return _public_coach(updated)
+
+
+def require_onboarded_coach(request: Request) -> dict[str, Any]:
+    coach = require_accepted_coach(request)
+    if coach.get("team_type") not in {"girls", "boys", "mixed"}:
+        raise HTTPException(status_code=409, detail="Complete team setup before managing athletes.")
+    return coach

@@ -21,6 +21,7 @@ class GoogleCredential(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     credential: str = Field(min_length=20, max_length=8192)
     turnstile_token: str | None = Field(default=None, max_length=2048)
+    intent: Literal["signup", "signin"] = "signin"
 
 
 class CoachPublicResponse(BaseModel):
@@ -117,15 +118,16 @@ def google_sign_in(payload: GoogleCredential, response: Response) -> dict[str, A
     email = claims.get("email")
     if not isinstance(email, str) or not email.strip():
         raise HTTPException(status_code=401, detail="Google account email is unavailable.")
-    # Open registration is the default: verified Google identity + Turnstile.
-    # An allowlist is an optional deployment-level switch for invite-only pilots.
-    configured_allowlist = os.environ.get("SINOPIA_COACH_ALLOWLIST", "").strip()
-    if configured_allowlist:
-        allowed = {item.strip().lower() for item in configured_allowlist.split(",") if item.strip()}
-        if email.strip().lower() not in allowed:
-            raise HTTPException(status_code=403, detail="This coach account is not enabled for this pilot.")
+    # Any verified Google account may register. Email uniqueness is enforced by the database.
+    if payload.intent == "signup":
+        coach = auth_store.register_coach(email, str(claims.get("name") or email))
+        if coach is None:
+            raise HTTPException(status_code=409, detail="An account already exists for this email. Sign in instead.")
+    else:
+        if not auth_store.coach_exists(email):
+            raise HTTPException(status_code=404, detail="No account exists for this email. Choose Get started to create one.")
+        coach = auth_store.ensure_coach(email, str(claims.get("name") or email))
     auth_store.delete_sessions_for_coach(email)
-    coach = auth_store.ensure_coach(email, str(claims.get("name") or email))
     token = auth_store.create_session(email)
     auth_store.log_event("coach_signed_in", coach["team_id"])
     response.set_cookie(

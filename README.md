@@ -67,7 +67,6 @@ Set these per project in Vercel. Do not put secrets in any `VITE_*` variable.
 - `SINOPIA_ENV=production` — not secret.
 - `DATABASE_URL` — Neon pooled PostgreSQL URL using the restricted app role and `sslmode=require`. **Secret.**
 - `GOOGLE_CLIENT_ID` — Google OAuth web client ID. Public identifier, but configure on the API too.
-- `SINOPIA_COACH_ALLOWLIST` — optional comma-separated approved coach emails for invite-only mode. Leave unset/empty for normal self-service registration. **Sensitive if used.**
 - `SINOPIA_ALLOWED_ORIGINS` — exact HTTPS origins, comma-separated. Not secret.
 - `SINOPIA_PROXY_SECRET` — at least 32 random characters shared with the frontend proxy. **Secret.**
 - `SINOPIA_ENCRYPTION_KEYS` — active AES-GCM key first, optional older keys after it. **Secret.**

@@ -1,6 +1,6 @@
 """Google ID-token sign-in and server-side coach sessions."""
 import os
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException, Request, Response
 from google.auth.transport.requests import Request as GoogleRequest
@@ -28,6 +28,8 @@ class CoachPublicResponse(BaseModel):
     display_name: str
     team_id: str
     team_name: str
+    team_type: Literal["girls", "boys", "mixed"] | None
+    needs_onboarding: bool
     accepted_at: str | None
     terms_version: str | None
     privacy_version: str | None
@@ -46,6 +48,7 @@ class PolicyAcceptance(BaseModel):
     model_config = ConfigDict(extra="forbid")
     age_18_or_older: bool
     authorised_and_parental_consent_obtained: bool
+    accept_terms_and_privacy: bool
 
 
 def _secure_cookie() -> bool:
@@ -58,6 +61,8 @@ def _public_coach(coach: dict[str, Any]) -> dict[str, Any]:
         "display_name": coach["display_name"],
         "team_id": coach["team_id"],
         "team_name": coach["team_name"],
+        "team_type": coach.get("team_type"),
+        "needs_onboarding": coach.get("team_type") not in {"girls", "boys", "mixed"},
         "accepted_at": coach["accepted_at"],
         "terms_version": coach["terms_version"],
         "privacy_version": coach["privacy_version"],
@@ -140,8 +145,8 @@ def get_me(request: Request) -> dict[str, Any]:
 @router.post("/accept-policies", response_model=PolicyAcceptedResponse)
 def accept_policies(payload: PolicyAcceptance, request: Request) -> dict[str, bool]:
     coach = current_coach(request)
-    if not payload.age_18_or_older or not payload.authorised_and_parental_consent_obtained:
-        raise HTTPException(status_code=422, detail="Both declarations must be accepted.")
+    if not payload.age_18_or_older or not payload.authorised_and_parental_consent_obtained or not payload.accept_terms_and_privacy:
+        raise HTTPException(status_code=422, detail="Both declarations and the Terms/Privacy acceptance must be confirmed.")
     auth_store.accept_policies(coach["email"], TERMS_VERSION, PRIVACY_VERSION)
     auth_store.log_event("policies_accepted", coach["team_id"])
     return {"accepted": True}
@@ -156,3 +161,23 @@ def logout(request: Request, response: Response) -> dict[str, bool]:
         key=SESSION_COOKIE, path="/", httponly=True, secure=_secure_cookie(), samesite="lax"
     )
     return {"logged_out": True}
+
+
+class TeamSetupRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    team_name: str = Field(min_length=1, max_length=120)
+    team_type: Literal["girls", "boys", "mixed"]
+
+
+@router.post("/setup-team", response_model=CoachPublicResponse)
+def setup_team(payload: TeamSetupRequest, request: Request) -> dict[str, Any]:
+    coach = require_accepted_coach(request)
+    try:
+        auth_store.update_team(coach["email"], payload.team_name, payload.team_type)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
+    updated = auth_store.get_session(request.cookies.get(SESSION_COOKIE, ""))
+    if updated is None:
+        raise HTTPException(status_code=401, detail="Session expired. Sign in again.")
+    auth_store.log_event("team_created", updated["team_id"])
+    return _public_coach(updated)

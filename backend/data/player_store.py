@@ -2,7 +2,7 @@
 import uuid
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
-from backend.data.db import SessionLocal, create_tables
+from backend.data.db import SessionLocal, create_tables, make_session_factory
 from backend.data.models import Player
 
 class DuplicatePlayerError(Exception):
@@ -11,7 +11,11 @@ class DuplicatePlayerError(Exception):
 
 class PlayerStore:
     def __init__(self, db_url: str | None = None):
-        create_tables()
+        if db_url is None:
+            self._engine, self._sessions = None, SessionLocal
+            create_tables()
+        else:
+            self._engine, self._sessions = make_session_factory(db_url)
 
     @staticmethod
     def _dict(p):
@@ -20,7 +24,7 @@ class PlayerStore:
     def register(self, name: str, team_type: str, registered_date: str) -> dict:
         p = Player(player_id=uuid.uuid4().hex, name=name, team_type=team_type, registered_date=registered_date)
         try:
-            with SessionLocal.begin() as db:
+            with self._sessions.begin() as db:
                 db.add(p)
                 db.flush()
                 result = self._dict(p)
@@ -29,12 +33,12 @@ class PlayerStore:
         return result
 
     def get(self, player_id: str) -> dict | None:
-        with SessionLocal() as db:
+        with self._sessions() as db:
             p = db.get(Player, player_id)
             return self._dict(p) if p else None
 
     def list_for_team(self, team_type: str) -> list[dict]:
-        with SessionLocal() as db:
+        with self._sessions() as db:
             rows = db.scalars(select(Player).where(Player.team_type == team_type).order_by(func.lower(Player.name))).all()
             return [self._dict(p) for p in rows]
 

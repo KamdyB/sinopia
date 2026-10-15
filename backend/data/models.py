@@ -9,7 +9,8 @@ class Player(Base):
     name = Column(String(80), nullable=False)
     team_type = Column(String(12), nullable=False)
     registered_date = Column(String(10), nullable=False)
-    __table_args__ = (Index("uq_players_team_name_ci", team_type, func.lower(name), unique=True),)
+    team_id = Column(String(64), nullable=False, default="legacy")
+    __table_args__ = (Index("uq_players_team_name_ci", team_id, func.lower(name), unique=True),)
 
 class TrainingSession(Base):
     __tablename__ = "sessions"
@@ -36,3 +37,17 @@ class CheckinLink(Base):
     __tablename__ = "checkin_links"
     token = Column(String(64), primary_key=True)
     player_id = Column(String(64), nullable=False, unique=True, index=True)
+
+
+class Coach(Base):
+    __tablename__ = "coaches"
+    google_sub = Column(String(255), primary_key=True)
+    email = Column(String(320), nullable=False, unique=True)
+    display_name = Column(String(160), nullable=False)
+
+class Team(Base):
+    __tablename__ = "teams"
+    team_id = Column(String(64), primary_key=True)
+    coach_id = Column(String(255), nullable=False, unique=True, index=True)
+    name = Column(String(120), nullable=False)
+    team_type = Column(String(12), nullable=False)

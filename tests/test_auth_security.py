@@ -36,15 +36,34 @@ def setup_valid_google_claims(monkeypatch):
     })
 
 
-def test_allowlist_rejects_before_creating_coach(monkeypatch):
+def test_verified_google_coach_can_register_without_hardcoded_allowlist(monkeypatch):
     monkeypatch.setenv("SINOPIA_ENV", "production")
-    monkeypatch.setenv("SINOPIA_COACH_ALLOWLIST", "")
+    monkeypatch.delenv("SINOPIA_COACH_ALLOWLIST", raising=False)
+    setup_valid_google_claims(monkeypatch)
+    store = FakeAuthStore()
+    monkeypatch.setattr(auth_api, "auth_store", store)
+    response = Response()
+    payload = auth_api.GoogleCredential(credential="x" * 30, turnstile_token="valid")
+
+    result = auth_api.google_sign_in(payload, response)
+
+    assert result["email"] == "coach@example.com"
+    assert result["display_name"] == "Coach"
+    assert response.headers["set-cookie"]
+    assert [call[0] for call in store.calls] == ["rotate", "ensure", "create_session", "audit"]
+
+
+def test_optional_allowlist_can_still_restrict_a_private_pilot(monkeypatch):
+    monkeypatch.setenv("SINOPIA_ENV", "production")
+    monkeypatch.setenv("SINOPIA_COACH_ALLOWLIST", "another@example.com")
     setup_valid_google_claims(monkeypatch)
     store = FakeAuthStore()
     monkeypatch.setattr(auth_api, "auth_store", store)
     payload = auth_api.GoogleCredential(credential="x" * 30, turnstile_token="valid")
+
     with pytest.raises(HTTPException) as error:
         auth_api.google_sign_in(payload, Response())
+
     assert error.value.status_code == 403
     assert store.calls == []
 

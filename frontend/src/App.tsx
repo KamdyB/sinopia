@@ -14,7 +14,7 @@ const LANDING_URL = import.meta.env.VITE_LEGAL_BASE_URL || "";\n\nconst TEAM_TIT
   mixed: "Mixed team status",
 };
 
-const TODAY = new Date().toLocaleDateString(undefined, {
+const LANDING_URL = import.meta.env.VITE_LEGAL_BASE_URL || "";\n\nconst TODAY = new Date().toLocaleDateString(undefined, {
   weekday: "long",
   month: "long",
   day: "numeric",
@@ -144,9 +144,11 @@ export default function App() {
         conversation, never a finding. For any health concern, consult a qualified
         medical professional.
       </p>
-      <p className="footer-link">
-        <a href="http://localhost:5174">About Sinopia</a>
-      </p>
+      {LANDING_URL && (
+        <p className="footer-link">
+          <a href={LANDING_URL}>About Sinopia</a>
+        </p>
+      )}
     </div>
   );
 }

@@ -30,13 +30,22 @@ def make_engine(database_url: str | None = None):
 
 def make_session_factory(database_url: str | None = None):
     db_engine = make_engine(database_url)
-    from backend.data.models import Base
-    Base.metadata.create_all(bind=db_engine)
+    create_tables(db_engine)
     return db_engine, sessionmaker(bind=db_engine, autoflush=False, expire_on_commit=False)
 
-engine = make_engine()
-SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
-
 def create_tables(target_engine=None):
+    from sqlalchemy import inspect, text
     from backend.data.models import Base
-    Base.metadata.create_all(bind=target_engine or engine)
+    db_engine = target_engine or engine
+    # Upgrade the original pre-team schema before create_all builds indexes.
+    inspector = inspect(db_engine)
+    if "players" in inspector.get_table_names():
+        columns = {column["name"] for column in inspector.get_columns("players")}
+        if "team_id" not in columns:
+            with db_engine.begin() as connection:
+                connection.execute(text("ALTER TABLE players ADD COLUMN team_id VARCHAR(64) NOT NULL DEFAULT 'legacy'"))
+                connection.execute(text("UPDATE players SET team_id = 'legacy-' || team_type"))
+        with db_engine.begin() as connection:
+            connection.execute(text("DROP INDEX IF EXISTS uq_players_team_name"))
+            connection.execute(text("DROP INDEX IF EXISTS uq_players_team_name_ci"))
+    Base.metadata.create_all(bind=db_engine)

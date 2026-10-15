@@ -29,6 +29,7 @@ export interface Player {
   name: string;
   team_type: TeamType;
   registered_date: string;
+  checkin_token: string;
 }
 
 export interface HistoryPoint {

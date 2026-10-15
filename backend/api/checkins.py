@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from backend.api.auth import require_accepted_coach
 from backend.timeutil import service_date
+from backend.data.auth_store import auth_store
 from backend.data.checkin_store import DuplicateCheckinError, checkin_store
 from backend.data.player_store import player_store
 from backend.data.session_store import session_store
@@ -111,7 +112,6 @@ def log_checkin(req: CheckinRequest, request: Request) -> dict:
                 {"date": open_session["session_date"], "duration_minutes": open_session["duration_minutes"], "rpe": req.rpe},
                 player["team_id"],
             )
-    from backend.data.auth_store import auth_store
     auth_store.log_event("checkin_submitted", player["team_id"])
     return {"status": "recorded"}
 

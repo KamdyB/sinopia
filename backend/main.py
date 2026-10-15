@@ -2,6 +2,7 @@
 import os
 import hmac
 import logging
+import traceback
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -65,8 +66,9 @@ logger = logging.getLogger("sinopia.api")
 @app.exception_handler(Exception)
 async def safe_unhandled_exception(request: Request, exc: Exception):
     # Never log request bodies, athlete labels, or exception text that may contain them.
-    logger.error("Unhandled API exception method=%s path=%s type=%s",
-                 request.method, request.url.path, type(exc).__name__)
+    stack = "".join(traceback.format_tb(exc.__traceback__))
+    logger.error("Unhandled API exception method=%s path=%s type=%s stack=%s",
+                 request.method, request.url.path, type(exc).__name__, stack)
     headers = {"Vary": "Origin", "Access-Control-Allow-Credentials": "true"}
     origin = request.headers.get("origin", "")
     if origin and origin.rstrip("/") in allowed_origins:

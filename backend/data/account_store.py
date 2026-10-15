@@ -32,7 +32,7 @@ class AccountStore:
     def get_coach(self, google_sub: str) -> dict | None:
         with self._sessions() as db:
             coach = db.get(Coach, google_sub)
-            return {"google_sub":coach.google_sub,"email":coach.email,"display_name":coach.display_name} if coach else None
+            return {"google_sub":coach.google_sub,"email":coach.email,"display_name":coach.display_name,"adult_confirmed_at":coach.adult_confirmed_at,"authorization_confirmed_at":coach.authorization_confirmed_at} if coach else None
 
     def create_team(self, coach_id: str, name: str, team_type: str) -> dict:
         with self._sessions.begin() as db:

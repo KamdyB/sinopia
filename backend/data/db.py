@@ -1,11 +1,28 @@
-"""Shared SQLite connection mechanics. No schema and no queries live here."""
+"""SQLAlchemy engine and session factory shared by persistence stores."""
 import os
-import sqlite3
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-DB_PATH = os.environ.get("SINOPIA_DB_PATH", "sinopia.db")
+def _database_url():
+    url = os.environ.get("DATABASE_URL")
+    if not url:
+        # SQLite is supported only when explicitly selected for local/tests.
+        url = os.environ.get("SINOPIA_TEST_DATABASE_URL", "sqlite:///:memory:")
+    if url.startswith("postgres://"):
+        url = "postgresql+psycopg://" + url[len("postgres://"):]
+    elif url.startswith("postgresql://"):
+        url = "postgresql+psycopg://" + url[len("postgresql://"):]
+    if url.startswith("postgresql") and "sslmode=" not in url:
+        url += ("&" if "?" in url else "?") + "sslmode=require"
+    return url
 
+DATABASE_URL = _database_url()
+_engine_options = {"pool_pre_ping": True}
+if DATABASE_URL.startswith("sqlite"):
+    _engine_options["connect_args"] = {"check_same_thread": False}
+engine = create_engine(DATABASE_URL, **_engine_options)
+SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
-def connect(db_path: str = DB_PATH) -> sqlite3.Connection:
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    return conn
+def create_tables():
+    from backend.data.models import Base
+    Base.metadata.create_all(bind=engine)

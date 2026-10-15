@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const API_BASE = (import.meta.env.VITE_API_BASE || "/api").replace(/\/+$/, "");
 
@@ -8,6 +8,13 @@ export function OnboardingPage() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetch(`${API_BASE}/auth/me`, { credentials: "include" })
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error("signed-out")))
+      .then((body) => { if (body.team) window.location.replace("/app"); })
+      .catch(() => window.location.replace("/sign-in"));
+  }, []);
 
   const submit = async () => {
     if (!name.trim()) { setError("Enter a team name."); return; }

@@ -20,24 +20,24 @@ class FakeRetentionStore:
 
 
 def test_retention_endpoint_requires_cron_secret(client, monkeypatch):
-    monkeypatch.setenv("CRON_SECRET", "a-long-test-secret")
+    monkeypatch.setenv("CRON_SECRET", "retention-test-secret-which-is-long-enough-123456")
     monkeypatch.setenv("SINOPIA_RETENTION_DAYS", "90")
     response = client.get("/internal/retention/purge")
     assert response.status_code == 403
 
 
 def test_retention_endpoint_fails_closed_without_policy(client, monkeypatch):
-    monkeypatch.setenv("CRON_SECRET", "a-long-test-secret")
+    monkeypatch.setenv("CRON_SECRET", "retention-test-secret-which-is-long-enough-123456")
     monkeypatch.delenv("SINOPIA_RETENTION_DAYS", raising=False)
     response = client.get(
         "/internal/retention/purge",
-        headers={"Authorization": "Bearer a-long-test-secret"},
+        headers={"Authorization": "Bearer retention-test-secret-which-is-long-enough-123456"},
     )
     assert response.status_code == 503
 
 
 def test_retention_endpoint_purges_expired_records_team_by_team(client, monkeypatch):
-    monkeypatch.setenv("CRON_SECRET", "a-long-test-secret")
+    monkeypatch.setenv("CRON_SECRET", "retention-test-secret-which-is-long-enough-123456")
     monkeypatch.setenv("SINOPIA_RETENTION_DAYS", "90")
     sessions = FakeRetentionStore({"team-a": 2, "team-b": 1})
     checkins = FakeRetentionStore({"team-a": 1, "team-b": 4})
@@ -47,7 +47,7 @@ def test_retention_endpoint_purges_expired_records_team_by_team(client, monkeypa
 
     response = client.get(
         "/internal/retention/purge",
-        headers={"Authorization": "Bearer a-long-test-secret"},
+        headers={"Authorization": "Bearer retention-test-secret-which-is-long-enough-123456"},
     )
     assert response.status_code == 200
     assert response.json() == {

@@ -28,7 +28,7 @@ class RetentionResult(BaseModel):
 @router.get("/purge", response_model=RetentionResult, include_in_schema=False)
 def purge_expired_records(request: Request) -> RetentionResult:
     expected = os.environ.get("CRON_SECRET", "").strip()
-    if not expected:
+    if len(expected) < 32:
         raise HTTPException(status_code=503, detail="Retention job is not configured.")
     supplied = request.headers.get("authorization", "")
     if not hmac.compare_digest(supplied, f"Bearer {expected}"):

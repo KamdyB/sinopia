@@ -29,7 +29,7 @@ class SessionRequest(BaseModel):
     player_id: str
     date_str: str
     duration_minutes: float = Field(gt=0, le=MAX_SESSION_MINUTES)
-    rpe: float = Field(gt=0, le=10)
+    rpe: float = Field(ge=0, le=10)
 
 
 @router.post("/sessions", response_model=StatusResponse)

@@ -28,6 +28,9 @@ def make_engine(database_url: str | None = None):
         options["connect_args"] = {"check_same_thread": False}
     return create_engine(url, **options)
 
+engine = make_engine()
+SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
+
 def make_session_factory(database_url: str | None = None):
     db_engine = make_engine(database_url)
     create_tables(db_engine)

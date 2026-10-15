@@ -152,3 +152,36 @@ def test_athlete_checkin_token_resolves_player_without_exposing_player_id_in_url
     assert resolved.status_code == 200
     assert resolved.json()["player_id"] == player["player_id"]
     assert client.get("/check-in/not-a-real-token").status_code == 404
+
+
+def test_open_team_session_prompts_for_effort_and_records_load(client):
+    player_id = register(client, "Tomi")
+    token = client.get(f"/players/{player_id}").json()["checkin_token"]
+    opened = client.post(
+        "/team-sessions/open",
+        json={"date_str": "2026-10-14", "duration_minutes": 75},
+    )
+    assert opened.status_code == 201
+    context = client.get(f"/check-in/{token}").json()
+    assert context["session_open"] is True
+    assert context["session_duration_minutes"] == 75
+
+    missing_effort = client.post(
+        "/checkins",
+        json={"checkin_token": token, "sleep": 4, "energy": 4,
+              "soreness": 2, "stress": 2, "pain": False},
+    )
+    assert missing_effort.status_code == 422
+
+    response = client.post(
+        "/checkins",
+        json={"checkin_token": token, "sleep": 4, "energy": 4,
+              "soreness": 2, "stress": 2, "pain": False, "rpe": 7},
+    )
+    assert response.status_code == 201
+    history = client.get(f"/players/{player_id}/history").json()
+    assert history[-1]["session_load"] == 525.0
+
+    closed = client.post("/team-sessions/close")
+    assert closed.status_code == 200
+    assert client.get(f"/check-in/{token}").json()["session_open"] is False

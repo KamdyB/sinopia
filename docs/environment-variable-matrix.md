@@ -9,6 +9,10 @@ This matrix documents the current main-branch environment contract; provider val
 | `SINOPIA_ENV` | `production` in production. For local development only, `development`. | No |
 | `DATABASE_URL` | Neon PostgreSQL connection URL for the restricted application role, preferably pooled, with TLS/SSL required. Do not use the owner role. | **Yes** |
 | `GOOGLE_CLIENT_ID` | OAuth 2.0 Web client ID from Google Cloud. Must match the frontend's client ID and authorized origins. | No; public identifier |
+| `RESEND_API_KEY` | Backend-only Resend API key used to send email verification links. | **Yes** |
+| `SINOPIA_EMAIL_FROM` | Sender address on a domain verified with Resend. | No |
+| `SINOPIA_EMAIL_APP_URL` | Exact HTTPS origin of the coach app, with no path. | No |
+| `SINOPIA_EMAIL_TOKEN_SECRET` | Random secret of at least 32 characters used to sign 15-minute verification links. | **Yes** |
 | `SINOPIA_ALLOWED_ORIGINS` | Exact production coach-app origin(s), comma-separated, e.g. `https://app.your-owned-domain.example`; no paths or wildcard. | No |
 | `SINOPIA_PROXY_SECRET` | Random high-entropy value at least 32 characters long. Use the **same value** in the API runtime and coach frontend Vercel server environment. Generate a different value from every other secret. | **Yes** |
 | `SINOPIA_ENCRYPTION_KEYS` | Key ring format `active-key-id:BASE64URL_32_BYTE_KEY`; older keys may follow comma-separated while still needed for decrypting data/backups. Generate locally; never commit or share. | **Critical secret** |
@@ -26,7 +30,7 @@ This matrix documents the current main-branch environment contract; provider val
 
 | Variable | Required value | Secret? |
 |---|---|---|
-| `VITE_API_BASE` | Production: `/api` to use the same-origin Vercel proxy. Local dev may use `http://localhost:8000`. | No |
+| `VITE_API_BASE` | Production: `/api` to use the same-origin Vercel proxy; its rewrite must run before the SPA fallback. Local dev may use `http://localhost:8000`. | No |
 | `VITE_GOOGLE_CLIENT_ID` | Same Google OAuth Web client ID as API's `GOOGLE_CLIENT_ID`. | No; public identifier |
 | `VITE_TURNSTILE_SITE_KEY` | Public/site key paired with API's `TURNSTILE_SECRET_KEY`, restricted to the coach app hostname. | No; designed to be public |
 | `VITE_LEGAL_BASE_URL` | Absolute origin of the deployed landing/legal site, e.g. `https://www.your-owned-domain.example`. | No |

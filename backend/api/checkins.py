@@ -12,7 +12,7 @@ router = APIRouter()
 
 
 class CheckinRequest(BaseModel):
-    player_id: str
+    checkin_token: str
     sleep: int = Field(ge=1, le=5)
     energy: int = Field(ge=1, le=5)
     soreness: int = Field(ge=1, le=5)
@@ -32,10 +32,11 @@ class CheckinRequest(BaseModel):
 
 @router.post("/checkins", status_code=201)
 def log_checkin(req: CheckinRequest) -> None:
-    if player_store.get(req.player_id) is None:
+    player = player_store.get_by_checkin_token(req.checkin_token)
+    if player is None:
         raise HTTPException(status_code=404, detail="Athlete not found.")
     checkin_store.log_checkin(
-        req.player_id,
+        player["player_id"],
         {
             "date": date.today().isoformat(),
             "sleep": req.sleep,

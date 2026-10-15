@@ -8,13 +8,17 @@ import { PlayerHistory } from "./PlayerHistory";
 import { DashboardTable } from "./DashboardTable";
 import { Glossary } from "./Glossary";
 
-const LANDING_URL = import.meta.env.VITE_LEGAL_BASE_URL || "";\n\nconst TEAM_TITLES: Record<TeamType, string> = {
+const LANDING_URL = import.meta.env.VITE_LEGAL_BASE_URL || "";
+
+const TEAM_TITLES: Record<TeamType, string> = {
   girls: "Girls team status",
   boys: "Boys team status",
   mixed: "Mixed team status",
 };
 
-const LANDING_URL = import.meta.env.VITE_LEGAL_BASE_URL || "";\n\nconst TODAY = new Date().toLocaleDateString(undefined, {
+const LANDING_URL = import.meta.env.VITE_LEGAL_BASE_URL || "";
+
+const TODAY = new Date().toLocaleDateString(undefined, {
   weekday: "long",
   month: "long",
   day: "numeric",

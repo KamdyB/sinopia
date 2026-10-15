@@ -7,6 +7,7 @@ import { PlayerDirectory } from "./PlayerDirectory";
 import { PlayerHistory } from "./PlayerHistory";
 import { DashboardTable } from "./DashboardTable";
 import { Glossary } from "./Glossary";
+import { TeamSessionControl } from "./TeamSessionControl";
 
 const LANDING_URL = import.meta.env.VITE_LEGAL_BASE_URL || "";
 
@@ -114,6 +115,8 @@ export default function App({ initialTeamType = "girls" }: { initialTeamType?: T
           </div>
         </div>
         <div>
+          <TeamSessionControl />
+          <hr className="rule" />
           <SessionEntryForm players={players} onScored={handleScored} />
           <hr className="rule" />
           <Glossary />

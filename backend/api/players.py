@@ -5,7 +5,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from backend.api.auth import require_accepted_coach, require_onboarded_coach
+from backend.api.auth import require_onboarded_coach
 from backend.data.checkin_store import checkin_store
 from backend.data.player_store import DuplicatePlayerError, player_store
 from backend.data.session_store import session_store
@@ -71,7 +71,7 @@ def register_player(req: PlayerRequest, coach: dict = Depends(require_onboarded_
 
 
 @router.get("/players", response_model=list[PlayerResponse])
-def list_players(team_type: TeamType, coach: dict = Depends(require_accepted_coach)) -> list[PlayerResponse]:
+def list_players(team_type: TeamType, coach: dict = Depends(require_onboarded_coach)) -> list[PlayerResponse]:
     return [PlayerResponse(**p) for p in player_store.list_for_team(coach["team_type"], coach["team_id"])]
 
 

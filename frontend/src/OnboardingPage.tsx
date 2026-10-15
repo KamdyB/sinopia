@@ -21,7 +21,7 @@ export function OnboardingPage() {
       });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) {
-        if (response.status === 401) { window.location.assign("/sign-in?expired=1"); return; }
+        if (response.status === 401) { window.location.assign(String(body.detail || "").toLowerCase().includes("expired") ? "/sign-in?expired=1" : "/sign-in"); return; }
         throw new Error(typeof body.detail === "string" ? body.detail : "Could not save your team.");
       }
       window.location.assign("/app");

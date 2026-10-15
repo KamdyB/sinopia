@@ -65,8 +65,10 @@ class DeleteAccountRequest(BaseModel):
 
 def _csv_safe(value):
     """Prevent spreadsheet formula execution from user-controlled CSV cells."""
-    if isinstance(value, str) and value.lstrip(" \t\r\n")[:1] in {"=", "+", "-", "@", "\t", "\r"}:
-        return "'" + value
+    if isinstance(value, str):
+        trimmed = value.lstrip(" \t\r\n")
+        if value[:1] in {"\t", "\r"} or trimmed[:1] in {"=", "+", "-", "@"}:
+            return "'" + value
     return value
 
 

@@ -1,69 +1,41 @@
-"""Persistence for registered players. One row per real player, created once,
-independent of any session. Opaque ids keep names out of URLs and keep two
-same-named players on different teams structurally separate forever."""
-import sqlite3
+"""Persistence for registered players; only this store accesses player rows."""
 import uuid
-
-from backend.data.db import DB_PATH, connect
-
-CREATE_PLAYERS = """
-CREATE TABLE IF NOT EXISTS players (
-    player_id TEXT PRIMARY KEY,
-    name TEXT NOT NULL COLLATE NOCASE,
-    team_type TEXT NOT NULL,
-    registered_date TEXT NOT NULL
-);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_players_team_name
-ON players (team_type, name);
-"""
-
+from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
+from backend.data.db import SessionLocal, create_tables
+from backend.data.models import Player
 
 class DuplicatePlayerError(Exception):
     def __init__(self, name: str, team_type: str):
         super().__init__(f'"{name}" is already registered for this team.')
 
-
 class PlayerStore:
-    def __init__(self, db_path: str = DB_PATH):
-        self._db_path = db_path
-        with connect(self._db_path) as conn:
-            conn.executescript(CREATE_PLAYERS)
+    def __init__(self, db_url: str | None = None):
+        create_tables()
+
+    @staticmethod
+    def _dict(p):
+        return {"player_id":p.player_id,"name":p.name,"team_type":p.team_type,"registered_date":p.registered_date}
 
     def register(self, name: str, team_type: str, registered_date: str) -> dict:
-        player_id = uuid.uuid4().hex
+        p = Player(player_id=uuid.uuid4().hex, name=name, team_type=team_type, registered_date=registered_date)
         try:
-            with connect(self._db_path) as conn:
-                conn.execute(
-                    "INSERT INTO players (player_id, name, team_type, registered_date) "
-                    "VALUES (?, ?, ?, ?)",
-                    (player_id, name, team_type, registered_date),
-                )
-        except sqlite3.IntegrityError as exc:
+            with SessionLocal.begin() as db:
+                db.add(p)
+                db.flush()
+                result = self._dict(p)
+        except IntegrityError as exc:
             raise DuplicatePlayerError(name, team_type) from exc
-        return {
-            "player_id": player_id,
-            "name": name,
-            "team_type": team_type,
-            "registered_date": registered_date,
-        }
+        return result
 
     def get(self, player_id: str) -> dict | None:
-        with connect(self._db_path) as conn:
-            row = conn.execute(
-                "SELECT player_id, name, team_type, registered_date "
-                "FROM players WHERE player_id = ?",
-                (player_id,),
-            ).fetchone()
-        return dict(row) if row else None
+        with SessionLocal() as db:
+            p = db.get(Player, player_id)
+            return self._dict(p) if p else None
 
     def list_for_team(self, team_type: str) -> list[dict]:
-        with connect(self._db_path) as conn:
-            rows = conn.execute(
-                "SELECT player_id, name, team_type, registered_date "
-                "FROM players WHERE team_type = ? ORDER BY name COLLATE NOCASE",
-                (team_type,),
-            ).fetchall()
-        return [dict(row) for row in rows]
-
+        with SessionLocal() as db:
+            rows = db.scalars(select(Player).where(Player.team_type == team_type).order_by(func.lower(Player.name))).all()
+            return [self._dict(p) for p in rows]
 
 player_store = PlayerStore()

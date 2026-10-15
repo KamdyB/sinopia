@@ -13,7 +13,7 @@ class AccountStore:
         else:
             self._engine, self._sessions = make_session_factory(db_url)
 
-    def upsert_coach(self, google_sub: str, email: str, display_name: str) -> dict:
+    def upsert_coach(self, google_sub: str, email: str, display_name: str, declarations: bool = False) -> dict:
         with self._sessions.begin() as db:
             coach = db.get(Coach, google_sub)
             if coach is None:
@@ -22,8 +22,12 @@ class AccountStore:
             else:
                 coach.email = email
                 coach.display_name = display_name
+            if declarations:
+                now = datetime.now(timezone.utc).isoformat()
+                coach.adult_confirmed_at = now
+                coach.authorization_confirmed_at = now
             db.flush()
-            return {"google_sub":coach.google_sub,"email":coach.email,"display_name":coach.display_name}
+            return {"google_sub":coach.google_sub,"email":coach.email,"display_name":coach.display_name,"adult_confirmed_at":coach.adult_confirmed_at,"authorization_confirmed_at":coach.authorization_confirmed_at}
 
     def get_coach(self, google_sub: str) -> dict | None:
         with self._sessions() as db:

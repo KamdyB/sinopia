@@ -23,10 +23,7 @@ const TODAY = new Date().toLocaleDateString(undefined, {
 });
 
 export default function App() {
-  const [teamType, setTeamType] = useState<TeamType>(() => {
-    document.documentElement.dataset.team = "girls";
-    return "girls";
-  });
+  const [teamType] = useState<TeamType>("girls");
   const [players, setPlayers] = useState<Player[]>([]);
   const [statuses, setStatuses] = useState<AthleteStatus[]>([]);
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -72,12 +69,6 @@ export default function App() {
     }
   };
 
-  const handleTeamChange = (next: TeamType) => {
-    document.documentElement.dataset.team = next;
-    setTeamType(next);
-    setDetailId(null); // never carry an athlete from one team into another
-  };
-
   const handleAddPlayer = async (name: string) => {
     await registerPlayer(name, teamType);
     setPlayers(await fetchPlayers(teamType));
@@ -96,17 +87,6 @@ export default function App() {
         <div>
           <p className="eyebrow">Sinopia by KamdyB</p>
           <h1 className="display-title">{TEAM_TITLES[teamType]}</h1>
-          <label className="team-type">
-            Team
-            <select
-              value={teamType}
-              onChange={(e) => handleTeamChange(e.target.value as TeamType)}
-            >
-              <option value="girls">Girls</option>
-              <option value="boys">Boys</option>
-              <option value="mixed">Mixed</option>
-            </select>
-          </label>
         </div>
         <p className="today-date">{TODAY}</p>
       </div>

@@ -47,7 +47,7 @@ export default function App() {
           <a href="#evidence">The evidence</a>
           <a href="#honesty">What is and isn\u2019t validated</a>
         </nav>
-        <a className="btn btn--primary nav__cta" href={COACH_APP_URL}>Sign in / Get started</a>
+        <a className="btn btn--primary nav__cta" href={`${COACH_APP_URL.replace(/\/$/, "")}/sign-in`}>Sign in</a>
       </header>
 
       <section className="hero">
@@ -66,7 +66,7 @@ export default function App() {
           workload ratios, plain language \u2014 on one phone, for zero budget.
         </p>
         <div className="hero-cta">
-          <a className="btn btn--primary btn--lg" href={COACH_APP_URL}>Sign in / Get started</a>
+          <a className="btn btn--primary btn--lg" href={`${COACH_APP_URL.replace(/\/$/, "")}/sign-up`}>Get started</a>
           <a className="btn btn--lg" href="#how">See it work</a>
         </div>
       </section>
@@ -162,7 +162,7 @@ export default function App() {
       <footer className="footer">
         <div className="footer__top">
           <span className="nav__wordmark">Sinopia</span>
-          <a className="btn btn--primary" href={COACH_APP_URL}>Sign in / Get started</a>
+          <a className="btn btn--primary" href={`${COACH_APP_URL.replace(/\/$/, "")}/sign-up`}>Get started</a>
         </div>
         <ol className="sources">
           {SOURCES.map((s, i) => (

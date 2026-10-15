@@ -54,7 +54,7 @@ export function CheckinPage({ playerId: token }: { playerId: string }) {
     };
   }, [token]);
 
-  const ready = QUESTIONS.every((q) => answers[q.key] > 0);
+  const ready = Boolean(player) && QUESTIONS.every((q) => answers[q.key] > 0);
 
   const handleSubmit = async () => {
     if (!ready) {
@@ -68,7 +68,7 @@ export function CheckinPage({ playerId: token }: { playerId: string }) {
     setSubmitting(true);
     setSubmitError(null);
     const payload: CheckinPayload = {
-      player_id: playerId,
+      player_id: player!.player_id,
       ...answers,
       pain,
       ...(pain ? { pain_area: painArea } : {}),

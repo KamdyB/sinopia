@@ -150,7 +150,9 @@ def test_athlete_checkin_token_resolves_player_without_exposing_player_id_in_url
     assert player["checkin_token"] != player["player_id"]
     resolved = client.get(f"/check-in/{player['checkin_token']}")
     assert resolved.status_code == 200
-    assert resolved.json()["player_id"] == player["player_id"]
+    assert resolved.json()["name"] == "Nneka"
+    assert "player_id" not in resolved.json()
+    assert "team_id" not in resolved.json()
     assert client.get("/check-in/not-a-real-token").status_code == 404
 
 

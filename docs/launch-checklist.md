@@ -27,7 +27,7 @@
 | 3 | Browser cannot access DB | **Design requirement.** Browser must call only the app/API; no Neon URL, database credential, or database Data API in either bundle. CI includes a built-asset scan; verify the latest successful run and inspect the resulting artifacts before release. |
 | 4 | PostgreSQL RLS | **Migration and PostgreSQL RLS integration test added; latest CI must pass, and the hosted deployment still needs verification.** Migration enables and FORCEs RLS on `players`, `team_sessions`, `open_team_sessions`, `sessions`, `checkins`, and `audit_log`. Policies use transaction-local `app.team_id`; check-in token lookup has a narrowly scoped player policy. Must run migration with owner role and prove team A cannot read team B rows using the non-owner app role, including a query without a WHERE clause. |
 | 5 | Sensitive field encryption | AES-GCM encryption code exists for athlete labels and pain-area values. The owner migration re-encrypts labels/pain areas and rebuilds keyed duplicate-label hashes using the active key ring. **PostgreSQL round-trip, backup restore, and key-recovery tests are still required.** |
-| 6 | Server-side auth | Google ID token verification and opaque server-side sessions exist. **Verified Google sign-in and self-service coach registration are implemented; an allowlist is optional and only restricts access when configured. Hosted end-to-end auth tests remain pending.** |
+| 6 | Server-side auth | Google ID token verification and opaque server-side sessions exist. **Verified Google sign-in and self-service coach registration are implemented; any verified Google email may register, and each normalized email can own only one coach account. Hosted end-to-end auth tests remain pending.** |
 | 7 | Record access isolation | Route code scopes athlete operations to team IDs and returns 404 for foreign athlete IDs. **PostgreSQL RLS integration tests and check-in-token cross-team tests pending.** |
 | 8 | Field tampering | Pydantic request models use `extra="forbid"` on core write requests; server sets team, IDs, registration/session dates and consent timestamps. **Add tampering tests for every write endpoint.** |
 | 9 | Session cookies | HttpOnly, Secure in production, SameSite=Lax and 8-hour expiry are configured. **Session rotation at login, cookie behavior, and server-side logout invalidation require tests.** |
@@ -55,8 +55,7 @@
 ## Beta access gate
 
 - Add `SINOPIA_COACH_ALLOWLIST` as a server-only environment variable containing normalized coach email addresses.
-- The backend verifies Google's ID token, then rejects any email not on the configured allowlist **before creating a coach, team, or session**. This code-level control still needs a hosted end-to-end test. Missing/empty allowlist fails closed in production.
-- Do not put the allowlist in any `VITE_*` variable or frontend code.
+- The backend verifies Google's ID token and verified email before account creation. Registration is open; the database's unique email key prevents duplicate coach accounts, and sign-in is reserved for existing accounts. Hosted end-to-end auth tests remain pending.
 - Turnstile server verification is a separate release blocker; the widget's client result alone is not trusted.
 
 ## PostgreSQL setup and migration
@@ -79,7 +78,7 @@ Landing: `VITE_COACH_APP_URL` and the public contact/legal configuration. Replac
 ## Do not launch until
 
 - PostgreSQL migration and RLS tests pass with the restricted app role.
-- Coach-email allowlist and Turnstile are implemented and tested.
+- Turnstile is implemented in code; confirm production keys and hostnames, and test the hosted registration flow.
 - Both build outputs pass secret scans.
 - Cookie rotation/logout, deletion, export, CSRF/CORS, HTTPS, security headers and team-isolation tests pass.
 - Restore/recovery and deletion tests pass.

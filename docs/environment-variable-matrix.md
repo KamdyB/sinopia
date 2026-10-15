@@ -10,7 +10,6 @@ This matrix documents the current main-branch environment contract; provider val
 | `DATABASE_URL` | Neon PostgreSQL connection URL for the restricted application role, preferably pooled, with TLS/SSL required. Do not use the owner role. | **Yes** |
 | `GOOGLE_CLIENT_ID` | OAuth 2.0 Web client ID from Google Cloud. Must match the frontend's client ID and authorized origins. | No; public identifier |
 | `SINOPIA_ALLOWED_ORIGINS` | Exact production coach-app origin(s), comma-separated, e.g. `https://app.your-owned-domain.example`; no paths or wildcard. | No |
-| `SINOPIA_COACH_ALLOWLIST` | **Optional.** Leave unset/empty for normal open registration. If intentionally running an invite-only pilot, set comma-separated verified coach emails in lowercase. Never hardcode emails in source code. | Private operational data; treat as sensitive |
 | `SINOPIA_PROXY_SECRET` | Random high-entropy value at least 32 characters long. Use the **same value** in the API runtime and coach frontend Vercel server environment. Generate a different value from every other secret. | **Yes** |
 | `SINOPIA_ENCRYPTION_KEYS` | Key ring format `active-key-id:BASE64URL_32_BYTE_KEY`; older keys may follow comma-separated while still needed for decrypting data/backups. Generate locally; never commit or share. | **Critical secret** |
 | `TURNSTILE_SECRET_KEY` | Secret key for the Turnstile widget configured for the coach app hostname. | **Yes** |
@@ -65,4 +64,3 @@ Do not add migration-only variables to the production API runtime unless a docum
 - Put database credentials in the backend runtime only. Put Turnstile's secret key in the backend runtime only.
 - Values with a `VITE_` prefix are compiled into browser-visible assets. Never place tokens, credentials, encryption keys, database URLs, allowlists, or proxy secrets in them.
 - These are names and expected values from the current security branch's configuration docs. The actual deployment settings have not been independently inspected, so treat every provider setting as **not yet verified** until you check it in the dashboard and test the deployed app.
-- Coach registration is open by default after verified Google sign-in and Turnstile; `SINOPIA_COACH_ALLOWLIST` is optional and only enables invite-only mode when non-empty. This does not remove the other release gates: hosted authentication, RLS/team-isolation, deletion/restore, rate-limit/proxy, CSP/HTTPS, retention and legal/privacy checks still block real athlete/child data.

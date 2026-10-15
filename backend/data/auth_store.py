@@ -3,6 +3,8 @@ from datetime import datetime, timedelta, timezone
 import hashlib
 import secrets
 
+from sqlalchemy.exc import IntegrityError
+
 from backend.data.db import DB_PATH, connect, init_schema
 
 
@@ -10,6 +12,40 @@ class AuthStore:
     def __init__(self, db_path: str = DB_PATH):
         self._db_path = db_path
         init_schema(self._db_path)
+
+    def coach_exists(self, email: str) -> bool:
+        with connect(self._db_path) as conn:
+            row = conn.execute("SELECT 1 FROM coaches WHERE email = ?", (email.strip().lower(),)).fetchone()
+        return row is not None
+
+    def register_coach(self, email: str, display_name: str) -> dict | None:
+        """Create one coach account and its initial team; return None for a duplicate email."""
+        now = datetime.now(timezone.utc).isoformat()
+        email = email.strip().lower()
+        try:
+            with connect(self._db_path) as conn:
+                conn.execute(
+                    "INSERT INTO coaches (email, display_name, created_at) VALUES (?, ?, ?)",
+                    (email, display_name[:120], now),
+                )
+                team_id = secrets.token_urlsafe(18)
+                conn.execute(
+                    "INSERT INTO teams (team_id, coach_email, team_name, created_at) VALUES (?, ?, ?, ?)",
+                    (team_id, email, "My team", now),
+                )
+                row = conn.execute(
+                    "SELECT email, display_name, accepted_at, terms_version, privacy_version FROM coaches WHERE email = ?",
+                    (email,),
+                ).fetchone()
+                team = conn.execute(
+                    "SELECT team_id, team_name, team_type FROM teams WHERE coach_email = ?", (email,)
+                ).fetchone()
+        except IntegrityError:
+            # The unique primary key is the final authority, including simultaneous signup attempts.
+            return None
+        result = dict(row)
+        result.update(dict(team))
+        return result
 
     def ensure_coach(self, email: str, display_name: str) -> dict:
         now = datetime.now(timezone.utc).isoformat()

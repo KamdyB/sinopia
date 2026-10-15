@@ -68,7 +68,7 @@ export function CheckinPage({ playerId: token }: { playerId: string }) {
     setSubmitting(true);
     setSubmitError(null);
     const payload: CheckinPayload = {
-      player_id: player!.player_id,
+      checkin_token: token,
       ...answers,
       pain,
       ...(pain ? { pain_area: painArea } : {}),

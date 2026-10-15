@@ -1,12 +1,13 @@
 // frontend/src/App.tsx
 import { useEffect, useState } from "react";
 import { AthleteStatus, HistoryPoint, Player, TeamType } from "./types";
-import { acknowledgePain, createCheckinToken, deletePlayer, exportTeamData, fetchPlayers, fetchTeamStatuses, registerPlayer } from "./api";
+import { acknowledgePain, createCheckinToken, deletePlayer, exportTeamData, fetchCoachSession, fetchPlayers, fetchTeamStatuses, registerPlayer } from "./api";
 import { SessionEntryForm } from "./SessionEntryForm";
 import { PlayerDirectory } from "./PlayerDirectory";
 import { PlayerHistory } from "./PlayerHistory";
 import { DashboardTable } from "./DashboardTable";
 import { Glossary } from "./Glossary";
+import { TeamSessionControl } from "./TeamSessionControl";
 
 const TEAM_TITLES: Record<TeamType, string> = {
   girls: "Girls team status",
@@ -23,10 +24,8 @@ const TODAY = new Date().toLocaleDateString(undefined, {
 });
 
 export default function App() {
-  const [teamType, setTeamType] = useState<TeamType>(() => {
-    document.documentElement.dataset.team = "girls";
-    return "girls";
-  });
+  const [teamType, setTeamType] = useState<TeamType>("girls");
+  const [teamReady, setTeamReady] = useState(false);
   const [players, setPlayers] = useState<Player[]>([]);
   const [statuses, setStatuses] = useState<AthleteStatus[]>([]);
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -38,6 +37,21 @@ export default function App() {
   const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+    fetchCoachSession()
+      .then((coach) => {
+        if (coach.team_type && !cancelled) {
+          setTeamType(coach.team_type);
+          document.documentElement.dataset.team = coach.team_type;
+          setTeamReady(true);
+        }
+      })
+      .catch(() => { if (!cancelled) setDataError("Could not load your saved team settings."); });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (!teamReady) return;
     let cancelled = false;
     setDataLoading(true);
     setDataError(null);
@@ -53,7 +67,7 @@ export default function App() {
       })
       .finally(() => { if (!cancelled) setDataLoading(false); });
     return () => { cancelled = true; };
-  }, [teamType]);
+  }, [teamType, teamReady]);
 
   useEffect(() => {
     if (!detailId) {
@@ -81,12 +95,6 @@ export default function App() {
     } catch {
       setDataError("Could not refresh team status. Existing results may be out of date.");
     }
-  };
-
-  const handleTeamChange = (next: TeamType) => {
-    document.documentElement.dataset.team = next;
-    setTeamType(next);
-    setDetailId(null); // never carry an athlete from one team into another
   };
 
   const handleAddPlayer = async (name: string, consentConfirmed: boolean) => {
@@ -130,17 +138,6 @@ export default function App() {
         <div>
           <p className="eyebrow">Sinopia by KamdyB</p>
           <h1 className="display-title">{TEAM_TITLES[teamType]}</h1>
-          <label className="team-type">
-            Team
-            <select
-              value={teamType}
-              onChange={(e) => handleTeamChange(e.target.value as TeamType)}
-            >
-              <option value="girls">Girls</option>
-              <option value="boys">Boys</option>
-              <option value="mixed">Mixed</option>
-            </select>
-          </label>
         </div>
         <div>
           <p className="today-date">{TODAY}</p>
@@ -149,7 +146,7 @@ export default function App() {
         </div>
       </div>
       {dataError && <p className="form-error" role="alert">{dataError}</p>}
-      {dataLoading && <p className="empty-note" role="status">Loading team records…</p>}
+      {(!teamReady || dataLoading) && <p className="empty-note" role="status">Loading team records…</p>}
       <div className="dashboard">
         <div>
           {detailPlayer && (
@@ -174,6 +171,8 @@ export default function App() {
           </div>
         </div>
         <div>
+          <TeamSessionControl />
+          <hr className="rule" />
           <SessionEntryForm players={players} onScored={handleScored} />
           <hr className="rule" />
           <Glossary />

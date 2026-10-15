@@ -5,7 +5,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 def normalize_database_url(value: str | None = None) -> str:
-    url = value or os.environ.get("DATABASE_URL") or os.environ.get("SINOPIA_TEST_DATABASE_URL") or "sqlite:///./sinopia-local.db"
+    url = value or os.environ.get("DATABASE_URL") or os.environ.get("SINOPIA_TEST_DATABASE_URL")
+    if not url:
+        if os.environ.get("VERCEL") == "1":
+            raise RuntimeError("DATABASE_URL must be configured for deployed Sinopia; ephemeral serverless storage is not supported.")
+        url = "sqlite:///./sinopia-local.db"
     # Existing tests historically passed a filesystem path; keep that API working.
     if "://" not in url:
         url = "sqlite:///" + str(Path(url).resolve())

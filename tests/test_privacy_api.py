@@ -74,5 +74,8 @@ def test_account_deletion_hard_deletes_team_data_and_coach_records(
     assert response.json() == {"deleted": True}
 
     with sqlite3.connect(db_path) as conn:
-        for table in ("coaches", "teams", "coach_sessions", "audit_log", "players", "sessions", "checkins"):
-            assert conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM coaches WHERE email = ?", (email,)).fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM teams WHERE team_id = ?", (coach["team_id"],)).fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM coach_sessions WHERE coach_email = ?", (email,)).fetchone()[0] == 0
+        for table in ("audit_log", "players", "sessions", "checkins", "team_sessions", "open_team_sessions"):
+            assert conn.execute(f"SELECT COUNT(*) FROM {table} WHERE team_id = ?", (coach["team_id"],)).fetchone()[0] == 0

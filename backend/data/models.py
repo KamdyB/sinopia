@@ -30,3 +30,9 @@ class Checkin(Base):
     stress = Column(Integer, nullable=False)
     pain = Column(Boolean, nullable=False)
     pain_area = Column(Text, nullable=True)
+
+
+class CheckinLink(Base):
+    __tablename__ = "checkin_links"
+    token = Column(String(64), primary_key=True)
+    player_id = Column(String(64), nullable=False, unique=True, index=True)

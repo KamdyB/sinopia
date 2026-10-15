@@ -4,7 +4,9 @@ import { LegalPage } from "./LegalPage";
 
 // Dev: the coach tool runs on 5173. In production, deploy the landing page at
 // "/" and the coach tool under "/app/", then set this to "/app/".
-const COACH_APP_URL = import.meta.env.VITE_COACH_APP_URL ?? (import.meta.env.PROD ? "/app/" : "http://localhost:5173");
+const COACH_APP_URL = (import.meta.env.VITE_COACH_APP_URL ?? (import.meta.env.PROD ? "" : "http://localhost:5173")).replace(/\/+$/, "");
+const SIGN_IN_URL = `${COACH_APP_URL}/sign-in`;
+const SIGN_UP_URL = `${COACH_APP_URL}/sign-up`;
 // Contact placeholder — replace with the real inbox before shipping.
 const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL as string | undefined;
 
@@ -53,7 +55,7 @@ export default function App() {
           <a href="#evidence">The evidence</a>
           <a href="#honesty">What is and isn\u2019t validated</a>
         </nav>
-        <a className="btn btn--primary nav__cta" href={COACH_APP_URL}>Open the coach tool</a>
+        <a className="btn btn--primary nav__cta" href={SIGN_IN_URL}>Sign in</a>
       </header>
 
       <section className="hero">
@@ -72,7 +74,7 @@ export default function App() {
           workload ratios, plain language \u2014 on one phone, for zero budget.
         </p>
         <div className="hero-cta">
-          <a className="btn btn--primary btn--lg" href={COACH_APP_URL}>Open the coach tool</a>
+          <a className="btn btn--primary btn--lg" href={SIGN_UP_URL}>Get started</a>
           <a className="btn btn--lg" href="#how">See it work</a>
         </div>
       </section>
@@ -89,6 +91,11 @@ export default function App() {
         <p className="section-note">
           In the coach tool, this chart lives on each player\u2019s page: open the team directory and click a name.
         </p>
+      </section>
+
+      <section className="section section--tinted">
+        <h2>I’m an athlete</h2>
+        <p>Use the personal check-in link your coach sends you. You do not need to create an account or download anything. Your answers go to the coach responsible for your team.</p>
       </section>
 
       <section id="evidence" className="section section--tinted">

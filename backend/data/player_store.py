@@ -41,12 +41,12 @@ class PlayerStore:
         return result
 
     def get(self, player_id: str) -> dict | None:
-        with self._sessions() as db:
+        with self._sessions.begin() as db:
             p = db.get(Player, player_id)
             return self._dict(p, db) if p else None
 
     def list_for_team(self, team_type: str) -> list[dict]:
-        with self._sessions() as db:
+        with self._sessions.begin() as db:
             rows = db.scalars(select(Player).where(Player.team_type == team_type).order_by(func.lower(Player.name))).all()
             return [self._dict(p, db) for p in rows]
 

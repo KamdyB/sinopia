@@ -4,7 +4,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
-from backend.api.auth import require_accepted_coach
+from backend.api.auth import require_accepted_coach, require_onboarded_coach
 from backend.timeutil import service_date
 from backend.data.player_store import player_store
 from backend.data.session_store import session_store
@@ -31,7 +31,7 @@ class SessionRequest(BaseModel):
 
 
 @router.post("/sessions", response_model=StatusResponse)
-def log_session(req: SessionRequest, coach: dict = Depends(require_accepted_coach)) -> StatusResponse:
+def log_session(req: SessionRequest, coach: dict = Depends(require_onboarded_coach)) -> StatusResponse:
     player = player_store.get(req.player_id, coach["team_id"])
     if player is None:
         raise HTTPException(status_code=404, detail="Athlete not found.")

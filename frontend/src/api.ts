@@ -89,6 +89,8 @@ export interface CoachSession {
   display_name: string;
   team_id: string;
   team_name: string;
+  team_type: TeamType | null;
+  needs_onboarding: boolean;
   accepted_at: string | null;
   terms_version: string | null;
   privacy_version: string | null;
@@ -106,11 +108,17 @@ export async function signInWithGoogle(credential: string, turnstileToken?: stri
 export async function acceptCoachPolicies(
   age18: boolean,
   authorisedAndConsent: boolean,
+  acceptTermsAndPrivacy: boolean,
 ): Promise<void> {
   await post<unknown>("/auth/accept-policies", {
     age_18_or_older: age18,
     authorised_and_parental_consent_obtained: authorisedAndConsent,
+    accept_terms_and_privacy: acceptTermsAndPrivacy,
   });
+}
+
+export async function setupCoachTeam(teamName: string, teamType: TeamType): Promise<CoachSession> {
+  return post<CoachSession>("/auth/setup-team", { team_name: teamName, team_type: teamType });
 }
 
 export async function signOut(): Promise<void> {

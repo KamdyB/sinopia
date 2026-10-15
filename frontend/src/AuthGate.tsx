@@ -43,6 +43,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const [turnstileVersion, setTurnstileVersion] = useState(0);
   const path = window.location.pathname;
   const isSignUp = path === "/sign-up";
+  const expiredSession = new URLSearchParams(window.location.search).get("expired") === "1";
 
   const refreshSession = async () => {
     const current = await fetchCoachSession();
@@ -54,7 +55,14 @@ export function AuthGate({ children }: { children: ReactNode }) {
     let cancelled = false;
     fetchCoachSession()
       .then((current) => { if (!cancelled) setCoach(current); })
-      .catch(() => { if (!cancelled) setCoach(null); })
+      .catch((err) => {
+        if (!cancelled) {
+          setCoach(null);
+          if (err instanceof Error && err.message.toLowerCase().includes("session expired")) {
+            window.location.replace("/sign-in?expired=1");
+          }
+        }
+      })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, []);
@@ -208,6 +216,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
         <p className="eyebrow">Sinopia by KamdyB</p>
         <h1 className="display-title">{isSignUp ? "Create your coach account" : "Coach sign-in"}</h1>
         <p>{isSignUp ? "Use Google to create your account after confirming the declarations below." : "Sign in with Google to access your team's training and check-in records."}</p>
+        {expiredSession && <p role="status">Your session expired. Sign in again to continue.</p>}
         {isSignUp && <>
           <label className="consent-confirmation"><input type="checkbox" checked={ageConfirmed} onChange={(event) => setAgeConfirmed(event.target.checked)} /> I am 18 years old or older.</label>
           <label className="consent-confirmation"><input type="checkbox" checked={consentConfirmed} onChange={(event) => setConsentConfirmed(event.target.checked)} /> I am authorised by my school or club to manage this team's data, and I have obtained parent or guardian consent for every athlete under 18.</label>

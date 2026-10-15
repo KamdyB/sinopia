@@ -107,7 +107,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
           try {
             const token = turnstileTokenRef.current;
             if (import.meta.env.PROD && !token) throw new Error("Complete the bot-protection check first.");
-            const signedIn = await signInWithGoogle(credentialResponse.credential, token ?? undefined);
+            const signedIn = await signInWithGoogle(credentialResponse.credential, token ?? undefined, isSignUp ? "signup" : "signin");
             if (isSignUp) {
               await acceptCoachPolicies(ageConfirmed, consentConfirmed, termsAccepted);
               const current = await refreshSession();

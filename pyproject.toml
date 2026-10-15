@@ -1,0 +1,3 @@
+[tool.vercel]
+# Point Vercel to the existing FastAPI ASGI application.
+entrypoint = "backend.main:app"

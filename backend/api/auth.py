@@ -46,7 +46,7 @@ class TeamRequest(BaseModel):
 def get_current_coach(request: Request) -> dict:
     token = request.cookies.get(SESSION_COOKIE)
     if not token:
-        raise HTTPException(status_code=401, detail="Your session has expired. Sign in again.")
+        raise HTTPException(status_code=401, detail="Sign in to continue.")
     try:
         payload = _serializer().loads(token, max_age=SESSION_MAX_AGE)
     except (BadSignature, SignatureExpired):

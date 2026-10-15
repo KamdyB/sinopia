@@ -2,7 +2,7 @@
 // The athlete-facing page. No accounts, no navigation, four taps per
 // question, mobile first. Reached by a link the coach shared.
 import { useEffect, useState } from "react";
-import { CheckinPayload, Player } from "./types";
+import { CheckinContext, CheckinPayload } from "./types";
 import { fetchCheckinPlayer, submitCheckin } from "./api";
 
 type AnswerKey = "sleep" | "energy" | "soreness" | "stress";
@@ -26,7 +26,7 @@ const AREAS = [
 ];
 
 export function CheckinPage({ playerId: token }: { playerId: string }) {
-  const [player, setPlayer] = useState<Player | null>(null);
+  const [player, setPlayer] = useState<CheckinContext | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<AnswerKey, number>>({
     sleep: 0,

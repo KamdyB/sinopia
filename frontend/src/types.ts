@@ -53,3 +53,11 @@ export interface CheckinPayload {
   pain: boolean;
   pain_area?: string;
 }
+
+export interface CheckinContext {
+  name: string;
+  checkin_token: string;
+  session_open: boolean;
+  session_date: string | null;
+  session_duration_minutes: number | null;
+}

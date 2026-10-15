@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/internal/retention/purge",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}

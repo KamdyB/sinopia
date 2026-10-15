@@ -14,6 +14,7 @@ from backend.api.checkins import router as checkins_router
 from backend.api.explain import router as explain_router
 from backend.api.players import router as players_router
 from backend.api.privacy import router as privacy_router
+from backend.api.retention import router as retention_router
 from backend.api.sessions import router as sessions_router
 from backend.api.statuses import router as statuses_router
 from backend.api.team_sessions import router as team_sessions_router
@@ -145,7 +146,7 @@ async def apply_rate_limits(request: Request, call_next):
 @app.middleware("http")
 async def require_trusted_proxy(request: Request, call_next):
     # Liveness/readiness probes are intentionally public and disclose no secrets.
-    if request.url.path in {"/health", "/ready"}:
+    if request.url.path in {"/health", "/ready", "/internal/retention/purge"}:
         return await call_next(request)
     if PRODUCTION:
         configured = os.environ.get("SINOPIA_PROXY_SECRET", "")
@@ -197,3 +198,4 @@ app.include_router(team_sessions_router)
 app.include_router(explain_router)
 app.include_router(players_router)
 app.include_router(privacy_router)
+app.include_router(retention_router)

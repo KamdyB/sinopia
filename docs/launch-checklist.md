@@ -43,6 +43,15 @@
 | 19 | HTTPS | **Provider setting not yet applied.** Cloudflare Full (strict), Always Use HTTPS, HSTS, and production rejection of non-HTTPS deployment URLs must be verified after domain setup. |
 | 20 | Dependency scans | CI runs `npm audit --audit-level=high`, `pip-audit`, and Gitleaks. **Dependabot configuration and current audit results must be verified after the dependency change.** |
 
+## Retention automation
+
+- Root `vercel.json` schedules a daily request to `/internal/retention/purge`.
+- Configure `CRON_SECRET` in the API Vercel project and ensure Vercel Cron sends its bearer authorization header.
+- Agree the retention period with the data controller/legal reviewer, then set `SINOPIA_RETENTION_DAYS` to an integer from 1 to 3650. The application intentionally does not guess this policy.
+- If either variable is absent or invalid, the endpoint fails closed without deleting records.
+- The job deletes only sessions and check-ins older than the cutoff, team by team under the normal RLS context. Athlete roster entries are retained until a separate athlete/account deletion.
+- After deployment, verify a synthetic expired record is purged and a recent record remains. Check the cron result in Vercel logs without logging athlete data.
+
 ## Beta access gate
 
 - Add `SINOPIA_COACH_ALLOWLIST` as a server-only environment variable containing normalized coach email addresses.

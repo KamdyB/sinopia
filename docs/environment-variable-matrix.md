@@ -1,6 +1,6 @@
 # Sinopia environment-variable setup matrix
 
-This matrix covers the current `security/phase-7-postgres-launch` branch. It is a configuration guide, not proof that a provider has been configured. Set variables in the specific project/runtime that consumes them. Never paste real secrets into GitHub source, issue comments, chat, or any `VITE_*` variable.
+This matrix documents the current main-branch environment contract; provider values must still be verified in their dashboards. It is a configuration guide, not proof that a provider has been configured. Set variables in the specific project/runtime that consumes them. Never paste real secrets into GitHub source, issue comments, chat, or any `VITE_*` variable.
 
 ## 1. API runtime (Vercel API project, or the selected backend host)
 
@@ -18,6 +18,8 @@ This matrix covers the current `security/phase-7-postgres-launch` branch. It is 
 | `SINOPIA_TERMS_VERSION` | Version/date identifier matching the actual published terms, e.g. `2026-10-15` only after that version is published. | No |
 | `SINOPIA_PRIVACY_VERSION` | Version/date identifier matching the actual published privacy notice. | No |
 | `SINOPIA_TIMEZONE` | IANA timezone for the pilot, e.g. `Africa/Lagos` if that is the pilot team's timezone. | No |
+| `CRON_SECRET` | At least 32 random characters; used as the bearer secret for the daily Vercel retention cron. Configure only in the API runtime. | **Yes** |
+| `SINOPIA_RETENTION_DAYS` | Data-controller-approved retention window, integer 1–3650. Leave unset until a policy is approved; missing/invalid values make the job fail closed. | No |
 | `GROQ_API_KEY` | A Groq API key only if the current explain/AI feature is intended to use Groq; otherwise leave unset and verify that the feature handles absence safely. | **Yes** |
 | `SINOPIA_DB_PATH` | Local SQLite path for development only, e.g. `sinopia.db`. Do not rely on local filesystem storage in a serverless production deployment. | No |
 

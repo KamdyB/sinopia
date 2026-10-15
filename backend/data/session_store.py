@@ -30,6 +30,15 @@ class SessionStore:
                 (session_id, player_id, team_id))
         return result.rowcount > 0
 
+    def purge_before(self, cutoff_date: str, team_id: str) -> int:
+        """Delete old session history only within the specified team."""
+        with connect(self._db_path, team_id=team_id) as conn:
+            result = conn.execute(
+                "DELETE FROM sessions WHERE team_id = ? AND date < ?",
+                (team_id, cutoff_date),
+            )
+        return max(0, result.rowcount)
+
     def delete_for_player(self, player_id: str, team_id: str | None = None) -> None:
         query = "DELETE FROM sessions WHERE player_id = ?"
         params: tuple = (player_id,)

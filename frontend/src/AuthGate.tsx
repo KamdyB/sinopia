@@ -7,6 +7,7 @@ import {
   fetchCoachSession,
   signInWithGoogle,
   signOut,
+  setupCoachTeam,
 } from "./api";
 
 type GoogleCredentialResponse = { credential: string };

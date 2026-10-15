@@ -53,3 +53,11 @@ export interface CheckinPayload {
   pain: boolean;
   pain_area?: string;
 }
+
+export interface OpenTeamSession {
+  team_id: string;
+  session_date: string;
+  duration_minutes: number;
+  is_open: boolean;
+  created_at: string;
+}

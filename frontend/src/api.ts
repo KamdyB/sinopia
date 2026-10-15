@@ -103,8 +103,8 @@ export async function fetchCoachSession(): Promise<CoachSession> {
   return get<CoachSession>("/auth/me");
 }
 
-export async function signInWithGoogle(credential: string, turnstileToken?: string): Promise<CoachSession> {
-  return post<CoachSession>("/auth/google", { credential, turnstile_token: turnstileToken ?? null });
+export async function signInWithGoogle(credential: string, turnstileToken?: string, intent: "signup" | "signin" = "signin"): Promise<CoachSession> {
+  return post<CoachSession>("/auth/google", { credential, turnstile_token: turnstileToken ?? null, intent });
 }
 
 export async function acceptCoachPolicies(

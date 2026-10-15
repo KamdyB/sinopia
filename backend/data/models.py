@@ -44,6 +44,8 @@ class Coach(Base):
     google_sub = Column(String(255), primary_key=True)
     email = Column(String(320), nullable=False, unique=True)
     display_name = Column(String(160), nullable=False)
+    adult_confirmed_at = Column(String(40), nullable=True)
+    authorization_confirmed_at = Column(String(40), nullable=True)
 
 class Team(Base):
     __tablename__ = "teams"

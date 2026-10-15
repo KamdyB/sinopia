@@ -314,3 +314,25 @@ def test_policy_gate_and_version_bump_require_fresh_acceptance(client, tmp_path,
 
     monkeypatch.setattr(auth_api, "TERMS_VERSION", "terms-v2")
     assert client.get("/players?team_type=girls").status_code == 403
+
+
+def test_open_team_session_adds_effort_question_and_records_workload(client):
+    player_id = register(client, "Effort Test")
+    token = checkin_token(client, player_id)
+    opened = client.post("/team-sessions/open", json={"date_str": "2026-10-14", "duration_minutes": 75})
+    assert opened.status_code == 201
+
+    context = client.post("/checkin/validate", json={"token": token}).json()
+    assert context["session_open"] is True
+    assert context["session_duration_minutes"] == 75
+
+    payload = {"token": token, "sleep": 4, "energy": 4, "soreness": 2,
+               "stress": 2, "pain": False}
+    assert client.post("/checkins", json=payload).status_code == 422
+    payload["rpe"] = 7
+    assert client.post("/checkins", json=payload).status_code == 201
+    history = client.get(f"/players/{player_id}/history").json()
+    assert history[-1]["session_load"] == 525.0
+
+    assert client.post("/team-sessions/close").status_code == 200
+    assert client.post("/checkin/validate", json={"token": token}).json()["session_open"] is False

@@ -53,6 +53,7 @@ class AuthStore:
                 (" ".join(team_name.split())[:120], team_type, email.lower()),
             )
             updated = conn.execute("SELECT team_id, team_name, team_type FROM teams WHERE coach_email = ?", (email.lower(),)).fetchone()
+            conn.execute("UPDATE players SET team_type = ? WHERE team_id = ?", (team_type, updated["team_id"]))
         return dict(updated)
 
     def create_session(self, email: str, lifetime_hours: int = 8) -> str:

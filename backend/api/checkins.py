@@ -10,7 +10,6 @@ from backend.timeutil import service_date
 from backend.data.auth_store import auth_store
 from backend.data.checkin_store import DuplicateCheckinError, checkin_store
 from backend.data.player_store import player_store
-from backend.data.session_store import session_store
 from backend.data.open_team_session_store import open_team_session_store
 from backend.security.rate_limit import client_ip, enforce_rate_limit
 
@@ -90,28 +89,23 @@ def log_checkin(req: CheckinRequest, request: Request) -> dict:
         raise HTTPException(status_code=422, detail="Add an effort rating while the team session is open.")
     if not open_session and req.rpe is not None:
         raise HTTPException(status_code=409, detail="There is no open team session for an effort rating.")
+    workload = None
+    if open_session and req.rpe is not None:
+        workload = {
+            "date": open_session["session_date"],
+            "duration_minutes": open_session["duration_minutes"],
+            "rpe": req.rpe,
+        }
     try:
         checkin_store.log_checkin(
             player["player_id"],
             {"date": service_date().isoformat(), "sleep": req.sleep, "energy": req.energy,
              "soreness": req.soreness, "stress": req.stress, "pain": req.pain, "pain_area": req.pain_area},
             player["team_id"],
+            workload=workload,
         )
     except DuplicateCheckinError:
         raise HTTPException(status_code=409, detail="A check-in has already been submitted today.")
-    if open_session and req.rpe is not None:
-        previous = session_store.get_sessions(player["player_id"], player["team_id"])
-        already_logged = any(
-            item["date"] == open_session["session_date"]
-            and item["duration_minutes"] == open_session["duration_minutes"]
-            for item in previous
-        )
-        if not already_logged:
-            session_store.log_session(
-                player["player_id"],
-                {"date": open_session["session_date"], "duration_minutes": open_session["duration_minutes"], "rpe": req.rpe},
-                player["team_id"],
-            )
     auth_store.log_event("checkin_submitted", player["team_id"])
     return {"status": "recorded"}
 

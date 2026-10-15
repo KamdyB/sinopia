@@ -390,3 +390,35 @@ class _FakeReadyConnection:
 
     def fetchone(self):
         return (1,)
+
+
+def test_effort_session_failure_rolls_back_the_checkin(client, tmp_path):
+    import sqlite3
+
+    player_id = register(client, "Atomic check-in")
+    token = checkin_token(client, player_id)
+    opened = client.post(
+        "/team-sessions/open",
+        json={"date_str": service_date().isoformat(), "duration_minutes": 60},
+    )
+    assert opened.status_code == 201
+
+    with sqlite3.connect(tmp_path / "test.db") as conn:
+        conn.execute(
+            "CREATE TRIGGER fail_session_insert BEFORE INSERT ON sessions "
+            "BEGIN SELECT RAISE(ABORT, 'simulated session insert failure'); END"
+        )
+
+    response = client.post(
+        "/checkins",
+        json={"token": token, "sleep": 4, "energy": 4, "soreness": 2,
+              "stress": 2, "pain": False, "rpe": 7},
+    )
+    assert response.status_code == 500
+    with sqlite3.connect(tmp_path / "test.db") as conn:
+        assert conn.execute(
+            "SELECT COUNT(*) FROM checkins WHERE player_id = ?", (player_id,)
+        ).fetchone()[0] == 0
+        assert conn.execute(
+            "SELECT COUNT(*) FROM sessions WHERE player_id = ?", (player_id,)
+        ).fetchone()[0] == 0

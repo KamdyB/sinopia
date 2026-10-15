@@ -51,3 +51,4 @@ class Team(Base):
     coach_id = Column(String(255), nullable=False, unique=True, index=True)
     name = Column(String(120), nullable=False)
     team_type = Column(String(12), nullable=False)
+    terms_accepted_at = Column(String(40), nullable=False)

@@ -14,7 +14,8 @@ import {
 const API_BASE = (import.meta.env.VITE_API_BASE ?? (import.meta.env.PROD ? "/api" : "http://localhost:8000")).replace(/\/$/, "");
 
 async function parseError(res: Response): Promise<Error> {
-  const body = (await res.json().catch(async () => ({ detail: await res.text().catch(() => "") }))) as { detail?: unknown } | null;
+  const fallback = res.clone();
+  const body = (await res.json().catch(async () => ({ detail: await fallback.text().catch(() => "") }))) as { detail?: unknown } | null;
   const detail = typeof body?.detail === "string" && body.detail.trim()
     ? body.detail.trim().slice(0, 300)
     : `Request failed: ${res.status}`;

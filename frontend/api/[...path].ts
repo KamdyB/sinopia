@@ -37,7 +37,21 @@ export default async function handler(request: Request): Promise<Response> {
   for (const name of [
     "host", "content-length", "connection", "accept-encoding",
     "x-forwarded-for", "x-real-ip", "x-forwarded-host",
+    "x-sinopia-proxy-secret", "x-sinopia-client-ip",
   ]) headers.delete(name);
+
+  const proxySecret = process.env.SINOPIA_PROXY_SECRET?.trim();
+  if (!proxySecret || proxySecret.length < 32) {
+    return new Response("The API proxy is not configured.", {
+      status: 503,
+      headers: { "Cache-Control": "no-store", "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }
+  headers.set("X-Sinopia-Proxy-Secret", proxySecret);
+  const forwarded = request.headers.get("x-forwarded-for") || "";
+  const forwardedParts = forwarded.split(",").map((part) => part.trim()).filter(Boolean);
+  const clientIp = forwardedParts[forwardedParts.length - 1];
+  if (clientIp && clientIp.length <= 64) headers.set("X-Sinopia-Client-IP", clientIp);
 
   let upstream: Response;
   try {

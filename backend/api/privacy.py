@@ -6,6 +6,7 @@ import time
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi.responses import JSONResponse
 from google.auth.transport.requests import Request as GoogleRequest
 from google.oauth2 import id_token
 from pydantic import BaseModel, ConfigDict, Field
@@ -16,14 +17,57 @@ from backend.data.checkin_store import checkin_store
 from backend.data.db import DB_PATH, connect
 from backend.data.player_store import player_store
 from backend.data.session_store import session_store
+from backend.security.turnstile import require_turnstile
 
 router = APIRouter(prefix="/privacy")
+
+
+class ExportSession(BaseModel):
+    date: str
+    duration_minutes: float
+    rpe: float
+
+
+class ExportCheckin(BaseModel):
+    date: str
+    sleep: int
+    energy: int
+    soreness: int
+    stress: int
+    pain: bool
+    pain_area: str | None
+    pain_acknowledged: bool
+
+
+class ExportPlayer(BaseModel):
+    label: str
+    team_type: str
+    registered_date: str
+    sessions: list[ExportSession]
+    checkins: list[ExportCheckin]
+
+
+class TeamExport(BaseModel):
+    exported_at: str
+    players: list[ExportPlayer]
+
+
+class DeleteAccountResponse(BaseModel):
+    deleted: bool
 
 
 class DeleteAccountRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     credential: str = Field(min_length=20, max_length=8192)
     confirm: bool
+    turnstile_token: str | None = Field(default=None, max_length=2048)
+
+
+def _csv_safe(value):
+    """Prevent spreadsheet formula execution from user-controlled CSV cells."""
+    if isinstance(value, str) and value.lstrip(" \t\r\n")[:1] in {"=", "+", "-", "@", "\t", "\r"}:
+        return "'" + value
+    return value
 
 
 def _team_export(team_id: str) -> dict:
@@ -43,14 +87,15 @@ def _team_export(team_id: str) -> dict:
     }
 
 
-@router.get("/export")
+@router.get("/export", response_model=TeamExport)
 def export_team(format: str = "json", coach: dict = Depends(require_accepted_coach)):
     if format not in {"json", "csv"}:
         raise HTTPException(status_code=422, detail="Format must be json or csv.")
     data = _team_export(coach["team_id"])
     auth_api.auth_store.log_event("team_exported", coach["team_id"])
     if format == "json":
-        return data
+        validated = TeamExport.model_validate(data)
+        return JSONResponse(validated.model_dump(), headers={"Cache-Control": "no-store"})
 
     output = io.StringIO(newline="")
     writer = csv.writer(output)
@@ -62,12 +107,12 @@ def export_team(format: str = "json", coach: dict = Depends(require_accepted_coa
     for player in data["players"]:
         for session in player["sessions"]:
             writer.writerow([
-                "session", player["label"], player["team_type"], session["date"],
+                "session", _csv_safe(player["label"]), player["team_type"], session["date"],
                 session["duration_minutes"], session["rpe"], "", "", "", "", "", "", "",
             ])
         for checkin in player["checkins"]:
             writer.writerow([
-                "check-in", player["label"], player["team_type"], checkin["date"],
+                "check-in", _csv_safe(player["label"]), player["team_type"], checkin["date"],
                 "", "", checkin["sleep"], checkin["energy"], checkin["soreness"],
                 checkin["stress"], checkin["pain"], checkin["pain_area"] or "",
                 checkin["pain_acknowledged"],
@@ -75,11 +120,11 @@ def export_team(format: str = "json", coach: dict = Depends(require_accepted_coa
     return Response(
         output.getvalue(),
         media_type="text/csv; charset=utf-8",
-        headers={"Content-Disposition": 'attachment; filename="sinopia-team-export.csv"'},
+        headers={"Content-Disposition": 'attachment; filename="sinopia-team-export.csv"', "Cache-Control": "no-store"},
     )
 
 
-@router.post("/delete-account")
+@router.post("/delete-account", response_model=DeleteAccountResponse)
 def delete_account(
     payload: DeleteAccountRequest,
     request: Request,
@@ -88,6 +133,7 @@ def delete_account(
 ) -> dict[str, bool]:
     if not payload.confirm:
         raise HTTPException(status_code=422, detail="Confirm permanent deletion to continue.")
+    require_turnstile(payload.turnstile_token, "delete_account")
     client_id = os.environ.get("GOOGLE_CLIENT_ID")
     if not client_id:
         raise HTTPException(status_code=503, detail="Google sign-in is not configured.")
@@ -124,6 +170,7 @@ def delete_account(
             (team_id, team_id),
         )
         conn.execute("DELETE FROM players WHERE team_id = ?", (team_id,))
+        conn.execute("DELETE FROM team_sessions WHERE team_id = ?", (team_id,))
         conn.execute("DELETE FROM audit_log WHERE team_id = ?", (team_id,))
         conn.execute("DELETE FROM coach_sessions WHERE coach_email = ?", (email,))
         conn.execute("DELETE FROM teams WHERE team_id = ?", (team_id,))

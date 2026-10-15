@@ -99,8 +99,8 @@ export async function fetchCoachSession(): Promise<CoachSession> {
   return get<CoachSession>("/auth/me");
 }
 
-export async function signInWithGoogle(credential: string): Promise<CoachSession> {
-  return post<CoachSession>("/auth/google", { credential });
+export async function signInWithGoogle(credential: string, turnstileToken?: string): Promise<CoachSession> {
+  return post<CoachSession>("/auth/google", { credential, turnstile_token: turnstileToken ?? null });
 }
 
 export async function acceptCoachPolicies(
@@ -117,8 +117,8 @@ export async function signOut(): Promise<void> {
   await post<unknown>("/auth/logout", {});
 }
 
-export async function deleteCoachAccount(credential: string): Promise<void> {
-  await post<unknown>("/privacy/delete-account", { credential, confirm: true });
+export async function deleteCoachAccount(credential: string, turnstileToken?: string): Promise<void> {
+  await post<unknown>("/privacy/delete-account", { credential, confirm: true, turnstile_token: turnstileToken ?? null });
 }
 
 export async function exportTeamData(format: "csv" | "json"): Promise<void> {

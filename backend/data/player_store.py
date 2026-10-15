@@ -97,6 +97,14 @@ class PlayerStore:
             result["name"] = decrypt_text(result["name"])
         return results
 
+    def delete_with_history(self, player_id: str, team_id: str) -> bool:
+        """Atomically remove a player and every associated training/check-in row."""
+        with connect(self._db_path, team_id=team_id) as conn:
+            conn.execute("DELETE FROM checkins WHERE player_id = ? AND team_id = ?", (player_id, team_id))
+            conn.execute("DELETE FROM sessions WHERE player_id = ? AND team_id = ?", (player_id, team_id))
+            result = conn.execute("DELETE FROM players WHERE player_id = ? AND team_id = ?", (player_id, team_id))
+        return result.rowcount > 0
+
     def delete(self, player_id: str, team_id: str | None = None) -> bool:
         query = "DELETE FROM players WHERE player_id = ?"
         params: tuple = (player_id,)

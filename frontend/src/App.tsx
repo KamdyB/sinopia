@@ -34,15 +34,24 @@ export default function App() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [dataError, setDataError] = useState<string | null>(null);
+  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    fetchPlayers(teamType)
-      .then((list) => { if (!cancelled) setPlayers(list); })
-      .catch(() => { if (!cancelled) setPlayers([]); });
-    fetchTeamStatuses(teamType)
-      .then((list) => { if (!cancelled) setStatuses(list); })
-      .catch(() => { if (!cancelled) setStatuses([]); });
+    setDataLoading(true);
+    setDataError(null);
+    Promise.all([fetchPlayers(teamType), fetchTeamStatuses(teamType)])
+      .then(([roster, teamStatuses]) => {
+        if (!cancelled) {
+          setPlayers(roster);
+          setStatuses(teamStatuses);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setDataError("Could not load team records. Check the connection and retry; the data has not been replaced with an empty roster.");
+      })
+      .finally(() => { if (!cancelled) setDataLoading(false); });
     return () => { cancelled = true; };
   }, [teamType]);
 
@@ -68,8 +77,9 @@ export default function App() {
   const refreshStatuses = async () => {
     try {
       setStatuses(await fetchTeamStatuses(teamType));
+      setDataError(null);
     } catch {
-      setStatuses([]);
+      setDataError("Could not refresh team status. Existing results may be out of date.");
     }
   };
 
@@ -138,6 +148,8 @@ export default function App() {
           <button type="button" className="copy-link" onClick={() => void handleExport("json")}>Export JSON</button>
         </div>
       </div>
+      {dataError && <p className="form-error" role="alert">{dataError}</p>}
+      {dataLoading && <p className="empty-note" role="status">Loading team records…</p>}
       <div className="dashboard">
         <div>
           {detailPlayer && (
@@ -152,13 +164,13 @@ export default function App() {
           <PlayerDirectory players={players} onAdd={handleAddPlayer} onCreateCheckinLink={handleCreateCheckinLink} onDeletePlayer={handleDeletePlayer} />
           <div className="panel">
             <p className="section-title">Team status</p>
-            {statuses.length === 0 ? (
+            {!dataLoading && !dataError && statuses.length === 0 ? (
               <p className="empty-note">
                 No athletes registered yet. Add each athlete once in the directory.
               </p>
-            ) : (
+            ) : !dataLoading && !dataError ? (
               <DashboardTable entries={statuses} onSelect={setDetailId} onAcknowledgePain={handleAcknowledgePain} />
-            )}
+            ) : null}
           </div>
         </div>
         <div>

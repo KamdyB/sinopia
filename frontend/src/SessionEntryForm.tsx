@@ -3,7 +3,11 @@ import { FormEvent, useRef, useState } from "react";
 import { Player, SessionPayload } from "./types";
 import { logSession } from "./api";
 
-const TODAY_ISO = new Date().toISOString().slice(0, 10);
+const TODAY_ISO = (() => {
+  const now = new Date();
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate());
+})();
 
 export function SessionEntryForm({
   players,
@@ -31,7 +35,7 @@ export function SessionEntryForm({
       return;
     }
     if (durationMinutes <= 0 || rpe === "") {
-      setError("Enter a duration and an RPE from 0 to 10.");
+      setError("Enter a duration and an RPE from 1 to 10.");
       return;
     }
     if (dateStr > TODAY_ISO) {
@@ -100,18 +104,18 @@ export function SessionEntryForm({
             id="duration"
             type="number"
             min={1}
-            max={600}
+            max={180}
             value={durationMinutes || ""}
             placeholder="0"
             onChange={(e) => setDurationMinutes(+e.target.value)}
           />
         </div>
         <div className="field-group">
-          <label className="field-group__label" htmlFor="rpe">Effort, 0 to 10</label>
+          <label className="field-group__label" htmlFor="rpe">Effort, 1 to 10</label>
           <input
             id="rpe"
             type="number"
-            min={0}
+            min={1}
             max={10}
             value={rpe}
             placeholder="0"

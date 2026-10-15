@@ -1,5 +1,4 @@
 """Token-authenticated athlete check-ins. The date is set by the server."""
-from datetime import date
 import hashlib
 from typing import Literal
 
@@ -7,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from backend.api.auth import require_accepted_coach
+from backend.timeutil import service_date
 from backend.data.checkin_store import DuplicateCheckinError, checkin_store
 from backend.data.player_store import player_store
 from backend.security.rate_limit import client_ip, enforce_rate_limit
@@ -37,12 +37,20 @@ class CheckinRequest(BaseModel):
         return self
 
 
+class CheckinValidationResponse(BaseModel):
+    valid: bool
+
+
+class CheckinCreatedResponse(BaseModel):
+    status: Literal["recorded"]
+
+
 class CheckinTokenValidationRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     token: str = Field(min_length=30, max_length=128)
 
 
-@router.post("/checkin/validate")
+@router.post("/checkin/validate", response_model=CheckinValidationResponse)
 def validate_checkin_link(payload: CheckinTokenValidationRequest, request: Request) -> dict:
     ip = client_ip(request)
     token_digest = hashlib.sha256(payload.token.encode()).hexdigest()
@@ -58,7 +66,7 @@ def validate_checkin_link(payload: CheckinTokenValidationRequest, request: Reque
     return {"valid": True}
 
 
-@router.post("/checkins", status_code=201)
+@router.post("/checkins", status_code=201, response_model=CheckinCreatedResponse)
 def log_checkin(req: CheckinRequest, request: Request) -> dict:
     ip = client_ip(request)
     token_digest = hashlib.sha256(req.token.encode()).hexdigest()
@@ -76,7 +84,7 @@ def log_checkin(req: CheckinRequest, request: Request) -> dict:
         checkin_store.log_checkin(
             player["player_id"],
             {
-                "date": date.today().isoformat(),
+                "date": service_date().isoformat(),
                 "sleep": req.sleep,
                 "energy": req.energy,
                 "soreness": req.soreness,

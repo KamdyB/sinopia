@@ -1,5 +1,6 @@
 """Database-backed shared rate limiting in production; in-memory only for local tests."""
 import hashlib
+import hmac
 import os
 import time
 from collections import defaultdict, deque
@@ -12,10 +13,14 @@ _LOCK = Lock()
 
 
 def client_ip(request: Request) -> str:
-    if os.environ.get("SINOPIA_TRUST_PROXY", "").lower() == "true":
-        forwarded = request.headers.get("x-forwarded-for", "")
-        if forwarded.strip():
-            return forwarded.split(",")[0].strip()
+    secret = os.environ.get("SINOPIA_PROXY_SECRET", "")
+    supplied = request.headers.get("x-sinopia-proxy-secret", "")
+    if secret and supplied and hmac.compare_digest(secret, supplied):
+        # The Vercel proxy strips client-supplied Sinopia headers and writes this
+        # from the platform-forwarded chain; use the final hop, not a spoofable prefix.
+        forwarded = request.headers.get("x-sinopia-client-ip", "").strip()
+        if forwarded and len(forwarded) <= 64:
+            return forwarded
     return request.client.host if request.client else "unknown"
 
 

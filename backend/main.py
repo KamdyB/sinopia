@@ -1,5 +1,6 @@
 """FastAPI application, request protections, and router registration."""
 import os
+import hmac
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -41,6 +42,8 @@ if PRODUCTION:
         raise RuntimeError("GOOGLE_CLIENT_ID is required in production.")
     if not os.environ.get("SINOPIA_COACH_ALLOWLIST", "").strip():
         raise RuntimeError("SINOPIA_COACH_ALLOWLIST is required in production; pilot access fails closed.")
+    if len(os.environ.get("SINOPIA_PROXY_SECRET", "")) < 32:
+        raise RuntimeError("SINOPIA_PROXY_SECRET must be at least 32 characters in production.")
     validate_encryption_config()
 
 app = FastAPI(
@@ -98,6 +101,16 @@ async def apply_rate_limits(request: Request, call_next):
                 status_code=429,
                 headers={"Retry-After": str(retry_after)},
             )
+    return await call_next(request)
+
+
+@app.middleware("http")
+async def require_trusted_proxy(request: Request, call_next):
+    if PRODUCTION:
+        configured = os.environ.get("SINOPIA_PROXY_SECRET", "")
+        supplied = request.headers.get("x-sinopia-proxy-secret", "")
+        if not configured or not supplied or not hmac.compare_digest(configured, supplied):
+            return Response("Request rejected.", status_code=403)
     return await call_next(request)
 
 

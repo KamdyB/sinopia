@@ -12,6 +12,7 @@ import re
 from sqlalchemy import text
 
 from backend.data.db import _METADATA, _normalise_url, create_engine
+from backend.security.encryption import decrypt_text, label_digest, reencrypt_text, validate_encryption_config
 
 owner_url = os.environ.get("DATABASE_OWNER_URL", "").strip()
 if not owner_url:
@@ -21,12 +22,35 @@ app_role = os.environ.get("SINOPIA_DB_APP_ROLE", "sinopia_app")
 if not re.fullmatch(r"[a-zA-Z_][a-zA-Z0-9_]{0,62}", app_role):
     raise SystemExit("SINOPIA_DB_APP_ROLE must be a simple PostgreSQL role name.")
 
+try:
+    validate_encryption_config()
+except RuntimeError as exc:
+    raise SystemExit(str(exc)) from exc
+
 engine = create_engine(_normalise_url(owner_url), pool_pre_ping=True)
 if engine.dialect.name != "postgresql":
     raise SystemExit("This migration command is only for PostgreSQL.")
 
 with engine.begin() as connection:
     _METADATA.create_all(connection)
+    protected_tables = ("players", "team_sessions", "sessions", "checkins", "audit_log")
+    # Temporarily disable existing policies inside this single DDL/data transaction
+    # so the owner can rotate every row; a failure rolls back the entire transaction.
+    for table in protected_tables:
+        connection.execute(text(f'ALTER TABLE "{table}" DISABLE ROW LEVEL SECURITY'))
+    # Re-encrypt stored sensitive fields and rebuild the keyed duplicate-label digest.
+    # This also makes rerunning the migration the supported key-rotation operation.
+    for row in connection.execute(text("SELECT player_id, name FROM players")).mappings():
+        plaintext = decrypt_text(row["name"])
+        connection.execute(
+            text("UPDATE players SET name = :name, name_hash = :digest WHERE player_id = :player_id"),
+            {"name": reencrypt_text(row["name"]), "digest": label_digest(plaintext), "player_id": row["player_id"]},
+        )
+    for row in connection.execute(text("SELECT id, pain_area FROM checkins WHERE pain_area IS NOT NULL")).mappings():
+        connection.execute(
+            text("UPDATE checkins SET pain_area = :pain_area WHERE id = :id"),
+            {"pain_area": reencrypt_text(row["pain_area"]), "id": row["id"]},
+        )
     # Enable and FORCE row-level security. Context values are set transaction-locally
     # by backend.data.db.connect(), never persisted across pooled connections.
     policies = {

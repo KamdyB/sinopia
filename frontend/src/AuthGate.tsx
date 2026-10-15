@@ -1,4 +1,5 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
+import { TurnstileWidget } from "./TurnstileWidget";
 import {
   acceptCoachPolicies,
   CoachSession,
@@ -34,6 +35,8 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [deletionMode, setDeletionMode] = useState(false);
   const [deleted, setDeleted] = useState(false);
+  const turnstileTokenRef = useRef<string | null>(null);
+  const [turnstileVersion, setTurnstileVersion] = useState(0);
 
   const refreshSession = async () => {
     const current = await fetchCoachSession();
@@ -67,11 +70,15 @@ export function AuthGate({ children }: { children: ReactNode }) {
           setBusy(true);
           setError(null);
           try {
-            const signedIn = await signInWithGoogle(credentialResponse.credential);
+            const token = turnstileTokenRef.current;
+            if (import.meta.env.PROD && !token) throw new Error("Complete the bot-protection check first.");
+            const signedIn = await signInWithGoogle(credentialResponse.credential, token ?? undefined);
             setCoach(signedIn);
           } catch (err) {
             setError(err instanceof Error ? err.message : "Google sign-in failed.");
           } finally {
+            turnstileTokenRef.current = null;
+            setTurnstileVersion((version) => version + 1);
             setBusy(false);
           }
         },
@@ -113,11 +120,11 @@ export function AuthGate({ children }: { children: ReactNode }) {
     }
   };
 
-  const handleDeleteAccount = async (credential: string) => {
+  const handleDeleteAccount = async (credential: string, turnstileToken?: string) => {
     setBusy(true);
     setError(null);
     try {
-      await deleteCoachAccount(credential);
+      await deleteCoachAccount(credential, turnstileToken);
       setDeleted(true);
       setCoach(null);
     } catch (err) {
@@ -154,6 +161,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
           <p className="eyebrow">Sinopia by KamdyB</p>
           <h1 className="display-title">Coach sign-in</h1>
           <p>Sign in with Google to access your team's training and check-in records.</p>
+          <TurnstileWidget key={turnstileVersion} action="login" onToken={(token) => { turnstileTokenRef.current = token; }} />
           <div ref={buttonRef} />
           {busy && <p>Signing in…</p>}
           {error && <p className="form-error">{error}</p>}
@@ -211,13 +219,15 @@ function DeleteAccountConfirmation({
   onDelete,
 }: {
   onCancel: () => void;
-  onDelete: (credential: string) => Promise<void>;
+  onDelete: (credential: string, turnstileToken?: string) => Promise<void>;
 }) {
   const buttonRef = useRef<HTMLDivElement>(null);
   const callbackRef = useRef(onDelete);
   const [confirmed, setConfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const turnstileTokenRef = useRef<string | null>(null);
+  const [turnstileVersion, setTurnstileVersion] = useState(0);
 
   useEffect(() => { callbackRef.current = onDelete; }, [onDelete]);
 
@@ -237,10 +247,14 @@ function DeleteAccountConfirmation({
           setBusy(true);
           setError(null);
           try {
-            await callbackRef.current(response.credential);
+            const token = turnstileTokenRef.current;
+            if (import.meta.env.PROD && !token) throw new Error("Complete the bot-protection check first.");
+            await callbackRef.current(response.credential, token ?? undefined);
           } catch (err) {
             setError(err instanceof Error ? err.message : "Deletion could not be confirmed.");
           } finally {
+            turnstileTokenRef.current = null;
+            setTurnstileVersion((version) => version + 1);
             setBusy(false);
           }
         },
@@ -275,7 +289,7 @@ function DeleteAccountConfirmation({
           <input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} />
           I understand this deletion is permanent and want to continue.
         </label>
-        {confirmed && <p>Complete a fresh Google sign-in below to confirm this deletion.</p>}
+        {confirmed && <><p>Complete the bot check and a fresh Google sign-in below to confirm this deletion.</p><TurnstileWidget key={turnstileVersion} action="delete_account" onToken={(token) => { turnstileTokenRef.current = token; }} /></>}
         <div ref={buttonRef} />
         {busy && <p>Deleting account and team data…</p>}
         {error && <p className="form-error">{error}</p>}

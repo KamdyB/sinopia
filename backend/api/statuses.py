@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from backend.api.auth import require_accepted_coach
+from backend.timeutil import service_date
 from backend.api.players import TeamType
 from backend.data.checkin_store import checkin_store
 from backend.data.player_store import player_store
@@ -26,7 +27,7 @@ class AthleteStatus(BaseModel):
 
 @router.get("/statuses", response_model=list[AthleteStatus])
 def team_statuses(team_type: TeamType, coach: dict = Depends(require_accepted_coach)) -> list[AthleteStatus]:
-    today = date.today()
+    today = service_date()
     statuses: list[AthleteStatus] = []
     for player in player_store.list_for_team(team_type, coach["team_id"]):
         sessions = session_store.get_sessions(player["player_id"], coach["team_id"])

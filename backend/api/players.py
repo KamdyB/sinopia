@@ -1,5 +1,5 @@
 """Athlete registration, roster listing, and per-athlete history."""
-from datetime import date
+from backend.timeutil import service_date
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Response
@@ -51,15 +51,20 @@ class CheckinTokenResponse(BaseModel):
 class HistoryPoint(BaseModel):
     date: str
     session_load: float
+    session_count: int
     level: str
     reasons: list[str]
     numbers: dict
+    pain: bool = False
+    pain_area: str | None = None
+    pain_acknowledged: bool = False
+    wellness_score: float | None = None
 
 
 @router.post("/players", response_model=PlayerResponse, status_code=201)
 def register_player(req: PlayerRequest, coach: dict = Depends(require_accepted_coach)) -> PlayerResponse:
     try:
-        player = player_store.register(req.name, req.team_type, date.today().isoformat(), coach["team_id"])
+        player = player_store.register(req.name, req.team_type, service_date().isoformat(), coach["team_id"])
     except DuplicatePlayerError:
         raise HTTPException(status_code=409, detail="An athlete label is already registered for this team.")
     return PlayerResponse(**player)
@@ -82,7 +87,9 @@ def get_player(player_id: str, coach: dict = Depends(require_accepted_coach)) ->
 def player_history(player_id: str, coach: dict = Depends(require_accepted_coach)) -> list[HistoryPoint]:
     if player_store.get(player_id, coach["team_id"]) is None:
         raise HTTPException(status_code=404, detail="Athlete not found.")
-    return [HistoryPoint(**p) for p in history_points(session_store.get_sessions(player_id, coach["team_id"]))]
+    sessions = session_store.get_sessions(player_id, coach["team_id"])
+    checkins = checkin_store.get_checkins(player_id, coach["team_id"])
+    return [HistoryPoint(**point) for point in history_points(sessions, checkins)]
 
 
 
@@ -116,9 +123,8 @@ def acknowledge_pain(
 def delete_player(player_id: str, coach: dict = Depends(require_accepted_coach)) -> Response:
     if player_store.get(player_id, coach["team_id"]) is None:
         raise HTTPException(status_code=404, detail="Athlete not found.")
-    checkin_store.delete_for_player(player_id, coach["team_id"])
-    session_store.delete_for_player(player_id, coach["team_id"])
-    player_store.delete(player_id, coach["team_id"])
+    if not player_store.delete_with_history(player_id, coach["team_id"]):
+        raise HTTPException(status_code=404, detail="Athlete not found.")
     from backend.data.auth_store import auth_store
     auth_store.log_event("athlete_deleted", coach["team_id"])
     return Response(status_code=204)

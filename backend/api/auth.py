@@ -8,6 +8,7 @@ from google.oauth2 import id_token
 from pydantic import BaseModel, ConfigDict, Field
 
 from backend.data.auth_store import auth_store
+from backend.security.turnstile import require_turnstile
 
 router = APIRouter(prefix="/auth")
 SESSION_COOKIE = "sinopia_session"
@@ -19,6 +20,26 @@ PRIVACY_VERSION = os.environ.get("SINOPIA_PRIVACY_VERSION", "2026-10-14")
 class GoogleCredential(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     credential: str = Field(min_length=20, max_length=8192)
+    turnstile_token: str | None = Field(default=None, max_length=2048)
+
+
+class CoachPublicResponse(BaseModel):
+    email: str
+    display_name: str
+    team_id: str
+    team_name: str
+    accepted_at: str | None
+    terms_version: str | None
+    privacy_version: str | None
+    needs_policy_acceptance: bool
+
+
+class PolicyAcceptedResponse(BaseModel):
+    accepted: bool
+
+
+class LogoutResponse(BaseModel):
+    logged_out: bool
 
 
 class PolicyAcceptance(BaseModel):
@@ -72,8 +93,9 @@ def require_accepted_coach(request: Request) -> dict[str, Any]:
     return coach
 
 
-@router.post("/google")
+@router.post("/google", response_model=CoachPublicResponse)
 def google_sign_in(payload: GoogleCredential, response: Response) -> dict[str, Any]:
+    require_turnstile(payload.turnstile_token, "login")
     client_id = os.environ.get("GOOGLE_CLIENT_ID")
     if not client_id:
         raise HTTPException(status_code=503, detail="Google sign-in is not configured.")
@@ -110,12 +132,12 @@ def google_sign_in(payload: GoogleCredential, response: Response) -> dict[str, A
     return _public_coach(coach)
 
 
-@router.get("/me")
+@router.get("/me", response_model=CoachPublicResponse)
 def get_me(request: Request) -> dict[str, Any]:
     return _public_coach(current_coach(request))
 
 
-@router.post("/accept-policies")
+@router.post("/accept-policies", response_model=PolicyAcceptedResponse)
 def accept_policies(payload: PolicyAcceptance, request: Request) -> dict[str, bool]:
     coach = current_coach(request)
     if not payload.age_18_or_older or not payload.authorised_and_parental_consent_obtained:
@@ -125,7 +147,7 @@ def accept_policies(payload: PolicyAcceptance, request: Request) -> dict[str, bo
     return {"accepted": True}
 
 
-@router.post("/logout")
+@router.post("/logout", response_model=LogoutResponse)
 def logout(request: Request, response: Response) -> dict[str, bool]:
     token = request.cookies.get(SESSION_COOKIE)
     if token:

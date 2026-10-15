@@ -47,7 +47,10 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sinopia_test?sslmode=disable
           DATABASE_OWNER_URL: postgresql://postgres:postgres@localhost:5432/sinopia_test?sslmode=disable
           SINOPIA_DB_APP_ROLE: sinopia_app
-        run: python -m backend.migrate
+          SINOPIA_ENCRYPTION_KEYS: ci-test:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+        run: |
+          python -m backend.migrate
+          python -m backend.migrate
       - run: python -m pytest -q
       - name: Test PostgreSQL row-level security with the non-owner role
         env:

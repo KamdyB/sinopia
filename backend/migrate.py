@@ -33,7 +33,8 @@ if engine.dialect.name != "postgresql":
 
 with engine.begin() as connection:
     _METADATA.create_all(connection)
-    protected_tables = ("players", "team_sessions", "sessions", "checkins", "audit_log")
+    connection.execute(text("ALTER TABLE teams ADD COLUMN IF NOT EXISTS team_type VARCHAR(16)"))
+    protected_tables = ("players", "team_sessions", "open_team_sessions", "sessions", "checkins", "audit_log")
     # Temporarily disable existing policies inside this single DDL/data transaction
     # so the owner can rotate every row; a failure rolls back the entire transaction.
     for table in protected_tables:
@@ -58,6 +59,7 @@ with engine.begin() as connection:
         "sessions": "team_id = NULLIF(current_setting('app.team_id', true), '')",
         "checkins": "team_id = NULLIF(current_setting('app.team_id', true), '')",
         "team_sessions": "team_id = NULLIF(current_setting('app.team_id', true), '')",
+        "open_team_sessions": "team_id = NULLIF(current_setting('app.team_id', true), '')",
         "audit_log": "team_id = NULLIF(current_setting('app.team_id', true), '')",
     }
     for table, predicate in policies.items():
@@ -77,7 +79,7 @@ with engine.begin() as connection:
     ))
     connection.execute(text(f'GRANT USAGE ON SCHEMA public TO "{app_role}"'))
     for table in ("coaches", "teams", "coach_sessions", "players", "sessions", "checkins",
-                  "team_sessions", "audit_log", "rate_limit_buckets"):
+                  "team_sessions", "open_team_sessions", "audit_log", "rate_limit_buckets"):
         connection.execute(text(f'GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE "{table}" TO "{app_role}"'))
     connection.execute(text(
         f'GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO "{app_role}"'

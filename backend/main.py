@@ -35,6 +35,12 @@ allowed_origins = [
 if PRODUCTION and any(not origin.startswith("https://") for origin in allowed_origins):
     raise RuntimeError("Production allowed origins must use HTTPS.")
 if PRODUCTION:
+    if not os.environ.get("DATABASE_URL", "").strip():
+        raise RuntimeError("DATABASE_URL is required in production; SQLite is local-development only.")
+    if not os.environ.get("GOOGLE_CLIENT_ID", "").strip():
+        raise RuntimeError("GOOGLE_CLIENT_ID is required in production.")
+    if not os.environ.get("SINOPIA_COACH_ALLOWLIST", "").strip():
+        raise RuntimeError("SINOPIA_COACH_ALLOWLIST is required in production; pilot access fails closed.")
     validate_encryption_config()
 
 app = FastAPI(

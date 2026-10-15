@@ -90,6 +90,11 @@ def google_sign_in(payload: GoogleCredential, response: Response) -> dict[str, A
     email = claims.get("email")
     if not isinstance(email, str) or not email.strip():
         raise HTTPException(status_code=401, detail="Google account email is unavailable.")
+    if os.environ.get("SINOPIA_ENV", "production").lower() == "production":
+        allowed = {item.strip().lower() for item in os.environ.get("SINOPIA_COACH_ALLOWLIST", "").split(",") if item.strip()}
+        if not allowed or email.strip().lower() not in allowed:
+            raise HTTPException(status_code=403, detail="This pilot is invite-only. Your coach account is not on the allowlist.")
+    auth_store.delete_sessions_for_coach(email)
     coach = auth_store.ensure_coach(email, str(claims.get("name") or email))
     token = auth_store.create_session(email)
     auth_store.log_event("coach_signed_in", coach["team_id"])

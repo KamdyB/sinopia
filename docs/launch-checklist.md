@@ -1,59 +1,72 @@
-# Sinopia launch checklist
+# Sinopia launch checklist — verified release gates
 
-**Release state: private alpha preparation. Not approved for real athlete health data.**
+**Status: NOT approved for production or real athlete data.** This document separates code-level checks from provider/dashboard checks. A checked box means the listed evidence exists; do not mark it complete based on configuration intent alone.
 
-## Deploy the coach API
+## Architecture
 
-1. Create a backend service from this repository using Python and the repository root.
-2. Build command: `pip install -r requirements.txt`.
-3. Start command: `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`.
-4. Use a durable, access-controlled database volume for a synthetic-data alpha only. The current application uses SQLite; do not treat ephemeral filesystem storage as durable.
-5. Set `SINOPIA_ENV=production`, `SINOPIA_ALLOWED_ORIGINS` to the exact HTTPS origin of the coach frontend, `GOOGLE_CLIENT_ID`, `SINOPIA_ENCRYPTION_KEYS`, `SINOPIA_TERMS_VERSION`, and `SINOPIA_PRIVACY_VERSION`. Set `SINOPIA_DB_PATH` to the durable volume path. Do not use the development coach in a public deployment.
-6. Generate a random 32-byte encryption key, base64url-encode it, and store it only in the host's secret manager. Never place the key in Git or a frontend variable.
-7. Verify `GET /health` returns `{"status":"ok"}` as a basic process-liveness check only. Separately verify Google OAuth audience and authorised origins, exact CORS origin, secure session cookie, and that missing production secrets make startup fail closed. The health route does not verify database readiness.
+- Frontend: Vercel project rooted at `frontend/`.
+- Landing/legal site: separate Vercel project rooted at `landing/`.
+- API: Vercel Python runtime only if the deployed FastAPI entrypoint, cold-start behavior, dependency size, and route semantics pass preview tests; otherwise Render. The repo currently has a Vercel `/api/*` proxy, not proof that FastAPI itself runs as a Vercel function.
+- Database: Neon PostgreSQL with `sslmode=require`; create separate owner and restricted application roles. API uses only the restricted role.
+- DNS/TLS/edge protection: Cloudflare; app and API use subdomains of one owned domain. Keep the Google sign-in origin and cookie behavior verified in browser tests.
+- Do not create provider projects until the code PR has passed CI and its unresolved gates have been reviewed.
 
-## Deploy the coach frontend
+## 20-point release checklist
 
-1. Create a Vercel project with root directory `frontend`.
-2. Add `SINOPIA_BACKEND_URL` as a server-side environment variable containing the backend origin only, such as `https://your-service.example`. Do not use a `VITE_` prefix for this secret/configuration.
-3. Set `VITE_API_BASE=/api`, `VITE_GOOGLE_CLIENT_ID` to the same Google OAuth web client ID used by the backend, and `VITE_LEGAL_BASE_URL` to the public landing-site origin.
-4. The Vercel edge function at `/api/*` proxies to the backend, preserving the session cookie and original Origin while removing client-supplied forwarded-IP headers. Add the exact coach frontend origin to `SINOPIA_ALLOWED_ORIGINS` on the backend.
-5. Confirm that `/api/auth/me` returns 401 while signed out, sign-in sets an HttpOnly/Secure/SameSite cookie, logout clears it, and no session token appears in browser storage.
+| # | Requirement | Evidence / current status |
+|---|---|---|
+| 1 | No secrets in frontend source or build | **Pending build scan.** CI must scan both `frontend/dist` and `landing/dist` for `GROQ_API_KEY`, database URL patterns and known secret prefixes. Google client ID and API URL are public configuration. |
+| 2 | Full-history secret scan | Gitleaks CI uses `fetch-depth: 0`. **Still verify push-protection settings in GitHub.** Rotate any exposed key; history rewriting alone is insufficient. |
+| 3 | Browser cannot access DB | **Design requirement.** Browser must call only the app/API; no Neon URL, database credential, or database Data API in either bundle. Build scan pending. |
+| 4 | PostgreSQL RLS | **Migration added; not yet runtime-proven.** Migration enables and FORCEs RLS on `players`, `team_sessions`, `sessions`, `checkins`, and `audit_log`. Policies use transaction-local `app.team_id`; check-in token lookup has a narrowly scoped player policy. Must run migration with owner role and prove team A cannot read team B rows using the non-owner app role, including a query without a WHERE clause. |
+| 5 | Sensitive field encryption | AES-GCM encryption code exists for athlete labels and pain-area values. **Key backup/recovery and PostgreSQL round-trip tests pending.** |
+| 6 | Server-side auth | Google ID token verification and opaque server-side sessions exist. **Invite allowlist and hosted end-to-end auth tests pending.** |
+| 7 | Record access isolation | Route code scopes athlete operations to team IDs and returns 404 for foreign athlete IDs. **PostgreSQL RLS integration tests and check-in-token cross-team tests pending.** |
+| 8 | Field tampering | Pydantic request models use `extra="forbid"` on core write requests; server sets team, IDs, registration/session dates and consent timestamps. **Add tampering tests for every write endpoint.** |
+| 9 | Session cookies | HttpOnly, Secure in production, SameSite=Lax and 8-hour expiry are configured. **Session rotation at login, cookie behavior, and server-side logout invalidation require tests.** |
+| 10 | Password storage | No password login exists; do not add passwords. If added in future, use Argon2id. |
+| 11 | Login rate limit | **Shared PostgreSQL counter implementation added.** Still require PostgreSQL concurrency tests and a Cloudflare edge rule on auth routes. |
+| 12 | Turnstile bot protection | **Not implemented.** Add widgets to sign-in and delete-account confirmation, server-side token verification, and fail-closed tests before public preview. |
+| 13 | Parameterized SQL | Store calls bind values through SQLAlchemy text statements. **Audit all query strings and migration code; no string-built user values.** |
+| 14 | Input validation | Pydantic validation exists on primary routes. **Full route-by-route bounds/enums audit pending.** |
+| 15 | Output escaping / CSP | React renders content as text and no upload/HTML-rendering feature is intended. **CSP must be tested against Google Identity script and the production frontend; current API CSP alone does not protect frontend responses.** |
+| 16 | File uploads | No upload route is intended. **Automated route inventory test pending.** |
+| 17 | Explicit response models | Main roster/history/session endpoints use response models. **Audit all auth, export, check-in, and error responses; ensure no session token, check-in token, or foreign-team identifiers leak.** |
+| 18 | Security headers | API middleware sets content-type, frame, referrer, permissions, CSP and HSTS in production. **Verify frontend/landing headers at the edge too.** |
+| 19 | HTTPS | **Provider setting not yet applied.** Cloudflare Full (strict), Always Use HTTPS, HSTS, and production rejection of non-HTTPS deployment URLs must be verified after domain setup. |
+| 20 | Dependency scans | CI runs `npm audit --audit-level=high`, `pip-audit`, and Gitleaks. **Dependabot configuration and current audit results must be verified after the dependency change.** |
 
-## Deploy the landing and legal pages
+## Beta access gate
 
-1. Create a second Vercel project with root directory `landing`.
-2. Set `VITE_COACH_APP_URL` to the deployed coach frontend origin and `VITE_CONTACT_EMAIL` to a monitored privacy/security contact address.
-3. Replace the controller/contact placeholders in `landing/src/LegalPage.tsx`; confirm the actual hosting providers, processing regions, retention policy, and subprocessors.
-4. Have the privacy notice, terms, DPIA, and consent process reviewed by a qualified Nigerian privacy professional before real athlete data is collected.
+- Add `SINOPIA_COACH_ALLOWLIST` as a server-only environment variable containing normalized coach email addresses.
+- The backend must verify Google's ID token first, then reject any email not on the allowlist **before creating a coach, team, or session**. Missing/empty allowlist fails closed in production.
+- Do not put the allowlist in any `VITE_*` variable or frontend code.
+- Turnstile server verification is a separate release blocker; the widget's client result alone is not trusted.
 
-## Synthetic-data feedback test
+## PostgreSQL setup and migration
 
-- Use only fictional athlete labels and synthetic training/check-in values.
-- Ask testers to evaluate sign-in, onboarding, adding a fictional athlete, creating a check-in link, submitting one synthetic check-in, viewing the dashboard, export, and deletion.
-- Do not use real minors, real injury/pain reports, real training records, or real team rosters in this alpha.
-- Collect product feedback without analytics/tracking. Ask testers to report confusing wording, failed steps, accessibility problems, and expected missing workflows.
+1. Create a Neon PostgreSQL database with TLS. Create separate owner/migration and restricted application roles in Neon.
+2. Set `DATABASE_OWNER_URL` locally/temporarily for the migration role and `SINOPIA_DB_APP_ROLE` to the exact app role. Run `python -m backend.migrate` once.
+3. Set `DATABASE_URL` only on the API host to the restricted role's pooled connection URL. The code appends `sslmode=require` if absent.
+4. Confirm the app role is not owner of RLS tables and does not have `BYPASSRLS`. The app must never connect with the owner URL.
+5. Run PostgreSQL integration tests: migration idempotence; encrypted label/pain-area round trip; one check-in per athlete/day; team A cannot read/write team B; token-only check-in lookup; rate limits shared across independent workers; export/delete; backup and restore.
+6. Existing local SQLite records are not automatically copied to Neon. If there is real data to preserve, stop and use a separately reviewed, tested migration and restore procedure. For synthetic-only alpha, start with an empty database.
 
-## Blockers before a real-data pilot
+## Hosting secrets (set only in provider dashboards)
 
-- Migrate from SQLite to PostgreSQL/SQLAlchemy with a tested legacy-data migration and backup/restore plan.
-- Implement and verify automated 12-month retention and inactivity warnings.
-- Add shared rate limiting for multi-worker deployments and operational monitoring that never logs athlete names, check-in tokens, or pain-area values.
-- Add team-level session records so missed attendance is distinguishable from missing session data.
-- Complete deletion verification, encryption key backup/recovery, provider contracts/regions, and independent security/privacy review.
-- Confirm the school/club authority, parent/guardian consent and athlete notice process, and the legal basis for processing health-related information about children.
+API: `SINOPIA_ENV=production`, `DATABASE_URL` (restricted role), `GOOGLE_CLIENT_ID`, `SINOPIA_ALLOWED_ORIGINS` (exact HTTPS coach app origin), `SINOPIA_ENCRYPTION_KEYS`, `SINOPIA_COACH_ALLOWLIST`, `SINOPIA_TERMS_VERSION`, `SINOPIA_PRIVACY_VERSION`, and Turnstile server secret once implemented.
 
+Coach frontend: `VITE_GOOGLE_CLIENT_ID` (public), `VITE_API_BASE=/api`, `VITE_LEGAL_BASE_URL` (public). The backend URL used by the proxy is server-only and must not be a `VITE_*` variable.
 
-## Short feedback script
+Landing: `VITE_COACH_APP_URL` and the public contact/legal configuration. Replace the legal controller/contact placeholders with verified details before launch.
 
-Use the same questions for each synthetic-data tester. Do not request or collect athlete names, health information, screenshots containing real records, or credentials.
+## Do not launch until
 
-1. What did you think Sinopia was for before you used it?
-2. Could you complete Google sign-in and understand the consent/authority declarations?
-3. Could you add a fictional athlete code, create a check-in link, and understand what the athlete sees?
-4. Could you record a fictional session and understand the difference between a building baseline and a load flag?
-5. Could you find pain acknowledgement, export, and deletion controls without help?
-6. Where did you hesitate, get an error, or expect a different result?
-7. What is the single most important improvement before a small pilot?
+- PostgreSQL migration and RLS tests pass with the restricted app role.
+- Coach-email allowlist and Turnstile are implemented and tested.
+- Both build outputs pass secret scans.
+- Cookie rotation/logout, deletion, export, CSRF/CORS, HTTPS, security headers and team-isolation tests pass.
+- Restore/recovery and deletion tests pass.
+- Legal/privacy review, guardian consent process, controller identity/contact, processing regions and provider contracts are verified.
+- The landing copy/demo matches the actual product; only fictional athlete data is used during alpha.
 
-Record only the step, severity, browser/device category, and a short description. Use no names or health data. Treat any security issue or cross-team exposure as a stop-ship issue rather than ordinary feedback.

@@ -111,7 +111,7 @@ def delete_account(
 
     team_id = coach["team_id"]
     email = coach["email"].lower()
-    with connect(DB_PATH) as conn:
+    with connect(DB_PATH, team_id=team_id) as conn:
         conn.execute("PRAGMA foreign_keys = ON")
         conn.execute(
             "DELETE FROM sessions WHERE team_id = ? OR player_id IN "
@@ -124,7 +124,7 @@ def delete_account(
             (team_id, team_id),
         )
         conn.execute("DELETE FROM players WHERE team_id = ?", (team_id,))
-        conn.execute("DELETE FROM security_audit WHERE team_id = ?", (team_id,))
+        conn.execute("DELETE FROM audit_log WHERE team_id = ?", (team_id,))
         conn.execute("DELETE FROM coach_sessions WHERE coach_email = ?", (email,))
         conn.execute("DELETE FROM teams WHERE team_id = ?", (team_id,))
         conn.execute("DELETE FROM coaches WHERE email = ?", (email,))

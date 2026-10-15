@@ -16,6 +16,19 @@ jobs:
   backend:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sinopia_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d sinopia_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -23,7 +36,23 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: python -m pip install -r requirements.txt
+      - name: Create restricted test role
+        env:
+          DATABASE_OWNER_URL: postgresql://postgres:postgres@localhost:5432/sinopia_test?sslmode=disable
+        run: |
+          psql "$DATABASE_OWNER_URL" -v ON_ERROR_STOP=1 -c "CREATE ROLE sinopia_app LOGIN PASSWORD 'test-password'"
+      - name: Apply PostgreSQL schema and row-level security
+        env:
+          SINOPIA_ENV: production
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sinopia_test?sslmode=disable
+          DATABASE_OWNER_URL: postgresql://postgres:postgres@localhost:5432/sinopia_test?sslmode=disable
+          SINOPIA_DB_APP_ROLE: sinopia_app
+        run: python -m backend.migrate
       - run: python -m pytest -q
+      - name: Test PostgreSQL row-level security with the non-owner role
+        env:
+          SINOPIA_TEST_DATABASE_URL: postgresql://sinopia_app:test-password@localhost:5432/sinopia_test?sslmode=disable
+        run: python -m pytest tests/test_postgres_rls.py -q
       - name: Audit Python dependencies
         run: |
           python -m pip install pip-audit
@@ -59,3 +88,10 @@ jobs:
         working-directory: ${{ matrix.app }}
       - run: npm run build
         working-directory: ${{ matrix.app }}
+      - name: Scan built assets for server secrets
+        shell: bash
+        run: |
+          if grep -R -E 'GROQ_API_KEY|DATABASE_URL|postgres(ql)?(\\+psycopg)?://[^[:space:]]+:[^[:space:]@]+@|sk-[A-Za-z0-9_-]{20,}' "${{ matrix.app }}/dist"; then
+            echo "Potential server secret found in built assets."
+            exit 1
+          fi

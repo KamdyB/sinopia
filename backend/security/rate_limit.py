@@ -1,11 +1,10 @@
-"""Shared process-local request throttling primitives.
-
-Production multi-worker deployments must also configure a shared edge limiter.
-"""
+"""Database-backed shared rate limiting in production; in-memory only for local tests."""
+import hashlib
 import os
 import time
 from collections import defaultdict, deque
 from threading import Lock
+
 from fastapi import Request
 
 _EVENTS: dict[tuple[str, ...], deque[float]] = defaultdict(deque)
@@ -21,6 +20,25 @@ def client_ip(request: Request) -> str:
 
 
 def enforce_rate_limit(key: tuple[str, ...], maximum: int, window: int) -> int | None:
+    if os.environ.get("SINOPIA_ENV", "production").lower() == "production":
+        from backend.data.db import connect
+        now = int(time.time())
+        window_start = now - (now % window)
+        bucket_key = hashlib.sha256("\0".join(key).encode()).hexdigest()
+        with connect() as conn:
+            row = conn.execute(
+                "INSERT INTO rate_limit_buckets (bucket_key, window_start, count) VALUES (?, ?, 1) "
+                "ON CONFLICT(bucket_key) DO UPDATE SET "
+                "count = CASE WHEN rate_limit_buckets.window_start = excluded.window_start "
+                "THEN rate_limit_buckets.count + 1 ELSE 1 END, "
+                "window_start = excluded.window_start RETURNING count",
+                (bucket_key, window_start),
+            ).fetchone()
+        count = int(row["count"])
+        if count > maximum:
+            return max(1, window_start + window - now)
+        return None
+
     now = time.monotonic()
     with _LOCK:
         events = _EVENTS[key]

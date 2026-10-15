@@ -2,6 +2,7 @@
 import {
   AthleteStatus,
   CheckinPayload,
+  CheckinValidationResponse,
   HistoryPoint,
   Player,
   SessionPayload,
@@ -65,8 +66,8 @@ export async function createCheckinToken(playerId: string): Promise<string> {
   return result.token;
 }
 
-export async function validateCheckinToken(token: string): Promise<void> {
-  await post<{ valid: boolean }>("/checkin/validate", { token });
+export async function validateCheckinToken(token: string): Promise<CheckinValidationResponse> {
+  return post<CheckinValidationResponse>("/checkin/validate", { token });
 }
 
 export async function fetchPlayerHistory(playerId: string): Promise<HistoryPoint[]> {

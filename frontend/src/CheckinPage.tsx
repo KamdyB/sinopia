@@ -107,6 +107,10 @@ export function CheckinPage({ playerId }: { playerId: string }) {
       <p className="checkin__sub">
         Takes under 20 seconds. Your coach sees the answers.
       </p>
+      <p className="checkin__sub">
+        Your answers help your coach check in on your training and wellbeing. This is not a medical diagnosis.
+        Only answer what you feel comfortable sharing, and tell your coach or a trusted adult if you need help.
+      </p>
       {QUESTIONS.map((q) => (
         <fieldset className="checkin__question" key={q.key}>
           <legend>{q.label}</legend>

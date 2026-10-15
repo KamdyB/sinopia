@@ -32,3 +32,29 @@ def test_team_composition_is_saved_once(tmp_path):
     import pytest
     with pytest.raises(ValueError):
         store.update_team("team@example.com", "Changed", "girls")
+
+
+def test_register_coach_creates_one_account_and_initial_team(tmp_path):
+    store = AuthStore(str(tmp_path / "registration.db"))
+
+    created = store.register_coach("New.Coach@example.com", "New Coach")
+
+    assert created is not None
+    assert created["email"] == "new.coach@example.com"
+    assert created["team_id"]
+    assert created["team_name"] == "My team"
+    assert store.coach_exists("NEW.COACH@example.com")
+
+
+def test_register_coach_rejects_duplicate_email_case_insensitively(tmp_path):
+    store = AuthStore(str(tmp_path / "duplicate-registration.db"))
+
+    first = store.register_coach("Coach@example.com", "Coach")
+    duplicate = store.register_coach(" coach@EXAMPLE.com ", "Second Coach")
+
+    assert first is not None
+    assert duplicate is None
+    assert store.coach_exists("coach@example.com")
+    with __import__("backend.data.db", fromlist=["connect"]).connect(str(tmp_path / "duplicate-registration.db")) as conn:
+        assert conn.execute("SELECT COUNT(*) AS count FROM coaches WHERE email = ?", ("coach@example.com",)).fetchone()["count"] == 1
+        assert conn.execute("SELECT COUNT(*) AS count FROM teams WHERE coach_email = ?", ("coach@example.com",)).fetchone()["count"] == 1

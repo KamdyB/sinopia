@@ -52,5 +52,9 @@ def create_tables(target_engine=None):
                 connection.execute(text("DROP INDEX IF EXISTS uq_players_team_name"))
                 connection.execute(text("DROP INDEX IF EXISTS uq_players_team_name_ci"))
     Base.metadata.create_all(bind=db_engine)
-    for index in Player.__table__.indexes:
-        index.create(bind=db_engine, checkfirst=True)
+    # Inspector checkfirst can miss SQLite expression indexes; IF NOT EXISTS is portable.
+    with db_engine.begin() as connection:
+        connection.execute(text(
+            "CREATE UNIQUE INDEX IF NOT EXISTS uq_players_team_name_ci "
+            "ON players (team_id, lower(name))"
+        ))

@@ -1,7 +1,7 @@
 // frontend/src/App.tsx
 import { useEffect, useState } from "react";
 import { AthleteStatus, HistoryPoint, Player, TeamType } from "./types";
-import { fetchPlayers, fetchTeamStatuses, registerPlayer } from "./api";
+import { fetchPlayers, fetchTeamStatuses, registerPlayer, signOut } from "./api";
 import { SessionEntryForm } from "./SessionEntryForm";
 import { PlayerDirectory } from "./PlayerDirectory";
 import { PlayerHistory } from "./PlayerHistory";
@@ -22,8 +22,8 @@ const TODAY = new Date().toLocaleDateString(undefined, {
   day: "numeric",
 });
 
-export default function App() {
-  const [teamType] = useState<TeamType>("girls");
+export default function App({ initialTeamType = "girls" }: { initialTeamType?: TeamType }) {
+  const [teamType] = useState<TeamType>(initialTeamType);
   const [players, setPlayers] = useState<Player[]>([]);
   const [statuses, setStatuses] = useState<AthleteStatus[]>([]);
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -88,7 +88,7 @@ export default function App() {
           <p className="eyebrow">Sinopia by KamdyB</p>
           <h1 className="display-title">{TEAM_TITLES[teamType]}</h1>
         </div>
-        <p className="today-date">{TODAY}</p>
+        <div className="today-date"><p>{TODAY}</p><button type="button" onClick={() => { void signOut().finally(() => window.location.assign("/sign-in")); }}>Sign out</button></div>
       </div>
       <div className="dashboard">
         <div>

@@ -38,7 +38,7 @@ def make_session_factory(database_url: str | None = None):
 
 def create_tables(target_engine=None):
     from sqlalchemy import inspect, text
-    from backend.data.models import Base, Player
+    from backend.data.models import Base
     db_engine = target_engine or engine
     # Upgrade the original pre-team schema before create_all builds indexes.
     inspector = inspect(db_engine)

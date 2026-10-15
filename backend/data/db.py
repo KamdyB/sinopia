@@ -38,7 +38,7 @@ def make_session_factory(database_url: str | None = None):
 
 def create_tables(target_engine=None):
     from sqlalchemy import inspect, text
-    from backend.data.models import Base
+    from backend.data.models import Base, Player
     db_engine = target_engine or engine
     # Upgrade the original pre-team schema before create_all builds indexes.
     inspector = inspect(db_engine)
@@ -52,3 +52,5 @@ def create_tables(target_engine=None):
                 connection.execute(text("DROP INDEX IF EXISTS uq_players_team_name"))
                 connection.execute(text("DROP INDEX IF EXISTS uq_players_team_name_ci"))
     Base.metadata.create_all(bind=db_engine)
+    for index in Player.__table__.indexes:
+        index.create(bind=db_engine, checkfirst=True)

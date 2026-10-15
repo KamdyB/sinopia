@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field, field_validator
 from backend.api.auth import get_current_coach, get_current_team
 from backend.data.player_store import DuplicatePlayerError, player_store
 from backend.data.session_store import session_store
+from backend.data.team_session_store import team_session_store
 from backend.scoring.history import history_points
 
 router = APIRouter()
@@ -35,6 +36,9 @@ class PlayerResponse(BaseModel):
     registered_date: str
     checkin_token: str
     team_id: str
+    session_open: bool = False
+    session_date: str | None = None
+    session_duration_minutes: float | None = None
 
 
 class HistoryPoint(BaseModel):
@@ -84,4 +88,10 @@ def resolve_checkin_link(token: str) -> PlayerResponse:
     player = player_store.get_by_checkin_token(token)
     if player is None:
         raise HTTPException(status_code=404, detail="This check-in link is not valid.")
-    return PlayerResponse(**player)
+    session = team_session_store.current(player["team_id"])
+    return PlayerResponse(
+        **player,
+        session_open=bool(session),
+        session_date=session["date"] if session else None,
+        session_duration_minutes=session["duration_minutes"] if session else None,
+    )

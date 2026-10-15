@@ -121,3 +121,20 @@ def test_statuses_orders_most_urgent_first(client):
                                    "pain_area": "Ankle or foot"})
     statuses = client.get("/statuses?team_type=girls").json()
     assert [s["player_id"] for s in statuses] == [hurt, calm]
+
+
+def test_unhandled_api_error_is_json_and_cors_safe(client, monkeypatch):
+    import backend.api.players as players_api
+
+    def explode(_player_id):
+        raise RuntimeError("sensitive athlete details must not be returned")
+
+    monkeypatch.setattr(players_api.player_store, "get", explode)
+    response = client.get(
+        "/players/known-id",
+        headers={"Origin": "https://coach.example"},
+    )
+    assert response.status_code == 500
+    assert response.headers["content-type"].startswith("application/json")
+    assert response.headers.get("access-control-allow-origin") == "https://coach.example"
+    assert "sensitive athlete details" not in response.text

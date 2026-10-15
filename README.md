@@ -53,7 +53,7 @@ GitHub Actions runs the backend test suite, dependency audits, secret scan, and 
 
 ## Security behaviour in this branch
 
-Coach routes require a coach session and are scoped to the owning team. Google ID tokens are verified server-side, and the backend issues an opaque server-side session in an HttpOnly cookie. Production deployment must set SINOPIA_ENV=production, configure GOOGLE_CLIENT_ID and VITE_GOOGLE_CLIENT_ID, and set SINOPIA_ALLOWED_ORIGINS to exact trusted origins.
+Coach routes require a coach session and are scoped to the owning team. Google ID tokens are verified server-side, and the backend issues an opaque server-side session in an HttpOnly cookie. New coach registration is open by default: any user with a verified Google account can register after bot protection and must complete the declarations/policy acceptance and team setup before using the dashboard. `SINOPIA_COACH_ALLOWLIST` is optional; only set it when you intentionally want invite-only access. Production deployment must set SINOPIA_ENV=production, configure GOOGLE_CLIENT_ID and VITE_GOOGLE_CLIENT_ID, and set SINOPIA_ALLOWED_ORIGINS to exact trusted origins.
 
 Athlete check-in links use a separate random token, not the athlete's player ID. The token is placed in the URL fragment, so it is not sent in HTTP requests or normal server access logs. A coach can regenerate a token to invalidate an older link. The API allows one check-in per athlete per day. When a coach opens a team session, the athlete check-in also asks for effort on a 0–10 scale and records duration × effort in workload history; closing the session removes the prompt from newly opened links. A pain flag remains active until a coach acknowledges it. Coach exports are team-scoped, and account deletion requires a fresh Google ID token.
 
@@ -67,7 +67,7 @@ Set these per project in Vercel. Do not put secrets in any `VITE_*` variable.
 - `SINOPIA_ENV=production` — not secret.
 - `DATABASE_URL` — Neon pooled PostgreSQL URL using the restricted app role and `sslmode=require`. **Secret.**
 - `GOOGLE_CLIENT_ID` — Google OAuth web client ID. Public identifier, but configure on the API too.
-- `SINOPIA_COACH_ALLOWLIST` — approved pilot coach emails. **Sensitive.**
+- `SINOPIA_COACH_ALLOWLIST` — optional comma-separated approved coach emails for invite-only mode. Leave unset/empty for normal self-service registration. **Sensitive if used.**
 - `SINOPIA_ALLOWED_ORIGINS` — exact HTTPS origins, comma-separated. Not secret.
 - `SINOPIA_PROXY_SECRET` — at least 32 random characters shared with the frontend proxy. **Secret.**
 - `SINOPIA_ENCRYPTION_KEYS` — active AES-GCM key first, optional older keys after it. **Secret.**

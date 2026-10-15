@@ -42,17 +42,23 @@ class AuthStore:
 
 
     def update_team(self, email: str, team_name: str, team_type: str) -> dict:
+        email = email.lower()
         with connect(self._db_path) as conn:
-            row = conn.execute("SELECT team_id, team_type FROM teams WHERE coach_email = ?", (email.lower(),)).fetchone()
+            row = conn.execute("SELECT team_id, team_type FROM teams WHERE coach_email = ?", (email,)).fetchone()
             if row is None:
                 raise ValueError("Coach team was not found.")
             if row["team_type"] is not None:
                 raise ValueError("Team composition has already been set.")
             conn.execute(
                 "UPDATE teams SET team_name = ?, team_type = ? WHERE coach_email = ? AND team_type IS NULL",
-                (" ".join(team_name.split())[:120], team_type, email.lower()),
+                (" ".join(team_name.split())[:120], team_type, email),
             )
-            updated = conn.execute("SELECT team_id, team_name, team_type FROM teams WHERE coach_email = ?", (email.lower(),)).fetchone()
+            updated = conn.execute(
+                "SELECT team_id, team_name, team_type FROM teams WHERE coach_email = ?", (email,)
+            ).fetchone()
+        # Roster rows are protected by PostgreSQL RLS; set the owning team context
+        # before migrating any pre-existing roster labels to the saved composition.
+        with connect(self._db_path, team_id=updated["team_id"]) as conn:
             conn.execute("UPDATE players SET team_type = ? WHERE team_id = ?", (team_type, updated["team_id"]))
         return dict(updated)
 

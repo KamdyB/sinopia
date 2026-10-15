@@ -24,15 +24,19 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   const incoming = new URL(request.url);
-  if (!incoming.pathname.startsWith("/api/")) {
+  const routedPath = incoming.searchParams.get("__sinopia_path") || "";
+  if (!routedPath || routedPath.startsWith("/") || routedPath.includes("..")) {
     return new Response("Not found.", {
       status: 404,
       headers: { "Cache-Control": "no-store" },
     });
   }
 
-  const backendPath = incoming.pathname.slice("/api".length);
-  const target = backend + backendPath + incoming.search;
+  const forwardedQuery = new URLSearchParams(incoming.searchParams);
+  forwardedQuery.delete("__sinopia_path");
+  const queryString = forwardedQuery.toString();
+  const backendPath = "/" + routedPath;
+  const target = backend + backendPath + (queryString ? "?" + queryString : "");
   const headers = new Headers(request.headers);
   for (const name of [
     "host", "content-length", "connection", "accept-encoding",

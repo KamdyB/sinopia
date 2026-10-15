@@ -109,3 +109,43 @@ def test_existing_coach_can_sign_in_with_secure_session_cookie(monkeypatch):
     assert result["email"] == "coach@example.com"
     assert "httponly" in cookie and "secure" in cookie and "samesite=lax" in cookie
     assert [call[0] for call in store.calls] == ["exists", "ensure", "rotate", "create_session", "audit"]
+
+
+def test_email_signup_token_is_signed_and_verifiable(monkeypatch):
+    monkeypatch.setenv("SINOPIA_EMAIL_TOKEN_SECRET", "x" * 40)
+    token = auth_api._sign_email_token({
+        "purpose": "coach-signup",
+        "email": "coach@example.com",
+        "name": "Coach Example",
+        "exp": 4_000_000_000,
+        "terms_version": "terms-v1",
+        "privacy_version": "privacy-v1",
+    })
+
+    claims = auth_api._verify_email_token(token)
+
+    assert claims["email"] == "coach@example.com"
+    assert claims["name"] == "Coach Example"
+
+
+def test_email_signup_token_rejects_expired_and_tampered_links(monkeypatch):
+    monkeypatch.setenv("SINOPIA_EMAIL_TOKEN_SECRET", "x" * 40)
+    expired = auth_api._sign_email_token({
+        "purpose": "coach-signup",
+        "email": "coach@example.com",
+        "name": "Coach Example",
+        "exp": 1,
+    })
+    with pytest.raises(HTTPException) as error:
+        auth_api._verify_email_token(expired)
+    assert error.value.status_code == 400
+
+    token = auth_api._sign_email_token({
+        "purpose": "coach-signup",
+        "email": "coach@example.com",
+        "name": "Coach Example",
+        "exp": 4_000_000_000,
+    })
+    with pytest.raises(HTTPException) as error:
+        auth_api._verify_email_token(token + "tampered")
+    assert error.value.status_code == 400

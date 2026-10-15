@@ -8,6 +8,8 @@ import {
   signInWithGoogle,
   signOut,
   setupCoachTeam,
+  requestEmailSignup,
+  verifyEmailSignup,
 } from "./api";
 
 type GoogleCredentialResponse = { credential: string };
@@ -37,6 +39,10 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const [teamName, setTeamName] = useState("");
   const [teamType, setTeamType] = useState<"girls" | "boys" | "mixed">("girls");
   const [error, setError] = useState<string | null>(null);
+  const [emailMode, setEmailMode] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailFullName, setEmailFullName] = useState("");
+  const [emailAddress, setEmailAddress] = useState("");
   const [deletionMode, setDeletionMode] = useState(false);
   const [deleted, setDeleted] = useState(false);
   const turnstileTokenRef = useRef<string | null>(null);
@@ -52,6 +58,10 @@ export function AuthGate({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    if (window.location.pathname === "/verify-email") {
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     fetchCoachSession()
       .then((current) => { if (!cancelled) setCoach(current); })
@@ -66,6 +76,29 @@ export function AuthGate({ children }: { children: ReactNode }) {
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    if (path !== "/verify-email") return;
+    const token = new URLSearchParams(window.location.search).get("token");
+    if (!token) {
+      setError("That verification link is incomplete. Start sign-up again.");
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    verifyEmailSignup(token)
+      .then((current) => {
+        if (!cancelled) {
+          setCoach(current);
+          window.history.replaceState({}, "", "/verify-email");
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : "Email verification failed. Request a new link.");
+      })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [path]);
 
   useEffect(() => {
     if (loading) return;
@@ -86,7 +119,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   }, [loading, coach, path]);
 
   useEffect(() => {
-    if (loading || coach || !buttonRef.current) return;
+    if (loading || coach || emailMode || !buttonRef.current) return;
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
     if (!clientId) {
       setError("Google sign-in is not configured. Set VITE_GOOGLE_CLIENT_ID for this deployment.");
@@ -144,7 +177,42 @@ export function AuthGate({ children }: { children: ReactNode }) {
       document.head.appendChild(script);
     }
     return () => { cancelled = true; };
-  }, [loading, coach, isSignUp, ageConfirmed, consentConfirmed, termsAccepted]);
+  }, [loading, coach, isSignUp, ageConfirmed, consentConfirmed, termsAccepted, emailMode]);
+
+  const handleEmailSignup = async () => {
+    if (!emailFullName.trim() || !emailAddress.trim()) {
+      setError("Enter your full name and email address.");
+      return;
+    }
+    if (!ageConfirmed || !consentConfirmed || !termsAccepted) {
+      setError("Confirm both declarations and accept the Terms and Privacy notice before continuing.");
+      return;
+    }
+    const token = turnstileTokenRef.current;
+    if (import.meta.env.PROD && !token) {
+      setError("Complete the bot-protection check first.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await requestEmailSignup({
+        full_name: emailFullName.trim(),
+        email: emailAddress.trim(),
+        turnstile_token: token ?? "",
+        age_18_or_older: ageConfirmed,
+        authorised_and_parental_consent_obtained: consentConfirmed,
+        accept_terms_and_privacy: termsAccepted,
+      });
+      setEmailSent(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not send the verification email.");
+    } finally {
+      turnstileTokenRef.current = null;
+      setTurnstileVersion((version) => version + 1);
+      setBusy(false);
+    }
+  };
 
   const handleAccept = async () => {
     setBusy(true);
@@ -210,12 +278,16 @@ export function AuthGate({ children }: { children: ReactNode }) {
   if (deleted) return <div className="page"><div className="panel"><h1>Account deleted</h1><p>Your coach account and team data have been deleted from the active database.</p></div></div>;
   if (loading) return <div className="page"><p>Checking your session…</p></div>;
 
+  if (path === "/verify-email" && !coach && loading) {
+    return <div className="page"><div className="panel"><p role="status">Verifying your email and creating your account…</p></div></div>;
+  }
+
   if (!coach) {
     return (
       <div className="page"><div className="panel">
         <p className="eyebrow">Sinopia by KamdyB</p>
         <h1 className="display-title">{isSignUp ? "Create your coach account" : "Coach sign-in"}</h1>
-        <p>{isSignUp ? "Use Google to create your account after confirming the declarations below." : "Sign in with Google to access your team's training and check-in records."}</p>
+        <p>{isSignUp ? "Create an account with Google or verify your email address." : "Sign in with Google to access your team's training and check-in records."}</p>
         {expiredSession && <p role="status">Your session expired. Sign in again to continue.</p>}
         {isSignUp && <>
           <label className="consent-confirmation"><input type="checkbox" checked={ageConfirmed} onChange={(event) => setAgeConfirmed(event.target.checked)} /> I am 18 years old or older.</label>
@@ -223,9 +295,31 @@ export function AuthGate({ children }: { children: ReactNode }) {
           <label className="consent-confirmation"><input type="checkbox" checked={termsAccepted} onChange={(event) => setTermsAccepted(event.target.checked)} /> I have read and accept the <a href="/terms" target="_blank" rel="noreferrer">Terms</a> and <a href="/privacy" target="_blank" rel="noreferrer">Privacy notice</a>.</label>
         </>}
         <TurnstileWidget key={turnstileVersion} action="login" onToken={(token) => { turnstileTokenRef.current = token; }} />
-        <div ref={buttonRef} />
-        {busy && <p>Signing in…</p>}
-        {error && <p className="form-error">{error}</p>}
+        {isSignUp && emailMode ? (
+          emailSent ? (
+            <div role="status">
+              <h2>Check your inbox</h2>
+              <p>If the email was sent, use the verification link within 15 minutes to finish creating your account.</p>
+              <button type="button" className="copy-link" onClick={() => { setEmailSent(false); setError(null); }}>Try another email</button>
+            </div>
+          ) : (
+            <div className="email-signup">
+              <label className="field-group__label" htmlFor="coach-full-name">Full name</label>
+              <input id="coach-full-name" autoComplete="name" value={emailFullName} maxLength={120} onChange={(event) => setEmailFullName(event.target.value)} placeholder="Your full name" />
+              <label className="field-group__label" htmlFor="coach-email">Email address</label>
+              <input id="coach-email" type="email" autoComplete="email" value={emailAddress} maxLength={320} onChange={(event) => setEmailAddress(event.target.value)} placeholder="you@example.com" />
+              <button type="button" className="record-btn" disabled={busy || !emailFullName.trim() || !emailAddress.trim()} onClick={() => void handleEmailSignup()}>{busy ? "Sending verification…" : "Send verification email"}</button>
+              <button type="button" className="copy-link" disabled={busy} onClick={() => { setEmailMode(false); setError(null); }}>Use Google instead</button>
+            </div>
+          )
+        ) : (
+          <>
+            <div ref={buttonRef} />
+            {isSignUp && <button type="button" className="copy-link" disabled={busy} onClick={() => { setEmailMode(true); setError(null); }}>Sign up with full name and email instead</button>}
+          </>
+        )}
+        {busy && <p role="status">{emailMode ? "Sending…" : "Signing in…"}</p>}
+        {error && <p className="form-error" role="alert">{error}</p>}
         <p><a href={isSignUp ? "/sign-in" : "/sign-up"}>{isSignUp ? "Already have an account? Sign in" : "New to Sinopia? Get started"}</a></p>
       </div></div>
     );

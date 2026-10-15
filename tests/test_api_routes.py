@@ -138,3 +138,14 @@ def test_unhandled_api_error_is_json_and_cors_safe(client, monkeypatch):
     assert response.headers["content-type"].startswith("application/json")
     assert response.headers.get("access-control-allow-origin") == "https://coach.example"
     assert "sensitive athlete details" not in response.text
+
+
+def test_athlete_checkin_token_resolves_player_without_exposing_player_id_in_url(client):
+    response = client.post("/players", json={"name": "Nneka", "team_type": "girls"})
+    assert response.status_code == 201
+    player = response.json()
+    assert player["checkin_token"] != player["player_id"]
+    resolved = client.get(f"/check-in/{player['checkin_token']}")
+    assert resolved.status_code == 200
+    assert resolved.json()["player_id"] == player["player_id"]
+    assert client.get("/check-in/not-a-real-token").status_code == 404

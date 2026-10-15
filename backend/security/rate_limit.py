@@ -20,7 +20,7 @@ def client_ip(request: Request) -> str:
 
 
 def enforce_rate_limit(key: tuple[str, ...], maximum: int, window: int) -> int | None:
-    if os.environ.get("SINOPIA_ENV", "production").lower() == "production":
+    if os.environ.get("SINOPIA_ENV", "production").lower() == "production" and os.environ.get("DATABASE_URL", "").strip():
         from backend.data.db import connect
         now = int(time.time())
         window_start = now - (now % window)

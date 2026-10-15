@@ -32,11 +32,16 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const [busy, setBusy] = useState(false);
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [consentConfirmed, setConsentConfirmed] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [teamName, setTeamName] = useState("");
+  const [teamType, setTeamType] = useState<"girls" | "boys" | "mixed">("girls");
   const [error, setError] = useState<string | null>(null);
   const [deletionMode, setDeletionMode] = useState(false);
   const [deleted, setDeleted] = useState(false);
   const turnstileTokenRef = useRef<string | null>(null);
   const [turnstileVersion, setTurnstileVersion] = useState(0);
+  const path = window.location.pathname;
+  const isSignUp = path === "/sign-up";
 
   const refreshSession = async () => {
     const current = await fetchCoachSession();
@@ -54,26 +59,56 @@ export function AuthGate({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (loading) return;
+    if (!coach) {
+      if (path === "/" || path === "/onboarding" || path.startsWith("/app")) {
+        window.location.replace("/sign-in");
+      }
+      return;
+    }
+    if (coach.needs_policy_acceptance) return;
+    if (coach.needs_onboarding) {
+      if (path !== "/onboarding") window.location.replace("/onboarding");
+      return;
+    }
+    if (path === "/" || path === "/sign-in" || path === "/sign-up" || path === "/onboarding") {
+      window.location.replace("/app");
+    }
+  }, [loading, coach, path]);
+
+  useEffect(() => {
     if (loading || coach || !buttonRef.current) return;
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
     if (!clientId) {
       setError("Google sign-in is not configured. Set VITE_GOOGLE_CLIENT_ID for this deployment.");
       return;
     }
-
     let cancelled = false;
     const renderGoogleButton = () => {
       if (cancelled || !buttonRef.current || !window.google) return;
       window.google.accounts.id.initialize({
         client_id: clientId,
         callback: async (credentialResponse) => {
+          if (isSignUp && (!ageConfirmed || !consentConfirmed || !termsAccepted)) {
+            setError("Confirm both declarations and accept the Terms and Privacy notice before continuing.");
+            return;
+          }
           setBusy(true);
           setError(null);
           try {
             const token = turnstileTokenRef.current;
             if (import.meta.env.PROD && !token) throw new Error("Complete the bot-protection check first.");
             const signedIn = await signInWithGoogle(credentialResponse.credential, token ?? undefined);
-            setCoach(signedIn);
+            if (isSignUp) {
+              await acceptCoachPolicies(ageConfirmed, consentConfirmed, termsAccepted);
+              const current = await refreshSession();
+              window.location.replace(current.needs_onboarding ? "/onboarding" : "/app");
+            } else {
+              setCoach(signedIn);
+              if (!signedIn.needs_policy_acceptance) {
+                window.location.replace(signedIn.needs_onboarding ? "/onboarding" : "/app");
+              }
+            }
           } catch (err) {
             setError(err instanceof Error ? err.message : "Google sign-in failed.");
           } finally {
@@ -83,18 +118,13 @@ export function AuthGate({ children }: { children: ReactNode }) {
           }
         },
       });
-      window.google.accounts.id.renderButton(buttonRef.current, {
-        theme: "outline",
-        size: "large",
-      });
+      buttonRef.current.replaceChildren();
+      window.google.accounts.id.renderButton(buttonRef.current, { theme: "outline", size: "large" });
     };
-
     const existingScript = document.getElementById(GOOGLE_SCRIPT_ID) as HTMLScriptElement | null;
-    if (window.google) {
-      renderGoogleButton();
-    } else if (existingScript) {
-      existingScript.addEventListener("load", renderGoogleButton, { once: true });
-    } else {
+    if (window.google) renderGoogleButton();
+    else if (existingScript) existingScript.addEventListener("load", renderGoogleButton, { once: true });
+    else {
       const script = document.createElement("script");
       script.id = GOOGLE_SCRIPT_ID;
       script.src = "https://accounts.google.com/gsi/client";
@@ -105,16 +135,33 @@ export function AuthGate({ children }: { children: ReactNode }) {
       document.head.appendChild(script);
     }
     return () => { cancelled = true; };
-  }, [loading, coach]);
+  }, [loading, coach, isSignUp, ageConfirmed, consentConfirmed, termsAccepted]);
 
   const handleAccept = async () => {
     setBusy(true);
     setError(null);
     try {
-      await acceptCoachPolicies(ageConfirmed, consentConfirmed);
-      await refreshSession();
+      await acceptCoachPolicies(ageConfirmed, consentConfirmed, termsAccepted);
+      const current = await refreshSession();
+      if (current.needs_onboarding) window.location.replace("/onboarding");
+      else window.location.replace("/app");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save the declarations.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleCreateTeam = async () => {
+    if (!teamName.trim()) { setError("Enter a team name."); return; }
+    setBusy(true);
+    setError(null);
+    try {
+      await setupCoachTeam(teamName.trim(), teamType);
+      const current = await refreshSession();
+      if (!current.needs_onboarding) window.location.replace("/app");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save your team.");
     } finally {
       setBusy(false);
     }
@@ -143,6 +190,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
       setCoach(null);
       setAgeConfirmed(false);
       setConsentConfirmed(false);
+      window.location.assign("/sign-in");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not sign out.");
     } finally {
@@ -151,48 +199,60 @@ export function AuthGate({ children }: { children: ReactNode }) {
   };
 
   if (deleted) return <div className="page"><div className="panel"><h1>Account deleted</h1><p>Your coach account and team data have been deleted from the active database.</p></div></div>;
-
   if (loading) return <div className="page"><p>Checking your session…</p></div>;
 
   if (!coach) {
     return (
-      <div className="page">
-        <div className="panel">
-          <p className="eyebrow">Sinopia by KamdyB</p>
-          <h1 className="display-title">Coach sign-in</h1>
-          <p>Sign in with Google to access your team's training and check-in records.</p>
-          <TurnstileWidget key={turnstileVersion} action="login" onToken={(token) => { turnstileTokenRef.current = token; }} />
-          <div ref={buttonRef} />
-          {busy && <p>Signing in…</p>}
-          {error && <p className="form-error">{error}</p>}
-        </div>
-      </div>
+      <div className="page"><div className="panel">
+        <p className="eyebrow">Sinopia by KamdyB</p>
+        <h1 className="display-title">{isSignUp ? "Create your coach account" : "Coach sign-in"}</h1>
+        <p>{isSignUp ? "Use Google to create your account after confirming the declarations below." : "Sign in with Google to access your team's training and check-in records."}</p>
+        {isSignUp && <>
+          <label className="consent-confirmation"><input type="checkbox" checked={ageConfirmed} onChange={(event) => setAgeConfirmed(event.target.checked)} /> I am 18 years old or older.</label>
+          <label className="consent-confirmation"><input type="checkbox" checked={consentConfirmed} onChange={(event) => setConsentConfirmed(event.target.checked)} /> I am authorised by my school or club to manage this team's data, and I have obtained parent or guardian consent for every athlete under 18.</label>
+          <label className="consent-confirmation"><input type="checkbox" checked={termsAccepted} onChange={(event) => setTermsAccepted(event.target.checked)} /> I have read and accept the <a href="/terms" target="_blank" rel="noreferrer">Terms</a> and <a href="/privacy" target="_blank" rel="noreferrer">Privacy notice</a>.</label>
+        </>}
+        <TurnstileWidget key={turnstileVersion} action="login" onToken={(token) => { turnstileTokenRef.current = token; }} />
+        <div ref={buttonRef} />
+        {busy && <p>Signing in…</p>}
+        {error && <p className="form-error">{error}</p>}
+        <p><a href={isSignUp ? "/sign-in" : "/sign-up"}>{isSignUp ? "Already have an account? Sign in" : "New to Sinopia? Get started"}</a></p>
+      </div></div>
     );
   }
 
   if (coach.needs_policy_acceptance) {
     return (
-      <div className="page">
-        <div className="panel">
-          <p className="eyebrow">Sinopia by KamdyB</p>
-          <h1 className="display-title">Before you continue</h1>
-          <p>Sinopia stores athlete training and wellness check-in information. You must make both declarations before accessing the dashboard.</p>
-          <label className="consent-confirmation">
-            <input type="checkbox" checked={ageConfirmed} onChange={(event) => setAgeConfirmed(event.target.checked)} />
-            I am 18 years old or older.
-          </label>
-          <label className="consent-confirmation">
-            <input type="checkbox" checked={consentConfirmed} onChange={(event) => setConsentConfirmed(event.target.checked)} />
-            I am authorised by my school or club to record this team's data, and I have obtained parent or guardian consent for every athlete under 18.
-          </label>
-          <p>These are declarations, not independent age verification. Only continue if both statements are true.</p>
-          <button className="record-btn" disabled={!ageConfirmed || !consentConfirmed || busy} onClick={handleAccept}>
-            {busy ? "Saving…" : "Accept and continue"}
-          </button>
-          <button className="copy-link" disabled={busy} onClick={handleSignOut}>Sign out</button>
-          {error && <p className="form-error">{error}</p>}
-        </div>
-      </div>
+      <div className="page"><div className="panel">
+        <p className="eyebrow">Sinopia by KamdyB</p><h1 className="display-title">Before you continue</h1>
+        <p>Sinopia stores athlete training and wellness check-in information. You must make both declarations and accept the current terms before accessing the dashboard.</p>
+        <label className="consent-confirmation"><input type="checkbox" checked={ageConfirmed} onChange={(event) => setAgeConfirmed(event.target.checked)} /> I am 18 years old or older.</label>
+        <label className="consent-confirmation"><input type="checkbox" checked={consentConfirmed} onChange={(event) => setConsentConfirmed(event.target.checked)} /> I am authorised by my school or club to record this team's data, and I have obtained parent or guardian consent for every athlete under 18.</label>
+        <label className="consent-confirmation"><input type="checkbox" checked={termsAccepted} onChange={(event) => setTermsAccepted(event.target.checked)} /> I have read and accept the <a href="/terms" target="_blank" rel="noreferrer">Terms</a> and <a href="/privacy" target="_blank" rel="noreferrer">Privacy notice</a>.</label>
+        <p>These are declarations, not independent age verification. Only continue if both statements are true.</p>
+        <button className="record-btn" disabled={!ageConfirmed || !consentConfirmed || !termsAccepted || busy} onClick={handleAccept}>{busy ? "Saving…" : "Accept and continue"}</button>
+        <button className="copy-link" disabled={busy} onClick={handleSignOut}>Sign out</button>
+        {error && <p className="form-error">{error}</p>}
+      </div></div>
+    );
+  }
+
+  if (coach.needs_onboarding) {
+    return (
+      <div className="page"><div className="panel">
+        <p className="eyebrow">Sinopia by KamdyB</p><h1 className="display-title">Set up your team</h1>
+        <p>Choose your team composition once. Sinopia uses it for registration and roster labels.</p>
+        <label className="field-group__label" htmlFor="team-name">Team name</label>
+        <input id="team-name" value={teamName} maxLength={120} onChange={(event) => setTeamName(event.target.value)} placeholder="e.g. U17 Football" />
+        <fieldset className="consent-confirmation"><legend>Team composition</legend>
+          <label><input type="radio" name="team-type" checked={teamType === "girls"} onChange={() => setTeamType("girls")} /> Girls</label>
+          <label><input type="radio" name="team-type" checked={teamType === "boys"} onChange={() => setTeamType("boys")} /> Boys</label>
+          <label><input type="radio" name="team-type" checked={teamType === "mixed"} onChange={() => setTeamType("mixed")} /> Mixed</label>
+        </fieldset>
+        <button className="record-btn" disabled={busy || !teamName.trim()} onClick={handleCreateTeam}>{busy ? "Saving…" : "Create team"}</button>
+        <button className="copy-link" disabled={busy} onClick={handleSignOut}>Sign out</button>
+        {error && <p className="form-error">{error}</p>}
+      </div></div>
     );
   }
 
@@ -203,12 +263,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
         <button type="button" className="copy-link" disabled={busy} onClick={handleSignOut}>Sign out</button>
         <button type="button" className="copy-link" disabled={busy} onClick={() => setDeletionMode(true)}>Delete account and team data</button>
       </div>
-      {deletionMode ? (
-        <DeleteAccountConfirmation
-          onCancel={() => setDeletionMode(false)}
-          onDelete={handleDeleteAccount}
-        />
-      ) : children}
+      {deletionMode ? <DeleteAccountConfirmation onCancel={() => setDeletionMode(false)} onDelete={handleDeleteAccount} /> : children}
       {error && <p className="form-error">{error}</p>}
     </div>
   );

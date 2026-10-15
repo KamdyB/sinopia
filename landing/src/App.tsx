@@ -1,8 +1,7 @@
 // landing/src/App.tsx  — LANDING PAGE (imports LiveDemo, nothing from the coach tool)
 import { LiveDemo } from "./LiveDemo";
 
-// Dev: the coach tool runs on 5173. In production, deploy the landing page at
-// "/" and the coach tool under "/app/", then set this to "/app/".
+// The public landing site and coach app are separate Vercel projects.
 const COACH_APP_URL = import.meta.env.VITE_COACH_APP_URL || "https://sinopia-app.vercel.app";
 // Contact placeholder — replace with the real inbox before shipping.
 const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || "";
@@ -48,7 +47,7 @@ export default function App() {
           <a href="#evidence">The evidence</a>
           <a href="#honesty">What is and isn\u2019t validated</a>
         </nav>
-        <a className="btn btn--primary nav__cta" href={COACH_APP_URL}>Open the coach tool</a>
+        <a className="btn btn--primary nav__cta" href={COACH_APP_URL}>Sign in / Get started</a>
       </header>
 
       <section className="hero">
@@ -67,7 +66,7 @@ export default function App() {
           workload ratios, plain language \u2014 on one phone, for zero budget.
         </p>
         <div className="hero-cta">
-          <a className="btn btn--primary btn--lg" href={COACH_APP_URL}>Open the coach tool</a>
+          <a className="btn btn--primary btn--lg" href={COACH_APP_URL}>Sign in / Get started</a>
           <a className="btn btn--lg" href="#how">See it work</a>
         </div>
       </section>
@@ -163,7 +162,7 @@ export default function App() {
       <footer className="footer">
         <div className="footer__top">
           <span className="nav__wordmark">Sinopia</span>
-          <a className="btn btn--primary" href={COACH_APP_URL}>Open the coach tool</a>
+          <a className="btn btn--primary" href={COACH_APP_URL}>Sign in / Get started</a>
         </div>
         <ol className="sources">
           {SOURCES.map((s, i) => (

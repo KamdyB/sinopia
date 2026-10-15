@@ -32,6 +32,10 @@
   ],
   "rewrites": [
     {
+      "source": "/api/(.*)",
+      "destination": "/api/index?__sinopia_path=$1"
+    },
+    {
       "source": "/check-in/(.*)",
       "destination": "/index.html"
     },

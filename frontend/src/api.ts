@@ -14,9 +14,10 @@ import {
 const API_BASE = (import.meta.env.VITE_API_BASE ?? (import.meta.env.PROD ? "/api" : "http://localhost:8000")).replace(/\/$/, "");
 
 async function parseError(res: Response): Promise<Error> {
-  const body = (await res.json().catch(() => null)) as { detail?: unknown } | null;
-  const detail =
-    typeof body?.detail === "string" ? body.detail : `Request failed: ${res.status}`;
+  const body = (await res.json().catch(async () => ({ detail: await res.text().catch(() => "") }))) as { detail?: unknown } | null;
+  const detail = typeof body?.detail === "string" && body.detail.trim()
+    ? body.detail.trim().slice(0, 300)
+    : `Request failed: ${res.status}`;
   return new Error(detail);
 }
 
@@ -105,6 +106,21 @@ export async function fetchCoachSession(): Promise<CoachSession> {
 
 export async function signInWithGoogle(credential: string, turnstileToken?: string, intent: "signup" | "signin" = "signin"): Promise<CoachSession> {
   return post<CoachSession>("/auth/google", { credential, turnstile_token: turnstileToken ?? null, intent });
+}
+
+export async function requestEmailSignup(payload: {
+  full_name: string;
+  email: string;
+  turnstile_token: string;
+  age_18_or_older: boolean;
+  authorised_and_parental_consent_obtained: boolean;
+  accept_terms_and_privacy: boolean;
+}): Promise<void> {
+  await post<unknown>("/auth/email/request", payload);
+}
+
+export async function verifyEmailSignup(token: string): Promise<CoachSession> {
+  return post<CoachSession>("/auth/email/verify", { token });
 }
 
 export async function acceptCoachPolicies(

@@ -25,7 +25,7 @@ class AuthStore:
                 (email,),
             ).fetchone()
             team = conn.execute(
-                "SELECT team_id, team_name FROM teams WHERE coach_email = ?", (email,)
+                "SELECT team_id, team_name, team_type FROM teams WHERE coach_email = ?", (email,)
             ).fetchone()
             if team is None:
                 team_id = secrets.token_urlsafe(18)
@@ -39,6 +39,21 @@ class AuthStore:
         result = dict(row)
         result.update(dict(team))
         return result
+
+
+    def update_team(self, email: str, team_name: str, team_type: str) -> dict:
+        with connect(self._db_path) as conn:
+            row = conn.execute("SELECT team_id, team_type FROM teams WHERE coach_email = ?", (email.lower(),)).fetchone()
+            if row is None:
+                raise ValueError("Coach team was not found.")
+            if row["team_type"] is not None:
+                raise ValueError("Team composition has already been set.")
+            conn.execute(
+                "UPDATE teams SET team_name = ?, team_type = ? WHERE coach_email = ? AND team_type IS NULL",
+                (" ".join(team_name.split())[:120], team_type, email.lower()),
+            )
+            updated = conn.execute("SELECT team_id, team_name, team_type FROM teams WHERE coach_email = ?", (email.lower(),)).fetchone()
+        return dict(updated)
 
     def create_session(self, email: str, lifetime_hours: int = 8) -> str:
         token = secrets.token_urlsafe(32)
@@ -57,7 +72,7 @@ class AuthStore:
         with connect(self._db_path) as conn:
             row = conn.execute(
                 "SELECT c.email, c.display_name, c.accepted_at, c.terms_version, c.privacy_version, "
-                "t.team_id, t.team_name FROM coach_sessions s JOIN coaches c ON c.email = s.coach_email "
+                "t.team_id, t.team_name, t.team_type FROM coach_sessions s JOIN coaches c ON c.email = s.coach_email "
                 "JOIN teams t ON t.coach_email = c.email WHERE s.session_hash = ? AND s.expires_at > ?",
                 (digest, now),
             ).fetchone()
@@ -82,7 +97,7 @@ class AuthStore:
 
     def log_event(self, event_type: str, team_id: str | None = None) -> None:
         allowed = {
-            "coach_signed_in", "policies_accepted", "checkin_token_regenerated",
+            "coach_signed_in", "policies_accepted", "team_created", "checkin_token_regenerated",
             "checkin_submitted", "pain_report_acknowledged", "athlete_deleted",
             "session_deleted", "checkin_deleted", "team_exported", "account_deleted",
         }

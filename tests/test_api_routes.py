@@ -84,15 +84,16 @@ def test_history_returns_walk_forward_levels(client):
 
 def test_checkin_logged_then_pain_refers(client):
     player_id = register(client, "Efe")
+    token = client.get(f"/players/{player_id}").json()["checkin_token"]
     ok = client.post(
         "/checkins",
-        json={"player_id": player_id, "sleep": 4, "energy": 3,
+        json={"checkin_token": token, "sleep": 4, "energy": 3,
               "soreness": 2, "stress": 4, "pain": False},
     )
     assert ok.status_code == 201
     pain = client.post(
         "/checkins",
-        json={"player_id": player_id, "sleep": 3, "energy": 2,
+        json={"checkin_token": token, "sleep": 3, "energy": 2,
               "soreness": 3, "stress": 3, "pain": True, "pain_area": "Knee"},
     )
     assert pain.status_code == 201
@@ -103,9 +104,10 @@ def test_checkin_logged_then_pain_refers(client):
 
 def test_checkin_pain_without_area_422s(client):
     player_id = register(client, "Fola")
+    token = client.get(f"/players/{player_id}").json()["checkin_token"]
     response = client.post(
         "/checkins",
-        json={"player_id": player_id, "sleep": 3, "energy": 3,
+        json={"checkin_token": token, "sleep": 3, "energy": 3,
               "soreness": 3, "stress": 3, "pain": True},
     )
     assert response.status_code == 422
@@ -116,7 +118,8 @@ def test_statuses_orders_most_urgent_first(client):
     hurt = register(client, "Hauwa")
     client.post("/sessions", json={"player_id": calm, "date_str": "2026-01-01",
                                    "duration_minutes": 60, "rpe": 5})
-    client.post("/checkins", json={"player_id": hurt, "sleep": 3, "energy": 3,
+    token = client.get(f"/players/{hurt}").json()["checkin_token"]
+    client.post("/checkins", json={"checkin_token": token, "sleep": 3, "energy": 3,
                                    "soreness": 3, "stress": 3, "pain": True,
                                    "pain_area": "Ankle or foot"})
     statuses = client.get("/statuses?team_type=girls").json()

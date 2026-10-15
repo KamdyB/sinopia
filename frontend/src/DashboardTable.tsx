@@ -8,9 +8,11 @@ import { LEVEL_LABEL } from "./level";
 export function DashboardTable({
   entries,
   onSelect,
+  onAcknowledgePain,
 }: {
   entries: AthleteStatus[];
   onSelect: (playerId: string) => void;
+  onAcknowledgePain: (playerId: string) => Promise<void>;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
   return (
@@ -51,6 +53,15 @@ export function DashboardTable({
                   <li key={i}>{reason}</li>
                 ))}
               </ul>
+              {entry.numbers.pain === true && (
+                <button
+                  type="button"
+                  className="copy-link"
+                  onClick={() => void onAcknowledgePain(entry.player_id)}
+                >
+                  Acknowledge pain report
+                </button>
+              )}
               <dl className="status-row__numbers">
                 {Object.entries(entry.numbers).map(([key, value]) => (
                   <div key={key}>

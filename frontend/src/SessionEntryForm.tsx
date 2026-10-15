@@ -3,7 +3,11 @@ import { FormEvent, useRef, useState } from "react";
 import { Player, SessionPayload } from "./types";
 import { logSession } from "./api";
 
-const TODAY_ISO = new Date().toISOString().slice(0, 10);
+const TODAY_ISO = (() => {
+  const now = new Date();
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate());
+})();
 
 export function SessionEntryForm({
   players,
@@ -17,12 +21,12 @@ export function SessionEntryForm({
   // Duration is set once for the whole squad and carries across submissions,
   // since the team trains the same length of time together.
   const [durationMinutes, setDurationMinutes] = useState(0);
-  const [rpe, setRpe] = useState(0);
+  const [rpe, setRpe] = useState<number | "">("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const playerSelectRef = useRef<HTMLSelectElement>(null);
 
-  const calculatedLoad = durationMinutes * rpe;
+  const calculatedLoad = durationMinutes * (rpe === "" ? 0 : rpe);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -30,8 +34,8 @@ export function SessionEntryForm({
       setError("Choose an athlete first. Register them in the directory if they are missing.");
       return;
     }
-    if (durationMinutes <= 0 || rpe <= 0) {
-      setError("Enter a duration and RPE greater than zero.");
+    if (durationMinutes <= 0 || rpe === "") {
+      setError("Enter a duration and an RPE from 1 to 10.");
       return;
     }
     if (dateStr > TODAY_ISO) {
@@ -44,12 +48,12 @@ export function SessionEntryForm({
       player_id: playerId,
       date_str: dateStr,
       duration_minutes: durationMinutes,
-      rpe,
+      rpe: Number(rpe),
     };
     try {
       await logSession(payload);
       onScored();
-      setRpe(0); // next athlete, same sitting
+      setRpe(""); // next athlete, same sitting
       playerSelectRef.current?.focus(); // back to the top, no mouse needed
     } catch (err) {
       setError(
@@ -107,15 +111,15 @@ export function SessionEntryForm({
           />
         </div>
         <div className="field-group">
-          <label className="field-group__label" htmlFor="rpe">Effort, 0 to 10</label>
+          <label className="field-group__label" htmlFor="rpe">Effort, 1 to 10</label>
           <input
             id="rpe"
             type="number"
-            min={0}
+            min={1}
             max={10}
-            value={rpe || ""}
+            value={rpe}
             placeholder="0"
-            onChange={(e) => setRpe(+e.target.value)}
+            onChange={(e) => setRpe(e.target.value === "" ? "" : +e.target.value)}
           />
         </div>
       </div>

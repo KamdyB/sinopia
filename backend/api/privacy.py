@@ -1,0 +1,188 @@
+"""Team export and confirmed hard deletion endpoints."""
+import csv
+import io
+import os
+import time
+from datetime import datetime, timezone
+
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi.responses import JSONResponse
+from google.auth.transport.requests import Request as GoogleRequest
+from google.oauth2 import id_token
+from pydantic import BaseModel, ConfigDict, Field
+
+import backend.api.auth as auth_api
+from backend.api.auth import SESSION_COOKIE, current_coach, require_accepted_coach
+from backend.data.checkin_store import checkin_store
+from backend.data.db import DB_PATH, connect
+from backend.data.player_store import player_store
+from backend.data.session_store import session_store
+from backend.security.turnstile import require_turnstile
+
+router = APIRouter(prefix="/privacy")
+
+
+class ExportSession(BaseModel):
+    date: str
+    duration_minutes: float
+    rpe: float
+
+
+class ExportCheckin(BaseModel):
+    date: str
+    sleep: int
+    energy: int
+    soreness: int
+    stress: int
+    pain: bool
+    pain_area: str | None
+    pain_acknowledged: bool
+
+
+class ExportPlayer(BaseModel):
+    label: str
+    team_type: str
+    registered_date: str
+    sessions: list[ExportSession]
+    checkins: list[ExportCheckin]
+
+
+class TeamExport(BaseModel):
+    exported_at: str
+    players: list[ExportPlayer]
+
+
+class DeleteAccountResponse(BaseModel):
+    deleted: bool
+
+
+class DeleteAccountRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    credential: str = Field(min_length=20, max_length=8192)
+    confirm: bool
+    turnstile_token: str | None = Field(default=None, max_length=2048)
+
+
+def _csv_safe(value):
+    """Prevent spreadsheet formula execution from user-controlled CSV cells."""
+    if isinstance(value, str):
+        trimmed = value.lstrip(" \t\r\n")
+        if value[:1] in {"\t", "\r"} or trimmed[:1] in {"=", "+", "-", "@"}:
+            return "'" + value
+    return value
+
+
+def _team_export(team_id: str) -> dict:
+    players = []
+    for team_type in ("girls", "boys", "mixed"):
+        for player in player_store.list_for_team(team_type, team_id):
+            players.append({
+                "label": player["name"],
+                "team_type": player["team_type"],
+                "registered_date": player["registered_date"],
+                "sessions": session_store.get_sessions(player["player_id"], team_id),
+                "checkins": checkin_store.get_checkins(player["player_id"], team_id),
+            })
+    return {
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+        "players": players,
+    }
+
+
+@router.get("/export", response_model=TeamExport)
+def export_team(format: str = "json", coach: dict = Depends(require_accepted_coach)):
+    if format not in {"json", "csv"}:
+        raise HTTPException(status_code=422, detail="Format must be json or csv.")
+    data = _team_export(coach["team_id"])
+    auth_api.auth_store.log_event("team_exported", coach["team_id"])
+    if format == "json":
+        validated = TeamExport.model_validate(data)
+        return JSONResponse(validated.model_dump(), headers={"Cache-Control": "no-store"})
+
+    output = io.StringIO(newline="")
+    writer = csv.writer(output)
+    writer.writerow([
+        "record_type", "athlete_label", "team_type", "date", "duration_minutes",
+        "rpe", "sleep", "energy", "soreness", "stress", "pain", "pain_area",
+        "pain_acknowledged",
+    ])
+    for player in data["players"]:
+        for session in player["sessions"]:
+            writer.writerow([
+                "session", _csv_safe(player["label"]), player["team_type"], session["date"],
+                session["duration_minutes"], session["rpe"], "", "", "", "", "", "", "",
+            ])
+        for checkin in player["checkins"]:
+            writer.writerow([
+                "check-in", _csv_safe(player["label"]), player["team_type"], checkin["date"],
+                "", "", checkin["sleep"], checkin["energy"], checkin["soreness"],
+                checkin["stress"], checkin["pain"], checkin["pain_area"] or "",
+                checkin["pain_acknowledged"],
+            ])
+    return Response(
+        output.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="sinopia-team-export.csv"', "Cache-Control": "no-store"},
+    )
+
+
+@router.post("/delete-account", response_model=DeleteAccountResponse)
+def delete_account(
+    payload: DeleteAccountRequest,
+    request: Request,
+    response: Response,
+    coach: dict = Depends(current_coach),
+) -> dict[str, bool]:
+    if not payload.confirm:
+        raise HTTPException(status_code=422, detail="Confirm permanent deletion to continue.")
+    require_turnstile(payload.turnstile_token, "delete_account")
+    client_id = os.environ.get("GOOGLE_CLIENT_ID")
+    if not client_id:
+        raise HTTPException(status_code=503, detail="Google sign-in is not configured.")
+    try:
+        claims = id_token.verify_oauth2_token(
+            payload.credential, GoogleRequest(), audience=client_id
+        )
+    except Exception:
+        raise HTTPException(status_code=401, detail="Fresh Google sign-in could not be verified.")
+    issued_at = claims.get("iat")
+    if (
+        claims.get("iss") not in {"accounts.google.com", "https://accounts.google.com"}
+        or claims.get("aud") != client_id
+        or claims.get("email_verified") is not True
+        or str(claims.get("email", "")).lower() != coach["email"].lower()
+        or not isinstance(issued_at, (int, float))
+        or time.time() - issued_at > 300
+        or issued_at > time.time() + 30
+    ):
+        raise HTTPException(status_code=401, detail="Fresh Google sign-in could not be verified.")
+
+    team_id = coach["team_id"]
+    email = coach["email"].lower()
+    with connect(DB_PATH, team_id=team_id) as conn:
+        conn.execute("PRAGMA foreign_keys = ON")
+        conn.execute(
+            "DELETE FROM sessions WHERE team_id = ? OR player_id IN "
+            "(SELECT player_id FROM players WHERE team_id = ?)",
+            (team_id, team_id),
+        )
+        conn.execute(
+            "DELETE FROM checkins WHERE team_id = ? OR player_id IN "
+            "(SELECT player_id FROM players WHERE team_id = ?)",
+            (team_id, team_id),
+        )
+        conn.execute("DELETE FROM players WHERE team_id = ?", (team_id,))
+        conn.execute("DELETE FROM team_sessions WHERE team_id = ?", (team_id,))
+        conn.execute("DELETE FROM open_team_sessions WHERE team_id = ?", (team_id,))
+        conn.execute("DELETE FROM audit_log WHERE team_id = ?", (team_id,))
+        conn.execute("DELETE FROM coach_sessions WHERE coach_email = ?", (email,))
+        conn.execute("DELETE FROM teams WHERE team_id = ?", (team_id,))
+        conn.execute("DELETE FROM coaches WHERE email = ?", (email,))
+    response.delete_cookie(
+        key=SESSION_COOKIE,
+        path="/",
+        httponly=True,
+        secure=os.environ.get("SINOPIA_ENV", "production").lower() == "production",
+        samesite="lax",
+    )
+    return {"deleted": True}

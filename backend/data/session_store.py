@@ -1,59 +1,42 @@
-"""Persistence for logged training sessions.
-
-One responsibility: the sessions table. The old profiles table carried
-cycle and growth context that the current scoring spec no longer uses,
-so the schema migration drops it rather than leaving dormant data about
-minors in storage.
-"""
-import sqlite3
+"""Persistence for logged training sessions."""
 from typing import List
-
-from backend.data.db import DB_PATH, connect
+from backend.data.db import DB_PATH, connect, init_schema
 from backend.scoring.load_calculator import Session
-
-SCHEMA = """
-CREATE TABLE IF NOT EXISTS sessions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    player_id TEXT NOT NULL,
-    date TEXT NOT NULL,
-    duration_minutes REAL NOT NULL,
-    rpe REAL NOT NULL
-);
-DROP TABLE IF EXISTS profiles;
-"""
-
 
 class SessionStore:
     def __init__(self, db_path: str = DB_PATH):
         self._db_path = db_path
-        with connect(self._db_path) as conn:
-            conn.executescript(SCHEMA)
+        init_schema(self._db_path)
 
-    def log_session(self, player_id: str, session: Session) -> None:
-        with connect(self._db_path) as conn:
-            conn.execute(
-                "INSERT INTO sessions (player_id, date, duration_minutes, rpe) "
-                "VALUES (?, ?, ?, ?)",
-                (player_id, session["date"], session["duration_minutes"], session["rpe"]),
-            )
+    def log_session(self, player_id: str, session: Session, team_id: str | None = None) -> None:
+        with connect(self._db_path, team_id=team_id) as conn:
+            conn.execute("INSERT INTO sessions (player_id, date, duration_minutes, rpe, team_id) VALUES (?, ?, ?, ?, ?)",
+                (player_id, session["date"], session["duration_minutes"], session["rpe"], team_id))
 
-    def get_sessions(self, player_id: str) -> List[Session]:
-        # Ordering by id as a tiebreak makes same-day sessions deterministic
-        # for the walk-forward history computation.
-        with connect(self._db_path) as conn:
-            rows = conn.execute(
-                "SELECT date, duration_minutes, rpe FROM sessions "
-                "WHERE player_id = ? ORDER BY date, id",
-                (player_id,),
-            ).fetchall()
-        return [
-            {
-                "date": row["date"],
-                "duration_minutes": row["duration_minutes"],
-                "rpe": row["rpe"],
-            }
-            for row in rows
-        ]
+    def get_sessions(self, player_id: str, team_id: str | None = None) -> List[Session]:
+        query = "SELECT date, duration_minutes, rpe FROM sessions WHERE player_id = ?"
+        params: tuple = (player_id,)
+        if team_id is not None:
+            query += " AND team_id = ?"
+            params += (team_id,)
+        query += " ORDER BY date, id"
+        with connect(self._db_path, team_id=team_id) as conn:
+            rows = conn.execute(query, params).fetchall()
+        return [{"date": row["date"], "duration_minutes": row["duration_minutes"], "rpe": row["rpe"]} for row in rows]
 
+    def delete_session(self, session_id: int, player_id: str, team_id: str) -> bool:
+        with connect(self._db_path, team_id=team_id) as conn:
+            result = conn.execute("DELETE FROM sessions WHERE id = ? AND player_id = ? AND team_id = ?",
+                (session_id, player_id, team_id))
+        return result.rowcount > 0
+
+    def delete_for_player(self, player_id: str, team_id: str | None = None) -> None:
+        query = "DELETE FROM sessions WHERE player_id = ?"
+        params: tuple = (player_id,)
+        if team_id is not None:
+            query += " AND team_id = ?"
+            params += (team_id,)
+        with connect(self._db_path, team_id=team_id) as conn:
+            conn.execute(query, params)
 
 session_store = SessionStore()

@@ -1,20 +1,4 @@
-[project]
-name = "sinopia-api"
-version = "0.1.0"
-description = "Sinopia FastAPI backend"
-requires-python = ">=3.11,<3.14"
-dependencies = [
-  "fastapi==0.143.0",
-  "uvicorn==0.54.0",
-  "pydantic==2.14.1",
-  "openai==3.31.0",
-  "google-auth==2.40.3",
-  "requests==2.33.0",
-  "cryptography==50.0.0",
-  "SQLAlchemy==2.0.44",
-  "psycopg[binary]==3.2.10",
-]
-
 [tool.vercel]
-# Point Vercel to the existing FastAPI ASGI application.
+# Vercel's Python runtime supports FastAPI. This custom entrypoint points at the
+# existing ASGI app without moving backend modules or duplicating route handlers.
 entrypoint = "backend.main:app"

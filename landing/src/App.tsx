@@ -1,10 +1,14 @@
 // landing/src/App.tsx  — LANDING PAGE (imports LiveDemo, nothing from the coach tool)
 import { LiveDemo } from "./LiveDemo";
+import { LegalPage } from "./LegalPage";
 
-// The public landing site and coach app are separate Vercel projects.
-const COACH_APP_URL = import.meta.env.VITE_COACH_APP_URL || "https://sinopia-app.vercel.app";
+// Dev: the coach tool runs on 5173. In production, deploy the landing page at
+// "/" and the coach tool under "/app/", then set this to "/app/".
+const COACH_APP_URL = (import.meta.env.VITE_COACH_APP_URL ?? (import.meta.env.PROD ? "" : "http://localhost:5173")).replace(/\/+$/, "");
+const SIGN_IN_URL = `${COACH_APP_URL}/sign-in`;
+const SIGN_UP_URL = `${COACH_APP_URL}/sign-up`;
 // Contact placeholder — replace with the real inbox before shipping.
-const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || "";
+const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL as string | undefined;
 
 const SOURCES: { text: string; url: string | null }[] = [
   {
@@ -38,6 +42,10 @@ const SOURCES: { text: string; url: string | null }[] = [
 ];
 
 export default function App() {
+  if (window.location.pathname === "/privacy") return <LegalPage kind="privacy" />;
+  if (window.location.pathname === "/terms") return <LegalPage kind="terms" />;
+  if (window.location.pathname === "/delete-account") return <LegalPage kind="delete-account" />;
+
   return (
     <div className="landing">
       <header className="nav">
@@ -47,7 +55,7 @@ export default function App() {
           <a href="#evidence">The evidence</a>
           <a href="#honesty">What is and isn\u2019t validated</a>
         </nav>
-        <a className="btn btn--primary nav__cta" href={COACH_APP_URL}>Sign in / Get started</a>
+        <a className="btn btn--primary nav__cta" href={SIGN_IN_URL}>Sign in</a>
       </header>
 
       <section className="hero">
@@ -66,7 +74,7 @@ export default function App() {
           workload ratios, plain language \u2014 on one phone, for zero budget.
         </p>
         <div className="hero-cta">
-          <a className="btn btn--primary btn--lg" href={COACH_APP_URL}>Sign in / Get started</a>
+          <a className="btn btn--primary btn--lg" href={SIGN_UP_URL}>Get started</a>
           <a className="btn btn--lg" href="#how">See it work</a>
         </div>
       </section>
@@ -85,6 +93,11 @@ export default function App() {
         </p>
       </section>
 
+      <section className="section section--tinted">
+        <h2>I’m an athlete</h2>
+        <p>Use the personal check-in link your coach sends you. You do not need to create an account or download anything. Your answers go to the coach responsible for your team.</p>
+      </section>
+
       <section id="evidence" className="section section--tinted">
         <h2>The gap, in three numbers</h2>
         <div className="facts">
@@ -94,7 +107,7 @@ export default function App() {
               Across 5,261 papers in six leading sports-science journals (2014\u20132020),
               only 6% of studies included female participants only, while 31% included
               males only. Of 12.5 million participants where sex was reported, 66% were male.
-              The load-monitoring thresholds used everywhere were mostly built on that base.
+              The field still has gaps in whose training histories are represented.
             </p>
             <span className="fact__source">Cowley et al., 2021</span>
           </article>
@@ -136,10 +149,9 @@ export default function App() {
           <div className="honesty__col honesty__col--flag">
             <h3>Not validated yet, and we say so</h3>
             <p>
-              The menstrual-cycle and growth-rate context layers multiply the score by exactly
-              1.0 today. They are placeholders pending validation against real season outcomes
-              \u2014 injury data that does not exist yet. No invented thresholds, anywhere,
-              in the tool or on this page. You will see this disclosure inside the tool too.
+              Current workload thresholds are provisional and have not been validated
+              against season outcomes. The app does not currently assess menstrual-cycle
+              or growth-rate context. Do not treat a band as a prediction or medical finding.
             </p>
           </div>
         </div>
@@ -152,17 +164,17 @@ export default function App() {
           with no budget for wearables or sports-science staff. One coach, one phone, one season.
         </p>
         <p className="who who--promise">
-          Everything entered stays between the coach and their team. There is no scout-facing
-          view, no export to third parties, and there never will be without a separate consent
-          framework. This is a workload tool for the person who trains the kids, not a
-          talent-evaluation feed.
+          Team records are intended to be accessible only to the authorised coach for that team.
+          Hosting and sign-in providers may process some information as described in the privacy notice.
+          Use initials or codes where possible. Sinopia does not currently provide a scout-facing
+          view or a talent-evaluation feed.
         </p>
       </section>
 
       <footer className="footer">
         <div className="footer__top">
           <span className="nav__wordmark">Sinopia</span>
-          <a className="btn btn--primary" href={COACH_APP_URL}>Sign in / Get started</a>
+          <a className="btn btn--primary" href={SIGN_UP_URL}>Get started</a>
         </div>
         <ol className="sources">
           {SOURCES.map((s, i) => (
@@ -172,10 +184,14 @@ export default function App() {
             </li>
           ))}
         </ol>
-        {/* Contact email is configured through VITE_CONTACT_EMAIL when available. */}
+        <nav className="nav__links">
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+          <a href="/delete-account">Delete account</a>
+        </nav>
         <div className="footer__bottom">
           <span>&copy; 2026 Sinopia. All rights reserved.</span>
-          {CONTACT_EMAIL && <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>}
+          {CONTACT_EMAIL ? <a href={"mailto:" + CONTACT_EMAIL}>{CONTACT_EMAIL}</a> : <span>Privacy contact to be published before launch</span>}
         </div>
       </footer>
     </div>

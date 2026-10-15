@@ -9,7 +9,7 @@ import {
   TeamType,
 } from "./types";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = (import.meta.env.VITE_API_BASE || "https://sinopia-eight.vercel.app").replace(/\/+$/, "");
 
 async function parseError(res: Response): Promise<Error> {
   const body = (await res.json().catch(() => null)) as { detail?: unknown } | null;

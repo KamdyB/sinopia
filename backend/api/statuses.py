@@ -3,9 +3,10 @@ sorted most urgent first. Built for a slow connection: the dashboard
 needs a single call, not one per athlete."""
 from datetime import date
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
+from backend.api.auth import get_current_coach, get_current_team
 from backend.api.players import TeamType
 from backend.data.checkin_store import checkin_store
 from backend.data.player_store import player_store
@@ -24,10 +25,10 @@ class AthleteStatus(BaseModel):
 
 
 @router.get("/statuses", response_model=list[AthleteStatus])
-def team_statuses(team_type: TeamType) -> list[AthleteStatus]:
+def team_statuses(team_type: TeamType | None = None, coach: dict = Depends(get_current_coach), team: dict = Depends(get_current_team)) -> list[AthleteStatus]:
     today = date.today()
     statuses: list[AthleteStatus] = []
-    for player in player_store.list_for_team(team_type):
+    for player in player_store.list_for_team(team["team_type"], team["team_id"]):
         sessions = session_store.get_sessions(player["player_id"])
         checkins = checkin_store.get_checkins(player["player_id"])
         status = status_from_records(sessions, checkins, today)

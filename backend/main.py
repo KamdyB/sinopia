@@ -139,12 +139,12 @@ async def require_trusted_proxy(request: Request, call_next):
 async def protect_state_changes(request: Request, call_next):
     if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
         if request.headers.get("x-sinopia-request") != "1":
-            return Response("Request rejected.", status_code=403)
+            return JSONResponse({"detail": "Request rejected."}, status_code=403)
         origin = request.headers.get("origin")
         if PRODUCTION and not origin:
-            return Response("Request rejected.", status_code=403)
+            return JSONResponse({"detail": "Request rejected."}, status_code=403)
         if origin and origin.rstrip("/") not in allowed_origins:
-            return Response("Request rejected.", status_code=403)
+            return JSONResponse({"detail": "Request rejected."}, status_code=403)
     return await call_next(request)
 
 

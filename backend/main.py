@@ -1,10 +1,12 @@
 """FastAPI application, request protections, and router registration."""
 import os
 import hmac
+import logging
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import Response
+from fastapi.responses import JSONResponse
 
 from backend.api.auth import router as auth_router
 from backend.api.checkins import router as checkins_router
@@ -58,6 +60,24 @@ def health_check() -> dict[str, str]:
     return {"status": "ok"}
 
 
+logger = logging.getLogger("sinopia.api")
+
+@app.exception_handler(Exception)
+async def safe_unhandled_exception(request: Request, exc: Exception):
+    # Never log request bodies, athlete labels, or exception text that may contain them.
+    logger.error("Unhandled API exception method=%s path=%s type=%s",
+                 request.method, request.url.path, type(exc).__name__)
+    headers = {"Vary": "Origin", "Access-Control-Allow-Credentials": "true"}
+    origin = request.headers.get("origin", "")
+    if origin and origin.rstrip("/") in allowed_origins:
+        headers["Access-Control-Allow-Origin"] = origin
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "An unexpected error occurred. Please try again."},
+        headers=headers,
+    )
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
@@ -97,9 +117,9 @@ async def apply_rate_limits(request: Request, call_next):
                 identity = "coach:dev@localhost"
         retry_after = enforce_rate_limit((request.url.path, identity), maximum, window)
         if retry_after is not None:
-            return Response(
-                "Too many requests.",
+            return JSONResponse(
                 status_code=429,
+                content={"detail": "Too many requests."},
                 headers={"Retry-After": str(retry_after)},
             )
     return await call_next(request)
@@ -111,7 +131,7 @@ async def require_trusted_proxy(request: Request, call_next):
         configured = os.environ.get("SINOPIA_PROXY_SECRET", "")
         supplied = request.headers.get("x-sinopia-proxy-secret", "")
         if not configured or not supplied or not hmac.compare_digest(configured, supplied):
-            return Response("Request rejected.", status_code=403)
+            return JSONResponse({"detail": "Request rejected."}, status_code=403)
     return await call_next(request)
 
 

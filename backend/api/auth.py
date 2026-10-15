@@ -78,7 +78,7 @@ def google_sign_in(req: GoogleLoginRequest, response: Response):
     if req.intent == "sign-in" and not existing:
         raise HTTPException(status_code=404, detail="No Sinopia account exists for this Google account. Choose Get started.")
     if req.intent == "sign-up":
-        account_store.upsert_coach(coach_id, str(claims["email"]), str(claims.get("name") or claims["email"]))
+        account_store.upsert_coach(coach_id, str(claims["email"]), str(claims.get("name") or claims["email"]), declarations=req.intent == "sign-up")
     elif existing:
         account_store.upsert_coach(coach_id, str(claims["email"]), str(claims.get("name") or claims["email"]))
     signed = _serializer().dumps({"sub": coach_id})

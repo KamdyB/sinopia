@@ -2,7 +2,7 @@
 import { LiveDemo } from "./LiveDemo";
 
 // The public landing site and coach app are separate Vercel projects.
-const COACH_APP_URL = import.meta.env.VITE_COACH_APP_URL || "https://sinopia-app.vercel.app";
+const COACH_APP_URL = (import.meta.env.VITE_COACH_APP_URL || "").replace(/\/$/, "");
 // Contact placeholder — replace with the real inbox before shipping.
 const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || "";
 

@@ -1,0 +1,4 @@
+[tool.vercel]
+# Vercel's Python runtime supports FastAPI. This custom entrypoint points at the
+# existing ASGI app without moving backend modules or duplicating route handlers.
+entrypoint = "backend.main:app"

@@ -6,7 +6,7 @@
 
 - Frontend: Vercel project rooted at `frontend/`.
 - Landing/legal site: separate Vercel project rooted at `landing/`.
-- API: Vercel Python runtime only if the deployed FastAPI entrypoint, cold-start behavior, dependency size, and route semantics pass preview tests; otherwise Render. The repo currently has a Vercel `/api/*` proxy, not proof that FastAPI itself runs as a Vercel function.
+- API: Vercel Python runtime with the custom entrypoint `backend.main:app` in the root `pyproject.toml`. Vercel's current Python runtime documentation supports FastAPI. Use the repository root as the API project's root directory, then verify the preview deployment's routes, cookies, database pooling, startup behavior, and bundle size. If that preview fails those checks, use Render as the API host instead.
 - Database: Neon PostgreSQL with `sslmode=require`; create separate owner and restricted application roles. API uses only the restricted role.
 - DNS/TLS/edge protection: Cloudflare; app and API use subdomains of one owned domain. Keep the Google sign-in origin and cookie behavior verified in browser tests.
 - Do not create provider projects until the code PR has passed CI and its unresolved gates have been reviewed.

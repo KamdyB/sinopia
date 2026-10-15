@@ -52,3 +52,12 @@ class Team(Base):
     name = Column(String(120), nullable=False)
     team_type = Column(String(12), nullable=False)
     terms_accepted_at = Column(String(40), nullable=False)
+
+
+class OpenTeamSession(Base):
+    __tablename__ = "open_team_sessions"
+    session_id = Column(String(64), primary_key=True)
+    team_id = Column(String(64), nullable=False, index=True)
+    date = Column(String(10), nullable=False)
+    duration_minutes = Column(Float, nullable=False)
+    is_open = Column(Boolean, nullable=False, default=True)

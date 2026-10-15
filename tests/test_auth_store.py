@@ -1,4 +1,5 @@
 from backend.data.auth_store import AuthStore
+from backend.data.db import connect
 
 
 def test_sessions_are_opaque_expiring_and_revocable(tmp_path):
@@ -55,6 +56,6 @@ def test_register_coach_rejects_duplicate_email_case_insensitively(tmp_path):
     assert first is not None
     assert duplicate is None
     assert store.coach_exists("coach@example.com")
-    with __import__("backend.data.db", fromlist=["connect"]).connect(str(tmp_path / "duplicate-registration.db")) as conn:
+    with connect(str(tmp_path / "duplicate-registration.db")) as conn:
         assert conn.execute("SELECT COUNT(*) AS count FROM coaches WHERE email = ?", ("coach@example.com",)).fetchone()["count"] == 1
         assert conn.execute("SELECT COUNT(*) AS count FROM teams WHERE coach_email = ?", ("coach@example.com",)).fetchone()["count"] == 1

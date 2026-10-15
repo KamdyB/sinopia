@@ -27,3 +27,5 @@ export async function fetchCheckinPlayer(token:string):Promise<Player>{return ge
 export async function fetchPlayerHistory(playerId:string):Promise<HistoryPoint[]>{return get(`/players/${encodeURIComponent(playerId)}/history`);}
 export async function fetchTeamStatuses(teamType:TeamType):Promise<AthleteStatus[]>{return get(`/statuses?team_type=${encodeURIComponent(teamType)}`);}
 export async function submitCheckin(payload:CheckinPayload):Promise<void>{await post("/checkins",payload);}
+
+export async function signOut(): Promise<void> { await post("/auth/logout", {}); }

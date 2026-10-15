@@ -32,6 +32,7 @@ class PlayerResponse(BaseModel):
     name: str
     team_type: TeamType
     registered_date: str
+    checkin_token: str
 
 
 class HistoryPoint(BaseModel):
@@ -73,3 +74,11 @@ def player_history(player_id: str) -> list[HistoryPoint]:
         raise HTTPException(status_code=404, detail="Athlete not found.")
     sessions = session_store.get_sessions(player_id)
     return [HistoryPoint(**p) for p in history_points(sessions)]
+
+
+@router.get("/check-in/{token}", response_model=PlayerResponse)
+def resolve_checkin_link(token: str) -> PlayerResponse:
+    player = player_store.get_by_checkin_token(token)
+    if player is None:
+        raise HTTPException(status_code=404, detail="This check-in link is not valid.")
+    return PlayerResponse(**player)

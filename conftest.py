@@ -4,6 +4,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 import pytest
 from fastapi.testclient import TestClient
+from backend.api.auth import get_current_coach, get_current_team
 import backend.api.checkins as checkins_api
 import backend.api.players as players_api
 import backend.api.sessions as sessions_api
@@ -25,5 +26,9 @@ def client(tmp_path, monkeypatch):
             store_type = next((t for t in _STORE_TYPES if isinstance(value, t)), None)
             if store_type is not None:
                 monkeypatch.setattr(module, attr, fresh[store_type])
+    app.dependency_overrides[get_current_coach] = lambda: {"google_sub": "test-coach", "email": "coach@example.test", "display_name": "Test Coach"}
+    app.dependency_overrides[get_current_team] = lambda: {"team_id": "test-team", "coach_id": "test-coach", "name": "Test Team", "team_type": "girls"}
     with TestClient(app, raise_server_exceptions=False) as test_client:
         yield test_client
+    app.dependency_overrides.pop(get_current_coach, None)
+    app.dependency_overrides.pop(get_current_team, None)

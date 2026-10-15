@@ -97,7 +97,7 @@ class AuthStore:
 
     def log_event(self, event_type: str, team_id: str | None = None) -> None:
         allowed = {
-            "coach_signed_in", "policies_accepted", "team_created", "checkin_token_regenerated",
+            "coach_signed_in", "policies_accepted", "team_created", "team_session_opened", "team_session_closed", "checkin_token_regenerated",
             "checkin_submitted", "pain_report_acknowledged", "athlete_deleted",
             "session_deleted", "checkin_deleted", "team_exported", "account_deleted",
         }

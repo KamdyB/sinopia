@@ -35,6 +35,13 @@ class GoogleLoginRequest(BaseModel):
 class TeamRequest(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     team_type: Literal["girls", "boys", "mixed"]
+    accepted_terms: bool = False
+
+    @model_validator(mode="after")
+    def _terms_required(self):
+        if not self.accepted_terms:
+            raise ValueError("Accept the terms before creating a team.")
+        return self
 
 def get_current_coach(request: Request) -> dict:
     token = request.cookies.get(SESSION_COOKIE)

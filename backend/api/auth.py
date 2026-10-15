@@ -117,10 +117,13 @@ def google_sign_in(payload: GoogleCredential, response: Response) -> dict[str, A
     email = claims.get("email")
     if not isinstance(email, str) or not email.strip():
         raise HTTPException(status_code=401, detail="Google account email is unavailable.")
-    if os.environ.get("SINOPIA_ENV", "production").lower() == "production":
-        allowed = {item.strip().lower() for item in os.environ.get("SINOPIA_COACH_ALLOWLIST", "").split(",") if item.strip()}
-        if not allowed or email.strip().lower() not in allowed:
-            raise HTTPException(status_code=403, detail="This pilot is invite-only. Your coach account is not on the allowlist.")
+    # Open registration is the default: verified Google identity + Turnstile.
+    # An allowlist is an optional deployment-level switch for invite-only pilots.
+    configured_allowlist = os.environ.get("SINOPIA_COACH_ALLOWLIST", "").strip()
+    if configured_allowlist:
+        allowed = {item.strip().lower() for item in configured_allowlist.split(",") if item.strip()}
+        if email.strip().lower() not in allowed:
+            raise HTTPException(status_code=403, detail="This coach account is not enabled for this pilot.")
     auth_store.delete_sessions_for_coach(email)
     coach = auth_store.ensure_coach(email, str(claims.get("name") or email))
     token = auth_store.create_session(email)

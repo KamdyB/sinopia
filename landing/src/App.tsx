@@ -174,7 +174,7 @@ export default function App() {
       <footer className="footer">
         <div className="footer__top">
           <span className="nav__wordmark">Sinopia</span>
-          <a className="btn btn--primary" href={COACH_APP_URL}>Open the coach tool</a>
+          <a className="btn btn--primary" href={SIGN_UP_URL}>Get started</a>
         </div>
         <ol className="sources">
           {SOURCES.map((s, i) => (

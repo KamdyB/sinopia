@@ -6,7 +6,7 @@ from datetime import date
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from backend.api.auth import require_accepted_coach, require_onboarded_coach
+from backend.api.auth import require_onboarded_coach
 from backend.timeutil import service_date
 from backend.api.players import TeamType
 from backend.data.checkin_store import checkin_store

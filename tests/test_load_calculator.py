@@ -42,10 +42,10 @@ def test_weeks_tracked_counts_complete_windows_only():
 
 
 def test_rolling_baseline_averages_only_tracked_weeks():
-    # One week of history at 300 per week: baseline over one tracked week is 300.
+    # The first tracked week has 300 load; the next complete tracked week has zero.
     daily = daily_loads([s(1, 60, 5)])
     baseline = rolling_baseline(daily, date(2026, 1, 21), 4)
-    assert baseline == 300.0
+    assert baseline == 150.0
 
 
 def test_rolling_baseline_is_zero_without_history():

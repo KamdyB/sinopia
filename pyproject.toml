@@ -12,7 +12,7 @@ dependencies = [
   "google-auth==2.40.3",
   "requests==2.33.0",
   "cryptography==50.0.0",
-  "SQLAlchemy==2.0.44",
+  "SQLAlchemy==2.1.4",
   "psycopg[binary]==3.2.10",
 ]
 

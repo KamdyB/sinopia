@@ -13,7 +13,7 @@ dependencies = [
   "requests==2.33.0",
   "cryptography==50.0.0",
   "SQLAlchemy==2.0.44",
-  "psycopg[binary]==3.2.10",
+  "psycopg[binary]==3.3.6",
 ]
 
 [tool.vercel]

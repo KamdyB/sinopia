@@ -422,3 +422,25 @@ def test_effort_session_failure_rolls_back_the_checkin(client, tmp_path):
         assert conn.execute(
             "SELECT COUNT(*) FROM sessions WHERE player_id = ?", (player_id,)
         ).fetchone()[0] == 0
+
+
+def test_database_errors_return_clear_503_not_generic_500(monkeypatch):
+    from fastapi.testclient import TestClient
+    from sqlalchemy.exc import ProgrammingError
+    from backend.main import app
+    from backend.data.auth_store import auth_store
+
+    def boom(*args, **kwargs):
+        raise ProgrammingError("SELECT 1", {}, Exception("relation does not exist"))
+
+    monkeypatch.setattr(auth_store, "coach_exists", boom)
+    client = TestClient(app, raise_server_exceptions=False)
+    response = client.post(
+        "/auth/email/request",
+        json={"full_name": "Test Coach", "email": "a@b.co", "turnstile_token": "t",
+              "age_18_or_older": True, "authorised_and_parental_consent_obtained": True,
+              "accept_terms_and_privacy": True},
+        headers={"X-Sinopia-Request": "1"},
+    )
+    assert response.status_code == 503
+    assert "database" in response.json()["detail"].lower()

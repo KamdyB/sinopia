@@ -50,125 +50,40 @@ export default function App() {
     <div className="landing">
       <header className="nav">
         <span className="nav__wordmark">Sinopia</span>
-        <nav className="nav__links">
-          <a href="#how">How it works</a>
-          <a href="#evidence">The evidence</a>
-          <a href="#honesty">What is and isn\u2019t validated</a>
-        </nav>
-        <a className="btn btn--primary nav__cta" href={SIGN_IN_URL}>Sign in</a>
+        <a className="btn nav__cta" href={SIGN_IN_URL}>Sign in</a>
       </header>
 
       <section className="hero">
-        <h1>Workload tracking was built mostly on male athletes. Your team deserved better numbers.</h1>
-        <div className="hero-stat">
-          <span className="hero-stat__number">&asymp;23 million</span>
-          <span className="hero-stat__text">
-            estimated sports-related injuries among African adolescents every year,
-            with limited injury data across the continent to guide the coaches training them.
-          </span>
-          <span className="hero-stat__source">Estimate as cited in van Loggerenberg et al., 2025, South African Journal of Sports Medicine.</span>
-        </div>
-        <p className="hero-sub">
-          Sinopia gives a coach of a girls\u2019, boys\u2019, or mixed youth team the same
-          load-monitoring math sports scientists use \u2014 duration \u00d7 effort, rolling
-          workload ratios, plain language \u2014 on one phone, for zero budget.
-        </p>
+        <h1>Training load, made simple for youth coaches.</h1>
+        <p className="hero-sub">Log each session in seconds. See who needs a lighter day. Free, on one phone.</p>
         <div className="hero-cta">
           <a className="btn btn--primary btn--lg" href={SIGN_UP_URL}>Get started</a>
-          <a className="btn btn--lg" href="#how">See it work</a>
+          <a className="btn btn--lg" href="#how">See how it works</a>
         </div>
+        <p className="hero-stat">
+          <strong>About 23 million</strong> sports injuries a year among African adolescents, with little data to guide their coaches.
+        </p>
       </section>
 
       <section id="how" className="section">
         <h2>How it works</h2>
         <ol className="steps">
-          <li><strong>Register each player once.</strong> One name per team, at the start of the season. Two players named Amaka on different teams are always separate histories.</li>
-          <li><strong>Set session length once.</strong> The whole squad trains together, so duration is entered one time for the sitting.</li>
-          <li><strong>Tap effort per player.</strong> RPE 0\u201310 as the session ends. Enter submits and moves to the next player, no mouse needed.</li>
-          <li><strong>Read the result.</strong> Each player gets a workload ratio, a plain-language band, and a history chart that shows the trend over time.</li>
+          <li><span className="steps__n">1</span><div><h3>Add your players</h3><p>Once, at the start of the season.</p></div></li>
+          <li><span className="steps__n">2</span><div><h3>Log the session</h3><p>One duration for the squad, one effort score per player.</p></div></li>
+          <li><span className="steps__n">3</span><div><h3>Read the result</h3><p>A plain-language band and a trend chart for each player.</p></div></li>
         </ol>
         <LiveDemo />
-        <p className="section-note">
-          In the coach tool, this chart lives on each player\u2019s page: open the team directory and click a name.
-        </p>
       </section>
 
-      <section className="section section--tinted">
-        <h2>I’m an athlete</h2>
-        <p>Use the personal check-in link your coach sends you. You do not need to create an account or download anything. Your answers go to the coach responsible for your team.</p>
-      </section>
-
-      <section id="evidence" className="section section--tinted">
-        <h2>The gap, in three numbers</h2>
-        <div className="facts">
-          <article className="fact">
-            <span className="fact__number">6% vs 31%</span>
-            <p>
-              Across 5,261 papers in six leading sports-science journals (2014\u20132020),
-              only 6% of studies included female participants only, while 31% included
-              males only. Of 12.5 million participants where sex was reported, 66% were male.
-              The field still has gaps in whose training histories are represented.
-            </p>
-            <span className="fact__source">Cowley et al., 2021</span>
-          </article>
-          <article className="fact">
-            <span className="fact__number">72.2%</span>
-            <p>
-              In a 2025 study of Nigerian grassroots football, 72.2% of respondents said the
-              country\u2019s age-grade development structure (U-15 to U-23) is not encouraging
-              professional development; development overall was rated low, at a weighted mean
-              of 1.77 on the study\u2019s scale.
-            </p>
-            <span className="fact__source">Nigerian Journal of Human Movement, Wellness, Leisure, and Sports, 2025</span>
-          </article>
-          <article className="fact">
-            <span className="fact__number">10</span>
-            <p>
-              Women\u2019s Africa Cup of Nations titles for Nigeria \u2014 the most in the
-              tournament\u2019s history, the latest won in Rabat in July 2025. The talent is
-              already there. What\u2019s missing is the everyday infrastructure around it.
-            </p>
-            <span className="fact__source">2024 WAFCON, played July 2025</span>
-          </article>
+      <section className="section split">
+        <div className="card">
+          <h3>Athlete?</h3>
+          <p>Open the check-in link your coach sent you. No account or download needed.</p>
         </div>
-      </section>
-
-      <section id="honesty" className="section">
-        <h2>What is and isn\u2019t validated \u2014 stated up front</h2>
-        <div className="honesty">
-          <div className="honesty__col">
-            <h3>Established science</h3>
-            <p>
-              Sinopia\u2019s core math is the session-RPE method (duration \u00d7 effort,
-              Foster et al., 2001) and the acute:chronic workload ratio, with 0.8\u20131.3 as
-              the commonly cited optimal range (Gabbett, 2016). Published critiques of the
-              ratio exist (e.g., Impellizzeri et al., 2020), so Sinopia treats it as a
-              screening prompt for a conversation \u2014 never a diagnosis.
-            </p>
-          </div>
-          <div className="honesty__col honesty__col--flag">
-            <h3>Not validated yet, and we say so</h3>
-            <p>
-              Current workload thresholds are provisional and have not been validated
-              against season outcomes. The app does not currently assess menstrual-cycle
-              or growth-rate context. Do not treat a band as a prediction or medical finding.
-            </p>
-          </div>
+        <div className="card card--flag">
+          <h3>Honest limits</h3>
+          <p>Thresholds are provisional and not yet validated against season outcomes. Treat a band as a prompt for a conversation, never a diagnosis.</p>
         </div>
-      </section>
-
-      <section className="section section--tinted">
-        <h2>Who it\u2019s for</h2>
-        <p className="who">
-          Coaches of under-resourced youth teams \u2014 girls\u2019, boys\u2019, or mixed \u2014
-          with no budget for wearables or sports-science staff. One coach, one phone, one season.
-        </p>
-        <p className="who who--promise">
-          Team records are intended to be accessible only to the authorised coach for that team.
-          Hosting and sign-in providers may process some information as described in the privacy notice.
-          Use initials or codes where possible. Sinopia does not currently provide a scout-facing
-          view or a talent-evaluation feed.
-        </p>
       </section>
 
       <footer className="footer">
@@ -176,22 +91,25 @@ export default function App() {
           <span className="nav__wordmark">Sinopia</span>
           <a className="btn btn--primary" href={SIGN_UP_URL}>Get started</a>
         </div>
-        <ol className="sources">
-          {SOURCES.map((s, i) => (
-            <li key={i}>
-              {s.text}{" "}
-              {s.url && <a href={s.url} target="_blank" rel="noreferrer">Source</a>}
-            </li>
-          ))}
-        </ol>
+        <details className="sources-box">
+          <summary>Sources</summary>
+          <ol className="sources">
+            {SOURCES.map((s, i) => (
+              <li key={i}>
+                {s.text}{" "}
+                {s.url && <a href={s.url} target="_blank" rel="noreferrer">Link</a>}
+              </li>
+            ))}
+          </ol>
+        </details>
         <nav className="nav__links">
           <a href="/privacy">Privacy</a>
           <a href="/terms">Terms</a>
           <a href="/delete-account">Delete account</a>
         </nav>
         <div className="footer__bottom">
-          <span>&copy; 2026 Sinopia. All rights reserved.</span>
-          {CONTACT_EMAIL ? <a href={"mailto:" + CONTACT_EMAIL}>{CONTACT_EMAIL}</a> : <span>Privacy contact to be published before launch</span>}
+          <span>&copy; 2026 Sinopia</span>
+          {CONTACT_EMAIL && <a href={"mailto:" + CONTACT_EMAIL}>{CONTACT_EMAIL}</a>}
         </div>
       </footer>
     </div>

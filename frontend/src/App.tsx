@@ -1,6 +1,7 @@
 // frontend/src/App.tsx
 import { useEffect, useState } from "react";
 import { AthleteStatus, HistoryPoint, Player, TeamType } from "./types";
+import { InstallButton } from "./InstallButton";
 import { acknowledgePain, createCheckinToken, deletePlayer, exportTeamData, fetchCoachSession, fetchPlayerHistory, fetchPlayers, fetchTeamStatuses, registerPlayer } from "./api";
 import { SessionEntryForm } from "./SessionEntryForm";
 import { PlayerDirectory } from "./PlayerDirectory";
@@ -140,6 +141,7 @@ export default function App() {
         </div>
         <div className="header-actions">
           <p className="today-date">{TODAY}</p>
+          <InstallButton />
           <button type="button" className="copy-link" onClick={() => void handleExport("csv")}>Export CSV</button>
           <button type="button" className="copy-link" onClick={() => void handleExport("json")}>Export JSON</button>
         </div>

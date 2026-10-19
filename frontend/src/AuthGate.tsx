@@ -1,3 +1,4 @@
+import { InstallButton } from "./InstallButton";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { TurnstileWidget } from "./TurnstileWidget";
 import {
@@ -286,6 +287,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     return (
       <div className="page"><div className="panel">
         <p className="eyebrow">Sinopia by KamdyB</p>
+        <InstallButton />
         <h1 className="display-title">{isSignUp ? "Create your coach account" : "Coach sign-in"}</h1>
         <p>{isSignUp ? "Create an account with Google or verify your email address." : "Sign in with Google to access your team's training and check-in records."}</p>
         {expiredSession && <p role="status">Your session expired. Sign in again to continue.</p>}

@@ -1,0 +1,25 @@
+name: Migrate database
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -r requirements.txt
+      - name: Apply schema and row-level security
+        env:
+          DATABASE_OWNER_URL: ${{ secrets.DATABASE_OWNER_URL }}
+          SINOPIA_DB_APP_ROLE: ${{ secrets.SINOPIA_DB_APP_ROLE }}
+          SINOPIA_ENCRYPTION_KEYS: ${{ secrets.SINOPIA_ENCRYPTION_KEYS }}
+        run: python -m backend.migrate

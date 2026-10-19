@@ -8,6 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import Response
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import InterfaceError, OperationalError, ProgrammingError
 
 from backend.api.auth import router as auth_router
 from backend.api.checkins import router as checkins_router
@@ -67,6 +68,9 @@ def readiness_check():
     try:
         with connect() as conn:
             conn.execute("SELECT 1").fetchone()
+            # Fail readiness when the schema was never migrated or the app role lacks grants.
+            for table in ("coaches", "teams", "coach_sessions", "players", "audit_log"):
+                conn.execute(f"SELECT 1 FROM {table} LIMIT 1").fetchone()
     except Exception:
         logging.getLogger("sinopia.api").warning("Readiness check failed: database unavailable")
         return JSONResponse(status_code=503, content={"status": "not_ready"})
@@ -74,6 +78,29 @@ def readiness_check():
 
 
 logger = logging.getLogger("sinopia.api")
+
+def _error_headers(request: Request) -> dict[str, str]:
+    headers = {"Vary": "Origin", "Access-Control-Allow-Credentials": "true"}
+    origin = request.headers.get("origin", "")
+    if origin and origin.rstrip("/") in allowed_origins:
+        headers["Access-Control-Allow-Origin"] = origin
+    return headers
+
+
+async def database_unavailable(request: Request, exc: Exception):
+    # Missing tables, missing grants, or an unreachable database: report it as a service
+    # problem and log only the exception type, never SQL parameters or athlete data.
+    logger.error("Database error method=%s path=%s type=%s", request.method, request.url.path, type(exc).__name__)
+    return JSONResponse(
+        status_code=503,
+        content={"detail": "The service database is not ready. Please try again shortly."},
+        headers=_error_headers(request),
+    )
+
+
+for _db_error in (ProgrammingError, OperationalError, InterfaceError):
+    app.add_exception_handler(_db_error, database_unavailable)
+
 
 @app.exception_handler(Exception)
 async def safe_unhandled_exception(request: Request, exc: Exception):

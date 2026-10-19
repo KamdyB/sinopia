@@ -5,7 +5,7 @@ declare const process: { env: Record<string, string | undefined> };
 
 export const config = { runtime: "edge" };
 
-const DEFAULT_BACKEND_ORIGIN = "https://sinopia-api.vercel.app";
+const DEFAULT_BACKEND_ORIGIN = "https://sinopia-eight.vercel.app";
 const ALLOWED_METHODS = new Set(["GET", "POST", "DELETE", "OPTIONS"]);
 
 export default async function handler(request: Request): Promise<Response> {

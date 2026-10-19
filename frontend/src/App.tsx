@@ -1,7 +1,7 @@
 // frontend/src/App.tsx
 import { useEffect, useState } from "react";
 import { AthleteStatus, HistoryPoint, Player, TeamType } from "./types";
-import { acknowledgePain, createCheckinToken, deletePlayer, exportTeamData, fetchCoachSession, fetchPlayers, fetchTeamStatuses, registerPlayer } from "./api";
+import { acknowledgePain, createCheckinToken, deletePlayer, exportTeamData, fetchCoachSession, fetchPlayerHistory, fetchPlayers, fetchTeamStatuses, registerPlayer } from "./api";
 import { SessionEntryForm } from "./SessionEntryForm";
 import { PlayerDirectory } from "./PlayerDirectory";
 import { PlayerHistory } from "./PlayerHistory";
@@ -78,8 +78,7 @@ export default function App() {
     let cancelled = false;
     setHistoryLoading(true);
     setHistoryError(null);
-    import("./api")
-      .then(({ fetchPlayerHistory }) => fetchPlayerHistory(detailId))
+    fetchPlayerHistory(detailId)
       .then((points) => { if (!cancelled) setHistory(points); })
       .catch(() => {
         if (!cancelled) setHistoryError("Could not load this athlete's history.");
@@ -139,7 +138,7 @@ export default function App() {
           <p className="eyebrow">Sinopia by KamdyB</p>
           <h1 className="display-title">{TEAM_TITLES[teamType]}</h1>
         </div>
-        <div>
+        <div className="header-actions">
           <p className="today-date">{TODAY}</p>
           <button type="button" className="copy-link" onClick={() => void handleExport("csv")}>Export CSV</button>
           <button type="button" className="copy-link" onClick={() => void handleExport("json")}>Export JSON</button>

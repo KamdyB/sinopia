@@ -561,3 +561,28 @@ button, input, select { min-height: 44px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* ---- Release polish: sign-in screens, header actions, installed-app safe areas ---- */
+.theme-stage, .theme-page { min-height: 100vh; min-height: 100dvh; }
+.header-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-left: auto; }
+.header-actions .today-date { margin: 0 .5rem 0 0; }
+.consent-confirmation { display: flex; align-items: flex-start; gap: .6rem; padding: .6rem 0; font-size: .88rem; line-height: 1.45; color: var(--ink); border: none; }
+.consent-confirmation input[type="checkbox"] { flex: 0 0 auto; width: 22px; height: 22px; min-height: 0; margin-top: .1rem; accent-color: var(--focus); }
+.consent-confirmation legend { padding: 0; margin-bottom: .4rem; color: var(--muted); font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; }
+.auth-toolbar { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: flex-end; padding: .75rem 0 0; }
+.email-signup { display: flex; flex-direction: column; gap: .5rem; }
+.page input:not([type]), .page input[type="text"], .page input[type="email"], .page input[type="search"] {
+  width: 100%; font: inherit; color: var(--ink); background: transparent;
+  border: 1px solid var(--line); padding: .5rem .8rem;
+}
+.page input:focus { outline: 2px solid var(--focus); outline-offset: 1px; }
+.page { padding-bottom: calc(var(--page-padding) + env(safe-area-inset-bottom)); }
+@media (max-width: 800px) {
+  .theme-control { top: calc(.75rem + env(safe-area-inset-top)); }
+  .page { padding-top: calc(4.25rem + env(safe-area-inset-top)); }
+  .header-actions { margin-left: 0; width: 100%; }
+  .header-actions .today-date { width: 100%; margin: 0; }
+}
+@media (display-mode: standalone) {
+  body { overscroll-behavior-y: contain; }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Sinopia",
+  "short_name": "Sinopia",
+  "description": "Workload and check-in monitoring for school and youth coaches.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6d9de",
+  "theme_color": "#a3435f",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

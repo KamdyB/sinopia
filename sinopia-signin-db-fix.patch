@@ -1,0 +1,129 @@
+From afc53087bca656c28fcef3e512ff03c0ed472a54 Mon Sep 17 00:00:00 2001
+From: KamdyB <noreply@users.noreply.github.com>
+Date: Mon, 19 Oct 2026 00:21:22 +0000
+Subject: [PATCH] fix: report unmigrated or unreachable database as a clear
+ 503, verify schema in /ready, add manual migrate workflow
+
+---
+ .github/workflows/migrate.yml | 25 +++++++++++++++++++++++++
+ backend/main.py               | 27 +++++++++++++++++++++++++++
+ tests/test_api_routes.py      | 22 ++++++++++++++++++++++
+ 3 files changed, 74 insertions(+)
+ create mode 100644 .github/workflows/migrate.yml
+
+diff --git a/.github/workflows/migrate.yml b/.github/workflows/migrate.yml
+new file mode 100644
+index 0000000..2ab666c
+--- /dev/null
++++ b/.github/workflows/migrate.yml
+@@ -0,0 +1,25 @@
++name: Migrate database
++
++permissions:
++  contents: read
++
++on:
++  workflow_dispatch:
++
++jobs:
++  migrate:
++    runs-on: ubuntu-latest
++    timeout-minutes: 10
++    steps:
++      - uses: actions/checkout@v5
++      - uses: actions/setup-python@v6
++        with:
++          python-version: "3.12"
++          cache: pip
++      - run: python -m pip install -r requirements.txt
++      - name: Apply schema and row-level security
++        env:
++          DATABASE_OWNER_URL: ${{ secrets.DATABASE_OWNER_URL }}
++          SINOPIA_DB_APP_ROLE: ${{ secrets.SINOPIA_DB_APP_ROLE }}
++          SINOPIA_ENCRYPTION_KEYS: ${{ secrets.SINOPIA_ENCRYPTION_KEYS }}
++        run: python -m backend.migrate
+diff --git a/backend/main.py b/backend/main.py
+index 1290297..193ddf7 100644
+--- a/backend/main.py
++++ b/backend/main.py
+@@ -8,6 +8,7 @@ from fastapi import FastAPI, Request
+ from fastapi.middleware.cors import CORSMiddleware
+ from starlette.responses import Response
+ from fastapi.responses import JSONResponse
++from sqlalchemy.exc import InterfaceError, OperationalError, ProgrammingError
+ 
+ from backend.api.auth import router as auth_router
+ from backend.api.checkins import router as checkins_router
+@@ -67,6 +68,9 @@ def readiness_check():
+     try:
+         with connect() as conn:
+             conn.execute("SELECT 1").fetchone()
++            # Fail readiness when the schema was never migrated or the app role lacks grants.
++            for table in ("coaches", "teams", "coach_sessions", "players", "audit_log"):
++                conn.execute(f"SELECT 1 FROM {table} LIMIT 1").fetchone()
+     except Exception:
+         logging.getLogger("sinopia.api").warning("Readiness check failed: database unavailable")
+         return JSONResponse(status_code=503, content={"status": "not_ready"})
+@@ -75,6 +79,29 @@ def readiness_check():
+ 
+ logger = logging.getLogger("sinopia.api")
+ 
++def _error_headers(request: Request) -> dict[str, str]:
++    headers = {"Vary": "Origin", "Access-Control-Allow-Credentials": "true"}
++    origin = request.headers.get("origin", "")
++    if origin and origin.rstrip("/") in allowed_origins:
++        headers["Access-Control-Allow-Origin"] = origin
++    return headers
++
++
++async def database_unavailable(request: Request, exc: Exception):
++    # Missing tables, missing grants, or an unreachable database: report it as a service
++    # problem and log only the exception type, never SQL parameters or athlete data.
++    logger.error("Database error method=%s path=%s type=%s", request.method, request.url.path, type(exc).__name__)
++    return JSONResponse(
++        status_code=503,
++        content={"detail": "The service database is not ready. Please try again shortly."},
++        headers=_error_headers(request),
++    )
++
++
++for _db_error in (ProgrammingError, OperationalError, InterfaceError):
++    app.add_exception_handler(_db_error, database_unavailable)
++
++
+ @app.exception_handler(Exception)
+ async def safe_unhandled_exception(request: Request, exc: Exception):
+     # Never log request bodies, athlete labels, or exception text that may contain them.
+diff --git a/tests/test_api_routes.py b/tests/test_api_routes.py
+index 0529d24..74d17b4 100644
+--- a/tests/test_api_routes.py
++++ b/tests/test_api_routes.py
+@@ -422,3 +422,25 @@ def test_effort_session_failure_rolls_back_the_checkin(client, tmp_path):
+         assert conn.execute(
+             "SELECT COUNT(*) FROM sessions WHERE player_id = ?", (player_id,)
+         ).fetchone()[0] == 0
++
++
++def test_database_errors_return_clear_503_not_generic_500(monkeypatch):
++    from fastapi.testclient import TestClient
++    from sqlalchemy.exc import ProgrammingError
++    from backend.main import app
++    from backend.data.auth_store import auth_store
++
++    def boom(*args, **kwargs):
++        raise ProgrammingError("SELECT 1", {}, Exception("relation does not exist"))
++
++    monkeypatch.setattr(auth_store, "coach_exists", boom)
++    client = TestClient(app, raise_server_exceptions=False)
++    response = client.post(
++        "/auth/email/request",
++        json={"full_name": "Test Coach", "email": "a@b.co", "turnstile_token": "t",
++              "age_18_or_older": True, "authorised_and_parental_consent_obtained": True,
++              "accept_terms_and_privacy": True},
++        headers={"X-Sinopia-Request": "1"},
++    )
++    assert response.status_code == 503
++    assert "database" in response.json()["detail"].lower()
+-- 
+2.43.0
+

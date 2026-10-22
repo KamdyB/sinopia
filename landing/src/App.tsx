@@ -54,14 +54,14 @@ export default function App() {
       </header>
 
       <section className="hero">
-        <h1>Training load, made simple for youth coaches.</h1>
-        <p className="hero-sub">Log each session in seconds. See who needs a lighter day. Free, on one phone.</p>
+        <h1>A clearer training picture, for coaches and athletes.</h1>
+        <p className="hero-sub">Keep session notes and athlete check-ins together. A simple tool for your team, on one phone.</p>
         <div className="hero-cta">
           <a className="btn btn--primary btn--lg" href={SIGN_UP_URL}>Get started</a>
           <a className="btn btn--lg" href="#how">See how it works</a>
         </div>
         <p className="hero-stat">
-          <strong>About 23 million</strong> sports injuries a year among African adolescents, with little data to guide their coaches.
+          Built for grassroots teams that need a straightforward way to keep training records and check in with athletes.
         </p>
       </section>
 
@@ -70,7 +70,7 @@ export default function App() {
         <ol className="steps">
           <li><span className="steps__n">1</span><div><h3>Add your players</h3><p>Once, at the start of the season.</p></div></li>
           <li><span className="steps__n">2</span><div><h3>Log the session</h3><p>One duration for the squad, one effort score per player.</p></div></li>
-          <li><span className="steps__n">3</span><div><h3>Read the result</h3><p>A plain-language band and a trend chart for each player.</p></div></li>
+          <li><span className="steps__n">3</span><div><h3>Review the picture</h3><p>See the recorded status and training history, then use it to guide a conversation.</p></div></li>
         </ol>
         <LiveDemo />
       </section>

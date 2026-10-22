@@ -96,16 +96,18 @@ export function TurnstileWidget({ action, onToken }: {
       renderWidget();
     } else {
       script = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
+      const shouldAppend = !script;
       if (!script) {
         script = document.createElement("script");
         script.id = SCRIPT_ID;
         script.src = SCRIPT_URL;
         script.async = true;
         script.defer = true;
-        document.head.appendChild(script);
       }
+      // Attach listeners before appending so a fast cached response cannot race past them.
       script.addEventListener("load", handleLoad, { once: true });
       script.addEventListener("error", handleError, { once: true });
+      if (shouldAppend) document.head.appendChild(script);
       timeoutId = window.setTimeout(() => {
         if (!window.turnstile) fail("Cloudflare's bot check did not finish loading. Retry or check whether your browser/network blocks challenges.cloudflare.com.");
       }, 12000);

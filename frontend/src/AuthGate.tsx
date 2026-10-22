@@ -285,8 +285,10 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   if (!coach) {
     return (
-      <div className="page"><div className="panel">
-        <p className="eyebrow">Sinopia by KamdyB</p>
+      <div className="page"><div className="panel auth-panel">
+        <a className="auth-wordmark" href={import.meta.env.VITE_LEGAL_BASE_URL || "/"}>Sinopia</a>
+        <p className="auth-caption">A clearer picture, one session at a time.</p>
+        <p className="eyebrow">COACH SPACE</p>
         <InstallButton />
         <h1 className="display-title">{isSignUp ? "Create your coach account" : "Coach sign-in"}</h1>
         <p>{isSignUp ? "Create an account with Google or verify your email address." : "Sign in with Google to access your team's training and check-in records."}</p>

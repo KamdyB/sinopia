@@ -5,8 +5,8 @@
   --muted: #7c6256;
   --paper: #f2e5d4;
   --card: #fbf5eb;
-  --accent: #b54a2d;
-  --accent-ink: #ffffff;
+  --accent: #9b3f25;
+  --accent-ink: #fff8ef;
   --line: rgba(117, 57, 37, 0.22);
   --radius-lg: 24px;
   --radius-md: 16px;
@@ -30,7 +30,7 @@ html { scroll-behavior: smooth; }
 html, body, #root { width: 100%; }
 body {
   margin: 0; overflow-x: hidden;
-  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: "Avenir Next", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
   color: var(--ink); background: var(--paper); line-height: 1.55;
   -webkit-text-size-adjust: 100%;
 }
@@ -39,9 +39,9 @@ body {
   padding: env(safe-area-inset-top) clamp(1rem, 4vw, 1.5rem) calc(2rem + env(safe-area-inset-bottom));
 }
 
-h1 { font-size: clamp(2rem, 6vw, 3.4rem); line-height: 1.1; margin: 0 0 1rem; letter-spacing: -0.02em; color: var(--ink-strong); }
-h2 { font-size: clamp(1.4rem, 3.4vw, 1.9rem); margin: 0 0 1.25rem; letter-spacing: -0.01em; color: var(--ink-strong); }
-h3 { margin: 0 0 .25rem; font-size: 1.02rem; }
+h1 { font-family: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif; font-weight: 750; text-wrap: balance; font-size: clamp(2rem, 6vw, 3.4rem); line-height: 1.1; margin: 0 0 1rem; letter-spacing: -0.02em; color: var(--ink-strong); }
+h2 { font-family: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif; font-weight: 750; text-wrap: balance; font-size: clamp(1.4rem, 3.4vw, 1.9rem); margin: 0 0 1.25rem; letter-spacing: -0.01em; color: var(--ink-strong); }
+h3 { font-family: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif; font-weight: 700; text-wrap: balance; margin: 0 0 .25rem; font-size: 1.02rem; }
 p { margin: 0 0 1rem; }
 
 .nav { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.1rem 0; }
@@ -54,18 +54,20 @@ p { margin: 0 0 1rem; }
 .nav__links a:hover { color: var(--ink-strong); }
 
 .btn {
-  display: inline-flex; align-items: center; justify-content: center; min-height: 44px;
-  border: 1px solid var(--line); background: var(--card); color: var(--ink);
-  border-radius: var(--radius-pill); padding: .55rem 1.2rem;
-  font: inherit; font-weight: 600; text-decoration: none; cursor: pointer;
-  transition: transform .15s ease, background .15s ease;
+  display: inline-flex; align-items: center; justify-content: center; min-height: 46px;
+  border: 1px solid var(--line-strong, var(--line)); background: var(--card); color: var(--ink);
+  border-radius: 13px; padding: .65rem 1rem;
+  font: inherit; font-weight: 700; text-decoration: none; cursor: pointer;
+  box-shadow: 0 3px 0 rgba(66, 40, 31, .16);
+  transition: transform 180ms cubic-bezier(.2, .75, .25, 1), box-shadow 180ms ease, background-color 180ms ease, border-color 180ms ease;
 }
-.btn:hover { transform: translateY(-1px); }
-.btn--primary { background: var(--ink-strong); border-color: var(--ink-strong); color: #fff; }
+.btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 0 rgba(66, 40, 31, .14); }
+.btn:active:not(:disabled) { transform: translateY(1px); box-shadow: 0 1px 0 rgba(66, 40, 31, .16); }
+.btn--primary { background: var(--ink-strong); border-color: var(--ink-strong); color: var(--accent-ink); }
 :root[data-theme="dark"] .btn--primary { color: #211813; }
-.btn--lg { padding: .8rem 1.6rem; font-size: 1.02rem; }
-.btn:disabled { opacity: .45; cursor: default; transform: none; }
-.btn:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--ink-strong); outline-offset: 2px; }
+.btn--lg { padding: .8rem 1.15rem; font-size: 1.02rem; }
+.btn:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid var(--ink-strong); outline-offset: 3px; }
 
 .hero { padding: 2.5rem 0 1.5rem; }
 .hero-sub { max-width: 46ch; font-size: 1.15rem; color: var(--muted); }
@@ -75,7 +77,8 @@ p { margin: 0 0 1rem; }
 
 .section { padding: 2rem 0; }
 .steps { list-style: none; margin: 0 0 2rem; padding: 0; display: grid; gap: .9rem; }
-.steps li { display: flex; gap: .9rem; align-items: flex-start; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 1rem 1.1rem; }
+.steps li { display: flex; gap: .9rem; align-items: flex-start; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 1rem 1.1rem; box-shadow: 0 3px 0 rgba(66, 40, 31, .08); transition: transform 220ms cubic-bezier(.2, .75, .25, 1), box-shadow 220ms ease, border-color 220ms ease; }
+.steps li:hover { transform: translateY(-2px); box-shadow: 0 5px 0 rgba(66, 40, 31, .08); }
 .steps p { margin: 0; color: var(--muted); font-size: .94rem; }
 .steps__n { flex: 0 0 auto; width: 2rem; height: 2rem; border-radius: 50%; display: grid; place-items: center; background: var(--ink-strong); color: #fff; font-weight: 700; font-size: .9rem; }
 :root[data-theme="dark"] .steps__n { color: #211813; }
@@ -135,4 +138,23 @@ p { margin: 0 0 1rem; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+/* One Sinopia rhythm across the landing page and coach app. */
+:root { --sinopia-ease: cubic-bezier(.2, .75, .25, 1); }
+body {
+  background:
+    radial-gradient(ellipse at 10% 0%, color-mix(in srgb, var(--paper) 70%, var(--card)), transparent 34rem),
+    var(--paper);
+  background-attachment: fixed;
+}
+.nav__wordmark { font-family: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif; font-weight: 800; letter-spacing: -.045em; }
+.card, .demo-session-card, .steps li { border-radius: 16px; }
+.card { box-shadow: 0 3px 0 rgba(66, 40, 31, .07); transition: transform 220ms var(--sinopia-ease), box-shadow 220ms ease, border-color 220ms ease; }
+.card:hover { transform: translateY(-2px); box-shadow: 0 5px 0 rgba(66, 40, 31, .07); }
+.demo-controls .btn { min-height: 44px; }
+.reveal-on-scroll { opacity: 0; transform: translateY(14px); transition: opacity 520ms var(--sinopia-ease), transform 520ms var(--sinopia-ease); }
+.reveal-on-scroll.is-visible { opacity: 1; transform: translateY(0); }
+@media (prefers-reduced-motion: reduce) {
+  .reveal-on-scroll, .reveal-on-scroll.is-visible { opacity: 1; transform: none; transition: none; }
 }

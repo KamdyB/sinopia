@@ -1,4 +1,5 @@
 // landing/src/App.tsx  — LANDING PAGE (imports LiveDemo, nothing from the coach tool)
+import { useEffect, useState } from "react";
 import { LiveDemo } from "./LiveDemo";
 import { LegalPage } from "./LegalPage";
 
@@ -42,6 +43,14 @@ const SOURCES: { text: string; url: string | null }[] = [
 ];
 
 export default function App() {
+  const [theme, setTheme] = useState<"light" | "dark">(() =>
+    window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+  );
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
+
   if (window.location.pathname === "/privacy") return <LegalPage kind="privacy" />;
   if (window.location.pathname === "/terms") return <LegalPage kind="terms" />;
   if (window.location.pathname === "/delete-account") return <LegalPage kind="delete-account" />;
@@ -50,7 +59,18 @@ export default function App() {
     <div className="landing">
       <header className="nav">
         <span className="nav__wordmark">Sinopia</span>
-        <a className="btn nav__cta" href={SIGN_IN_URL}>Sign in</a>
+        <div className="nav__actions">
+          <button
+            type="button"
+            className="btn theme-toggle"
+            aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+            aria-pressed={theme === "dark"}
+            onClick={() => setTheme((current) => current === "dark" ? "light" : "dark")}
+          >
+            {theme === "dark" ? "Light mode" : "Dark mode"}
+          </button>
+          <a className="btn nav__cta" href={SIGN_IN_URL}>Sign in</a>
+        </div>
       </header>
 
       <section className="hero">

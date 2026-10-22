@@ -109,7 +109,7 @@ export function PlayerDirectory({
             <li className="directory-card" key={p.player_id}>
               <div className={`directory-row${copiedId === p.player_id ? " directory-row--active" : ""}`}>
                 <span className="directory-avatar" aria-hidden="true">
-                  {p.name.trim().split(/\\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "?"}
+                  {p.name.trim().split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "?"}
                 </span>
                 <span className="directory-card__main">
                   <span className="directory-row__name">{p.name}</span>

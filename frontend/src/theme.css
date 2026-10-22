@@ -16,6 +16,7 @@
   --line: rgba(113, 62, 40, 0.2);
   --line-strong: rgba(113, 62, 40, 0.38);
   --accent: #a64264;
+  --accent-ink: #fff8ef;
   --accent-soft: #f2d7e0;
   --focus: #963b5c;
   --stable: #39765d;
@@ -31,12 +32,14 @@
 
 :root[data-team="boys"] {
   --accent: #28678c;
+  --accent-ink: #ffffff;
   --accent-soft: #d5e7f0;
   --focus: #245b7b;
 }
 
 :root[data-team="mixed"] {
   --accent: #8a6814;
+  --accent-ink: #fff8ef;
   --accent-soft: #f4e6b7;
   --focus: #79590e;
 }
@@ -53,23 +56,27 @@
   --line-strong: rgba(231, 185, 157, 0.36);
   --stable: #91c5a8;
   --watch: #e2bd70;
+  --accent-ink: #211813;
   --elevated: #ed9b7a;
 }
 
 :root[data-theme="dark"][data-team="girls"] {
   --accent: #efa0bc;
+  --accent-ink: #211813;
   --accent-soft: #4a2b37;
   --focus: #efa0bc;
 }
 
 :root[data-theme="dark"][data-team="boys"] {
   --accent: #91c9e7;
+  --accent-ink: #17232a;
   --accent-soft: #233f50;
   --focus: #91c9e7;
 }
 
 :root[data-theme="dark"][data-team="mixed"] {
   --accent: #f0cf67;
+  --accent-ink: #211813;
   --accent-soft: #493c1d;
   --focus: #f0cf67;
 }
@@ -698,7 +705,7 @@ body {
   border: 1px solid var(--accent);
   border-radius: 13px;
   background: var(--accent);
-  color: var(--canvas);
+  color: var(--accent-ink);
   padding: .8rem 1rem;
   font-weight: 700;
   letter-spacing: .01em;
@@ -708,7 +715,7 @@ body {
   transition: transform 150ms ease, box-shadow 150ms ease, background-color 180ms ease;
 }
 .record-btn:hover:not(:disabled), .checkin__submit:hover:not(:disabled) {
-  color: var(--canvas);
+  color: var(--accent-ink);
   letter-spacing: .01em;
   transform: translateY(-1px);
   box-shadow: 0 4px 0 color-mix(in srgb, var(--accent) 55%, var(--ink));
@@ -764,7 +771,7 @@ body {
 .checkin__question legend { color: var(--ink-strong); line-height: 1.4; }
 .checkin__pick { border-color: var(--line-strong); background: var(--canvas); }
 .checkin__pick:hover { border-color: var(--accent); background: var(--accent-soft); }
-.checkin__pick.is-chosen { border-color: var(--accent); background: var(--accent); color: var(--canvas); box-shadow: 0 2px 0 color-mix(in srgb, var(--accent) 55%, var(--ink)); }
+.checkin__pick.is-chosen { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); box-shadow: 0 2px 0 color-mix(in srgb, var(--accent) 55%, var(--ink)); }
 .status-row, .status-row__level { border-radius: 12px; }
 @media (max-width: 600px) {
   .panel { padding: 1rem; border-radius: 18px; }

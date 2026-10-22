@@ -597,6 +597,7 @@ button, input, select { min-height: 44px; }
   overflow: hidden;
 }
 .register-panel summary {
+  list-style: none;
   min-height: 48px;
   display: flex;
   align-items: center;
@@ -605,7 +606,7 @@ button, input, select { min-height: 44px; }
   font-weight: 650;
   cursor: pointer;
 }
-.register-panel summary::marker { color: var(--accent); }
+.register-panel summary::-webkit-details-marker { display: none; }
 .register-panel summary::after {
   content: "+";
   margin-left: auto;

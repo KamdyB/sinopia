@@ -1,27 +1,27 @@
 /* landing/src/landing.css: matches the Sinopia coach app palette */
 :root {
-  --ink: #5b3040;
-  --ink-strong: #a3435f;
-  --muted: #8a6b73;
-  --paper: #f6d9de;
-  --card: #fbeef0;
-  --accent: #5595b9;
+  --ink: #40251d;
+  --ink-strong: #9b3f25;
+  --muted: #7c6256;
+  --paper: #f2e5d4;
+  --card: #fbf5eb;
+  --accent: #b54a2d;
   --accent-ink: #ffffff;
-  --line: rgba(163, 67, 95, 0.22);
+  --line: rgba(117, 57, 37, 0.22);
   --radius-lg: 24px;
   --radius-md: 16px;
   --radius-pill: 999px;
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --ink: #f0dce2;
-  --ink-strong: #e0a8bc;
-  --muted: #b992a0;
-  --paper: #2a1c22;
-  --card: #3a2530;
-  --accent: #8bbbd7;
-  --accent-ink: #2a1c22;
-  --line: rgba(224, 168, 188, 0.22);
+  --ink: #f1e3d5;
+  --ink-strong: #e5a17f;
+  --muted: #c4a896;
+  --paper: #211813;
+  --card: #33231b;
+  --accent: #df8a61;
+  --accent-ink: #211813;
+  --line: rgba(229, 161, 127, 0.24);
 }
 :root[data-theme="light"] { color-scheme: light; }
 
@@ -62,7 +62,7 @@ p { margin: 0 0 1rem; }
 }
 .btn:hover { transform: translateY(-1px); }
 .btn--primary { background: var(--ink-strong); border-color: var(--ink-strong); color: #fff; }
-:root[data-theme="dark"] .btn--primary { color: #2a1c22; }
+:root[data-theme="dark"] .btn--primary { color: #211813; }
 .btn--lg { padding: .8rem 1.6rem; font-size: 1.02rem; }
 .btn:disabled { opacity: .45; cursor: default; transform: none; }
 .btn:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--ink-strong); outline-offset: 2px; }
@@ -78,7 +78,7 @@ p { margin: 0 0 1rem; }
 .steps li { display: flex; gap: .9rem; align-items: flex-start; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 1rem 1.1rem; }
 .steps p { margin: 0; color: var(--muted); font-size: .94rem; }
 .steps__n { flex: 0 0 auto; width: 2rem; height: 2rem; border-radius: 50%; display: grid; place-items: center; background: var(--ink-strong); color: #fff; font-weight: 700; font-size: .9rem; }
-:root[data-theme="dark"] .steps__n { color: #2a1c22; }
+:root[data-theme="dark"] .steps__n { color: #211813; }
 
 .split { display: grid; gap: 1rem; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 1.2rem 1.3rem; }
@@ -94,7 +94,7 @@ p { margin: 0 0 1rem; }
 .demo-controls { display: flex; gap: .6rem; flex-wrap: wrap; margin: .9rem 0 .4rem; }
 .demo-progress { color: var(--muted); font-size: .85rem; }
 .demo-score { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: .3rem .8rem; border-radius: var(--radius-pill); padding: .45rem 1rem; margin-bottom: .8rem; border: 2px solid var(--line); background: var(--card); }
-.demo-score[data-band="act"] { border-color: #c9647e; }
+.demo-score[data-band="act"] { border-color: #b54a2d; }
 .demo-score[data-band="ok"] { border-color: var(--accent); }
 .demo-score[data-band="building"] { border-color: var(--muted); }
 .demo-score__band { font-weight: 800; }

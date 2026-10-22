@@ -159,7 +159,7 @@ export default function App() {
               onClose={() => setDetailId(null)}
             />
           )}
-          <PlayerDirectory players={players} onAdd={handleAddPlayer} onCreateCheckinLink={handleCreateCheckinLink} onDeletePlayer={handleDeletePlayer} />
+          <PlayerDirectory players={players} statuses={statuses} onAdd={handleAddPlayer} onCreateCheckinLink={handleCreateCheckinLink} onDeletePlayer={handleDeletePlayer} />
           <div className="panel">
             <p className="section-title">Team status</p>
             {!dataLoading && !dataError && statuses.length === 0 ? (

@@ -15,22 +15,15 @@ export function ThemeStage({ children }: { children: ReactNode }) {
     document.documentElement.dataset.theme = initial;
     return initial;
   });
-  const [turning, setTurning] = useState(false);
-
   function toggleTheme() {
-    if (turning) return;
-    setTurning(true);
-    window.setTimeout(() => {
-      const next = theme === "light" ? "dark" : "light";
-      setTheme(next);
-      document.documentElement.dataset.theme = next;
-    }, 320);
-    window.setTimeout(() => setTurning(false), 720);
+    const next = theme === "light" ? "dark" : "light";
+    setTheme(next);
+    document.documentElement.dataset.theme = next;
   }
 
   return (
     <div className="theme-stage">
-      <div className={`theme-page ${turning ? "is-flipping" : ""}`}>
+      <div className="theme-page">
         <button
           type="button"
           className="theme-control"

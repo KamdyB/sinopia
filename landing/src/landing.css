@@ -1,27 +1,34 @@
 /* landing/src/landing.css: matches the Sinopia coach app palette */
 :root {
-  --ink: #40251d;
-  --ink-strong: #9b3f25;
-  --muted: #7c6256;
-  --paper: #f2e5d4;
-  --card: #fbf5eb;
-  --accent: #b54a2d;
-  --accent-ink: #ffffff;
-  --line: rgba(117, 57, 37, 0.22);
+  color-scheme: light;
+  --ink: #2B1410;
+  --ink-strong: #C2391C;
+  --muted: #7A5A4E;
+  --paper: #FFF6EE;
+  --card: #FFFFFF;
+  --surface-alt: #FFE6D6;
+  --primary: #E04A28;
+  --primary-ink: #FFFFFF;
+  --accent: #C2391C;
+  --accent-ink: #FFFFFF;
+  --line: rgba(94, 43, 28, 0.22);
   --radius-lg: 24px;
   --radius-md: 16px;
   --radius-pill: 999px;
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --ink: #f1e3d5;
-  --ink-strong: #e5a17f;
-  --muted: #c4a896;
-  --paper: #211813;
-  --card: #33231b;
-  --accent: #df8a61;
-  --accent-ink: #211813;
-  --line: rgba(229, 161, 127, 0.24);
+  --ink: #FFEDE2;
+  --ink-strong: #FF8A66;
+  --muted: #D0A998;
+  --paper: #1A0F0C;
+  --card: #2A1914;
+  --surface-alt: #36211A;
+  --primary: #FF6A45;
+  --primary-ink: #1A0F0C;
+  --accent: #FF6A45;
+  --accent-ink: #1A0F0C;
+  --line: rgba(255, 205, 180, 0.2);
 }
 :root[data-theme="light"] { color-scheme: light; }
 
@@ -46,7 +53,12 @@ p { margin: 0 0 1rem; }
 
 .nav { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.1rem 0; }
 .nav__actions { display: flex; align-items: center; gap: .55rem; flex-wrap: wrap; justify-content: flex-end; }
-.theme-toggle { font-size: .9rem; }
+ .theme-toggle {
+  width: 44px; min-width: 44px; height: 44px; min-height: 44px;
+  padding: 0; border-radius: 50%; font-size: .9rem;
+}
+.theme-toggle svg { width: 17px; height: 17px; display: block; }
+.theme-toggle:hover { transform: none; }
 .theme-toggle:focus-visible { outline: 2px solid var(--ink-strong); outline-offset: 3px; }
 .nav__wordmark { font-weight: 800; font-size: 1.2rem; letter-spacing: -0.02em; color: var(--ink-strong); }
 .nav__links { display: flex; gap: 1.1rem; flex-wrap: wrap; }
@@ -62,7 +74,7 @@ p { margin: 0 0 1rem; }
 }
 .btn:hover { transform: translateY(-1px); }
 .btn--primary { background: var(--ink-strong); border-color: var(--ink-strong); color: #fff; }
-:root[data-theme="dark"] .btn--primary { color: #211813; }
+:root[data-theme="dark"] .btn--primary { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); }
 .btn--lg { padding: .8rem 1.6rem; font-size: 1.02rem; }
 .btn:disabled { opacity: .45; cursor: default; transform: none; }
 .btn:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--ink-strong); outline-offset: 2px; }
@@ -127,7 +139,8 @@ p { margin: 0 0 1rem; }
 @media (max-width: 560px) {
   .nav { align-items: flex-start; }
   .nav__actions { gap: .4rem; }
-  .theme-toggle, .nav__cta { padding-inline: .8rem; font-size: .82rem; }
+  .theme-toggle { padding: 0; }
+  .nav__cta { padding-inline: .8rem; font-size: .82rem; }
   .hero { padding-top: 1.25rem; }
   .hero-cta { display: grid; grid-template-columns: minmax(0, 1fr); }
   .demo-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }

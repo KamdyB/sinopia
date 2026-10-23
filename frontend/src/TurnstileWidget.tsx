@@ -24,6 +24,7 @@ export function TurnstileWidget({ action, onToken }: {
   const hostRef = useRef<HTMLDivElement>(null);
   const callbackRef = useRef(onToken);
   const [error, setError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
   callbackRef.current = onToken;
 
   useEffect(() => {
@@ -46,27 +47,43 @@ export function TurnstileWidget({ action, onToken }: {
         theme: "auto",
       });
     };
-    const existing = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
+    let existing = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
+    if (existing?.dataset.failed === "true" && !window.turnstile) {
+      existing.remove();
+      existing = null;
+    }
     if (window.turnstile) render();
-    else if (existing) existing.addEventListener("load", render, { once: true });
-    else {
+    else if (existing) {
+      existing.addEventListener("load", render, { once: true });
+      existing.addEventListener("error", () => setError("Bot check could not load. Try again."), { once: true });
+    } else {
       const script = document.createElement("script");
       script.id = SCRIPT_ID;
       script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
       script.async = true;
       script.defer = true;
       script.onload = render;
-      script.onerror = () => setError("Bot check could not load. Try again.");
+      script.onerror = () => {
+        script.dataset.failed = "true";
+        callbackRef.current(null);
+        setError("Bot check could not load. Try again.");
+      };
       document.head.appendChild(script);
     }
     return () => {
       cancelled = true;
       if (widgetId && window.turnstile) window.turnstile.remove(widgetId);
     };
-  }, [action]);
+  }, [action, retryKey]);
 
   return <div className="turnstile-check">
     <div ref={hostRef} />
-    {error && <p className="form-error" role="alert">{error}</p>}
+    {error && <div className="turnstile-error" role="alert">
+      <p className="form-error">{error}</p>
+      <button type="button" className="copy-link turnstile-retry" onClick={() => {
+        setError(null);
+        setRetryKey((key) => key + 1);
+      }}>Try again</button>
+    </div>}
   </div>;
 }

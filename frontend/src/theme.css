@@ -798,3 +798,20 @@ body {
   --radius-pill: var(--radius);
 }
 .panel, .log-session, .check-today, .athlete-row, .metric-block, .calculated-load, .status-row, .status-row__level { border-radius: var(--radius-card); }
+
+
+/* Consistency pass 2: auth sizing and small-screen safeguards. */
+.page { width: min(100%, var(--container-width)); min-width: 0; }
+.page .display-title { font-size: var(--text-xl); line-height: 1.1; overflow-wrap: anywhere; }
+.page .panel, .page .log-session, .page .check-today { min-width: 0; }
+.page input:not([type="checkbox"]):not([type="radio"]), .page select, .page textarea { width: 100%; min-width: 0; min-height: var(--control-height); padding: var(--space-2) var(--control-padding-x); font: inherit; }
+.page input:focus-visible, .page select:focus-visible, .page textarea:focus-visible, .page button:focus-visible, .page a:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.page button, .page .copy-link, .page .record-btn, .page .checkin__submit { min-height: var(--control-height); }
+@media (max-width: 375px) {
+  .page { padding: var(--space-4); }
+  .header-row { gap: var(--space-3); flex-wrap: wrap; }
+  .dashboard { grid-template-columns: minmax(0, 1fr); }
+  .field-row { flex-wrap: wrap; gap: var(--space-3); }
+  .field-row .field-group { min-width: 0; }
+  .turnstile-check { min-width: 0; overflow-x: auto; }
+}

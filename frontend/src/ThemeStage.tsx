@@ -3,15 +3,20 @@ import { useState, ReactNode } from "react";
 
 type Theme = "light" | "dark";
 
-function systemPrefersDark(): boolean {
-  return typeof window !== "undefined" && window.matchMedia
-    ? window.matchMedia("(prefers-color-scheme: dark)").matches
-    : false;
+function initialTheme(): Theme {
+  if (typeof window === "undefined") return "light";
+  try {
+    const saved = window.localStorage.getItem("sinopia-theme");
+    if (saved === "light" || saved === "dark") return saved;
+  } catch {
+    // Keep theme selection usable when storage is unavailable.
+  }
+  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
 export function ThemeStage({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
-    const initial: Theme = systemPrefersDark() ? "dark" : "light";
+    const initial = initialTheme();
     document.documentElement.dataset.theme = initial;
     return initial;
   });
@@ -19,6 +24,9 @@ export function ThemeStage({ children }: { children: ReactNode }) {
     const next = theme === "light" ? "dark" : "light";
     setTheme(next);
     document.documentElement.dataset.theme = next;
+    try { window.localStorage.setItem("sinopia-theme", next); } catch {
+      // Theme still updates for this page when storage is unavailable.
+    }
   }
 
   return (

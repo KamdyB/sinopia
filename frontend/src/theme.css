@@ -829,3 +829,27 @@ body {
 .page .form-error, .page [role="alert"] { color: var(--elevated-text); }
 .page [role="status"] { margin-block: var(--space-3); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius); color: var(--muted); background: var(--surface-alt); }
 .page .form-error[role="alert"] { margin-block: var(--space-3); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-alt); }
+
+/* Actionable team picture: compact distribution and review queue. */
+.team-picture__total { display: flex; align-items: baseline; gap: .65rem; margin: .6rem 0 .8rem; }
+.team-picture__total strong { color: var(--ink-strong); font-family: var(--font-mono); font-size: clamp(2rem, 4vw, 2.8rem); line-height: 1; }
+.team-picture__total span { color: var(--muted); font-size: .82rem; }
+.team-picture__bar { display: flex; width: 100%; height: 14px; overflow: hidden; gap: 3px; border-radius: 999px; background: var(--surface-alt); }
+.team-picture__bar button { min-width: 0; padding: 0; border: 0; border-radius: 0; cursor: pointer; transition: opacity 160ms ease; }
+.team-picture__bar button:hover, .team-picture__bar button[aria-pressed="true"] { opacity: .7; }
+.team-picture__legend { display: flex; flex-wrap: wrap; gap: .45rem 1rem; margin: .8rem 0 1.2rem; }
+.team-picture__key { display: inline-flex; align-items: center; gap: .4rem; padding: .2rem 0; border: 0; border-radius: 0; background: transparent; color: var(--muted); font: inherit; font-size: .76rem; cursor: pointer; }
+.team-picture__key > span { width: 8px; height: 8px; border-radius: 50%; }
+.team-picture__key strong { color: var(--ink); font-family: var(--font-mono); font-size: .78rem; }
+.team-picture__key[aria-pressed="true"] { color: var(--ink-strong); text-decoration: underline; text-underline-offset: 3px; }
+.team-picture__filter { margin: 0 0 1rem; color: var(--muted); font-size: .8rem; }
+.team-picture__review { margin-top: 1.2rem; border-top: 1px solid var(--line); }
+.team-picture__review-title { margin: .9rem 0 .35rem; font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.team-picture__review-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .45rem .8rem; align-items: center; padding: .7rem 0; border-top: 1px solid var(--line); }
+.team-picture__review-row .status-row__name { font-size: .9rem; }
+.team-picture__review-row .status-row__level { grid-column: 1; grid-row: 2; justify-self: start; font-size: .65rem; }
+.team-picture__review-row .copy-link { grid-column: 2; grid-row: 1 / span 2; }
+@media (max-width: 420px) {
+  .team-picture__review-row { grid-template-columns: minmax(0, 1fr); }
+  .team-picture__review-row .copy-link { grid-column: 1; grid-row: auto; justify-self: start; }
+}

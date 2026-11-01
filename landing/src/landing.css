@@ -190,3 +190,19 @@ p { margin: 0 0 1rem; }
   --radius-pill: var(--radius);
 }
 .card, .steps li, .demo-session-card { border-radius: var(--radius-card); }
+
+
+/* Consistency pass 2: match auth sizing and preserve 375px layouts. */
+.landing { width: min(100%, var(--container-width)); min-width: 0; }
+.hero h1 { font-size: var(--text-xl); line-height: 1.1; overflow-wrap: anywhere; }
+.btn, .btn--lg { min-height: var(--control-height); padding: var(--space-2) var(--control-padding-x); font-size: var(--text-base); }
+.btn:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--ink-strong); outline-offset: 2px; }
+.card, .steps li, .demo-session-card, .demo, .split, .nav, .hero-cta { min-width: 0; }
+@media (max-width: 375px) {
+  .landing { padding-inline: var(--space-4); }
+  .nav { gap: var(--space-2); }
+  .nav__wordmark { font-size: var(--text-base); }
+  .nav__actions { gap: var(--space-1); }
+  .nav__cta { padding-inline: var(--space-2); }
+  .card, .steps li { overflow-wrap: anywhere; }
+}

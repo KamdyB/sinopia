@@ -1,10 +1,5 @@
 /* landing/src/landing.css: matches the Sinopia coach app palette */
-/* Shared consistency tokens */
-:root {
-  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px;
-  --text-xs: 12px; --text-sm: 14px; --text-base: 16px; --text-lg: 20px; --text-xl: 28px;
-  --radius: 8px; --radius-card: 16px; --control-height: 44px; --control-padding-x: var(--space-4); --container-width: 960px;
-}
+@import "../../shared/tokens.css";
 
 :root {
   color-scheme: light;

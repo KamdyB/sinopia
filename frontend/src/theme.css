@@ -791,12 +791,6 @@ body {
 .theme-page { min-height: 100vh; }
 
 
-/* Consistency pass 1: normalize the shared radius aliases. */
-:root {
-  --radius-lg: var(--radius-card);
-  --radius-md: var(--radius-card);
-  --radius-pill: var(--radius);
-}
 .panel, .log-session, .check-today, .athlete-row, .metric-block, .calculated-load, .status-row, .status-row__level { border-radius: var(--radius-card); }
 
 

@@ -1,63 +1,45 @@
-// landing/src/App.tsx  — LANDING PAGE (imports LiveDemo, nothing from the coach tool)
 import { useEffect, useState } from "react";
 import { LiveDemo } from "./LiveDemo";
 import { LegalPage } from "./LegalPage";
 
-// Dev: the coach tool runs on 5173. In production, deploy the landing page at
-// "/" and the coach tool under "/app/", then set this to "/app/".
 const COACH_APP_URL = (import.meta.env.VITE_COACH_APP_URL ?? (import.meta.env.PROD ? "" : "http://localhost:5173")).replace(/\/+$/, "");
 const SIGN_IN_URL = `${COACH_APP_URL}/sign-in`;
 const SIGN_UP_URL = `${COACH_APP_URL}/sign-up`;
-// Contact placeholder — replace with the real inbox before shipping.
 const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL as string | undefined;
 
 const SOURCES: { text: string; url: string | null }[] = [
-  {
-    text: "van Loggerenberg, C., Ramagole, D. A., Jansen van Rensburg, A., Janse van Rensburg, D. C., & Boer, P. (2025). Sports-related injuries and illnesses amongst adolescent athletes in an urban sports medicine practice setting. South African Journal of Sports Medicine, 37(1).",
-    url: "https://scielo.org.za/scielo.php?script=sci_arttext&pid=S1015-51632025000100021",
-  },
-  {
-    text: "Cowley, E. S., Olenick, A. A., McNulty, K. L., & Ross, E. Z. (2021). \u201cInvisible Sportswomen\u201d: The Sex Data Gap in Sport and Exercise Science Research. Women in Sport and Physical Activity Journal, 29(2), 146\u2013151.",
-    url: "https://journals.humankinetics.com/view/journals/wspaj/29/2/article-p146.xml",
-  },
-  {
-    text: "Nigerian Journal of Human Movement, Wellness, Leisure, and Sports (2025). Grassroots football development in Nigeria: professional development rated low (weighted mean 1.77); 72.2% of respondents on the age-grade structure.",
-    url: null,
-  },
-  {
-    text: "2024 Women\u2019s Africa Cup of Nations (played July 2025, Morocco): Nigeria beat Morocco 3\u20132 in the final in Rabat, a record-extending tenth title.",
-    url: "https://en.wikipedia.org/wiki/2024_Women%27s_Africa_Cup_of_Nations",
-  },
-  {
-    text: "Foster, C., et al. (2001). A new approach to monitoring exercise training. Journal of Strength and Conditioning Research, 15(1), 109\u2013114.",
-    url: null,
-  },
-  {
-    text: "Gabbett, T. J. (2016). The training\u2013injury prevention paradox: should athletes be training smarter and harder? British Journal of Sports Medicine, 50(5), 273\u2013280.",
-    url: "https://bjsm.bmj.com/content/50/5/273",
-  },
-  {
-    text: "Impellizzeri, F. M., et al. (2020). Acute:Chronic Workload Ratio: conceptual issues and fundamental pitfalls. International Journal of Sports Physiology and Performance.",
-    url: null,
-  },
+  { text: "van Loggerenberg, C., Ramagole, D. A., Jansen van Rensburg, A., Janse van Rensburg, D. C., & Boer, P. (2025). Sports-related injuries and illnesses amongst adolescent athletes in an urban sports medicine practice setting. South African Journal of Sports Medicine, 37(1).", url: "https://scielo.org.za/scielo.php?script=sci_arttext&pid=S1015-51632025000100021" },
+  { text: "Cowley, E. S., Olenick, A. A., McNulty, K. L., & Ross, E. Z. (2021). “Invisible Sportswomen”: The Sex Data Gap in Sport and Exercise Science Research. Women in Sport and Physical Activity Journal, 29(2), 146–151.", url: "https://journals.humankinetics.com/view/journals/wspaj/29/2/article-p146.xml" },
+  { text: "Nigerian Journal of Human Movement, Wellness, Leisure, and Sports (2025). Grassroots football development in Nigeria: professional development rated low (weighted mean 1.77); 72.2% of respondents on the age-grade structure.", url: null },
+  { text: "2024 Women’s Africa Cup of Nations (played July 2025, Morocco): Nigeria beat Morocco 3–2 in the final in Rabat, a record-extending tenth title.", url: "https://en.wikipedia.org/wiki/2024_Women%27s_Africa_Cup_of_Nations" },
+  { text: "Foster, C., et al. (2001). A new approach to monitoring exercise training. Journal of Strength and Conditioning Research, 15(1), 109–114.", url: null },
+  { text: "Gabbett, T. J. (2016). The training–injury prevention paradox: should athletes be training smarter and harder? British Journal of Sports Medicine, 50(5), 273–280.", url: "https://bjsm.bmj.com/content/50/5/273" },
+  { text: "Impellizzeri, F. M., et al. (2020). Acute:Chronic Workload Ratio: conceptual issues and fundamental pitfalls. International Journal of Sports Physiology and Performance.", url: null },
 ];
+
+function PitchMark() {
+  return <svg className="pitch-mark" viewBox="0 0 360 250" fill="none" aria-hidden="true">
+    <rect x="18" y="18" width="324" height="214" rx="5" />
+    <path d="M180 18V232M18 125H342" />
+    <circle cx="180" cy="125" r="38" />
+    <rect x="18" y="73" width="50" height="104" /><rect x="292" y="73" width="50" height="104" />
+    <rect x="18" y="96" width="22" height="58" /><rect x="320" y="96" width="22" height="58" />
+    <circle cx="180" cy="125" r="2" fill="currentColor" />
+  </svg>;
+}
 
 export default function App() {
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     try {
       const saved = window.localStorage.getItem("sinopia-theme");
       if (saved === "light" || saved === "dark") return saved;
-    } catch {
-      // Fall back to the system preference when storage is unavailable.
-    }
+    } catch { /* Use system preference if storage is unavailable. */ }
     return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   });
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    try { window.localStorage.setItem("sinopia-theme", theme); } catch {
-      // Theme still updates for this page when storage is unavailable.
-    }
+    try { window.localStorage.setItem("sinopia-theme", theme); } catch { /* Theme still works for this visit. */ }
   }, [theme]);
 
   if (window.location.pathname === "/privacy") return <LegalPage kind="privacy" />;
@@ -67,89 +49,76 @@ export default function App() {
   return (
     <div className="landing">
       <header className="nav">
-        <span className="nav__wordmark">Sinopia</span>
-        <div className="nav__actions">
-          <button
-            type="button"
-            className="btn theme-toggle"
-            aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-            title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-            aria-pressed={theme === "dark"}
-            onClick={() => setTheme((current) => current === "dark" ? "light" : "dark")}
-          >
-            {theme === "light" ? (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
-                <circle cx="12" cy="12" r="4.2" />
-                <path d="M12 2.5v2.4M12 19.1v2.4M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.6 19.4l1.7-1.7M17.7 6.3l1.7-1.7" />
-              </svg>
-            ) : (
-              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z" />
-              </svg>
-            )}
+        <a className="brand" href="#" aria-label="Sinopia home"><span className="brand__mark">S</span><span>sinopia<span className="brand__period">.</span></span></a>
+        <nav className="nav__actions" aria-label="Main navigation">
+          <a className="nav__text-link" href="#how">How it works</a>
+          <button type="button" className="btn theme-toggle" aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"} title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"} aria-pressed={theme === "dark"} onClick={() => setTheme((current) => current === "dark" ? "light" : "dark")}>
+            {theme === "light" ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2" /><path d="M12 2.5v2.4M12 19.1v2.4M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.6 19.4l1.7-1.7M17.7 6.3l1.7-1.7" /></svg> : <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z" /></svg>}
           </button>
           <a className="btn nav__cta" href={SIGN_IN_URL}>Sign in</a>
-        </div>
+        </nav>
       </header>
 
-      <section className="hero">
-        <h1>A clearer training picture, for coaches and athletes.</h1>
-        <p className="hero-sub">Keep session notes and athlete check-ins together. A simple tool for your team, on one phone.</p>
-        <div className="hero-cta">
-          <a className="btn btn--primary btn--lg" href={SIGN_UP_URL}>Get started</a>
-          <a className="btn btn--lg" href="#how">See how it works</a>
-        </div>
-        <p className="hero-stat">
-          Built for grassroots teams that need a straightforward way to keep training records and check in with athletes.
-        </p>
-      </section>
+      <main>
+        <section className="hero">
+          <div className="hero__copy">
+            <p className="eyebrow enter enter--one"><span className="eyebrow__dot" /> For the people building the game</p>
+            <h1 className="enter enter--two">Better records.<br /><em>More informed</em> coaching.</h1>
+            <p className="hero-sub enter enter--three">A calmer way to keep training sessions, athlete check-ins and workload history in one place — built for grassroots sport.</p>
+            <div className="hero-cta enter enter--four">
+              <a className="btn btn--primary btn--lg" href={SIGN_UP_URL}>Get started <span aria-hidden="true">↗</span></a>
+              <a className="text-link" href="#how">Take a look <span aria-hidden="true">↓</span></a>
+            </div>
+            <p className="hero-note enter enter--four">Made for real teams, on the devices they already have.</p>
+          </div>
+          <div className="hero__visual enter enter--three" aria-label="Illustrated football pitch at night">
+            <div className="visual__halo" />
+            <PitchMark />
+            <div className="visual__ball" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="21" /><path d="m24 13 8 6-3 10h-10l-3-10 8-6ZM24 13l-1-7M16 19 8 16M19 29l-5 8M29 29l6 8M32 19l8-3M14 37l-3 4M35 37l3 4" /></svg></div>
+            <div className="visual__caption"><span>THE BIGGER PICTURE</span><span>One team. Better context.</span></div>
+          </div>
+          <div className="hero__bottom"><span>01 / RECORD WHAT MATTERS</span><span>BUILT FOR GRASSROOTS SPORT</span></div>
+        </section>
 
-      <section id="how" className="section">
-        <h2>How it works</h2>
-        <ol className="steps">
-          <li><span className="steps__n">1</span><div><h3>Add your players</h3><p>Once, at the start of the season.</p></div></li>
-          <li><span className="steps__n">2</span><div><h3>Log the session</h3><p>One duration for the squad, one effort score per player.</p></div></li>
-          <li><span className="steps__n">3</span><div><h3>Review the picture</h3><p>See the recorded status and training history, then use it to guide a conversation.</p></div></li>
-        </ol>
-        <LiveDemo />
-      </section>
+        <section className="purpose section" aria-labelledby="purpose-title">
+          <div className="section-heading"><p className="eyebrow">The point is the people</p><h2 id="purpose-title">Good coaching needs more than a good eye.</h2></div>
+          <p className="purpose__statement">Grassroots coaches often work with limited time, tools and sports-science support. Sinopia helps bring the details they already collect into one clearer picture — so important conversations are easier to start and follow through.</p>
+        </section>
 
-      <section className="section split">
-        <div className="card">
-          <h3>Athlete?</h3>
-          <p>Open the check-in link your coach sent you. No account or download needed.</p>
-        </div>
-        <div className="card card--flag">
-          <h3>Honest limits</h3>
-          <p>Thresholds are provisional and not yet validated against season outcomes. Treat a band as a prompt for a conversation, never a diagnosis.</p>
-        </div>
-      </section>
+        <section id="how" className="section workflow" aria-labelledby="how-title">
+          <div className="section-heading"><p className="eyebrow">Simple by design</p><h2 id="how-title">From the session to the next conversation.</h2><p>Less scattered paperwork. More useful context.</p></div>
+          <div className="workflow__grid">
+            <article className="workflow-card"><span className="workflow-card__number">01</span><div className="workflow-card__icon" aria-hidden="true">↗</div><h3>Record</h3><p>Keep sessions, duration and perceived effort together with the athlete’s training history.</p></article>
+            <article className="workflow-card"><span className="workflow-card__number">02</span><div className="workflow-card__icon" aria-hidden="true">◎</div><h3>Notice</h3><p>Bring recorded workload patterns and athlete check-ins into view, without pretending a flag is a diagnosis.</p></article>
+            <article className="workflow-card"><span className="workflow-card__number">03</span><div className="workflow-card__icon" aria-hidden="true">↗</div><h3>Follow through</h3><p>Use the record as a starting point for a conversation, a closer look or a practical next step.</p></article>
+          </div>
+        </section>
+
+        <section className="demo-section section" aria-labelledby="demo-title">
+          <div className="section-heading"><p className="eyebrow">A look inside</p><h2 id="demo-title">A training picture, taking shape.</h2><p>Try a small, fictional workload example. No real athlete data is used.</p></div>
+          <LiveDemo />
+        </section>
+
+        <section className="impact section" aria-labelledby="impact-title">
+          <div className="impact__art" aria-hidden="true"><PitchMark /><span className="impact__orbit impact__orbit--one" /><span className="impact__orbit impact__orbit--two" /></div>
+          <div className="impact__copy"><p className="eyebrow">Why this matters</p><h2 id="impact-title">Sports insight shouldn’t start with expensive infrastructure.</h2><p>For a community team, better support can begin with a reliable record, a simple check-in and a coach who has time to listen. Sinopia is being built to make that everyday process easier to sustain.</p><a className="text-link" href="#limits">What Sinopia can — and can’t — tell you <span aria-hidden="true">↓</span></a></div>
+        </section>
+
+        <section id="limits" className="trust section" aria-labelledby="limits-title">
+          <div><p className="eyebrow">Built with care</p><h2 id="limits-title">Useful context. Honest limits.</h2></div>
+          <div className="trust__items">
+            <article><span>01</span><div><h3>Designed for everyday teams</h3><p>Keep the workflow practical for coaches who may not have dedicated sports-science staff.</p></div></article>
+            <article><span>02</span><div><h3>A flag is a prompt, not a verdict</h3><p>Current workload thresholds are provisional and not validated against season outcomes. They do not diagnose injuries or predict an individual athlete’s future.</p></div></article>
+            <article><span>03</span><div><h3>Athletes deserve to be heard</h3><p>Check-ins should support a respectful conversation and appropriate follow-up — not replace an athlete’s voice or qualified care.</p></div></article>
+          </div>
+        </section>
+      </main>
 
       <footer className="footer">
-        <div className="footer__top">
-          <span className="nav__wordmark">Sinopia</span>
-          <a className="btn btn--primary" href={SIGN_UP_URL}>Get started</a>
-        </div>
-        <details className="sources-box">
-          <summary>Sources</summary>
-          <ol className="sources">
-            {SOURCES.map((s, i) => (
-              <li key={i}>
-                {s.text}{" "}
-                {s.url && <a href={s.url} target="_blank" rel="noreferrer">Link</a>}
-              </li>
-            ))}
-          </ol>
-        </details>
-        <nav className="nav__links">
-          <a href="/privacy">Privacy</a>
-          <a href="/terms">Terms</a>
-          <a href="/delete-account">Delete account</a>
-        </nav>
-        <div className="footer__bottom">
-          <span>&copy; 2026 Sinopia</span>
-          {CONTACT_EMAIL && <a href={"mailto:" + CONTACT_EMAIL}>{CONTACT_EMAIL}</a>}
-        </div>
+        <div className="footer__top"><a className="brand" href="#" aria-label="Sinopia home"><span className="brand__mark">S</span><span>sinopia<span className="brand__period">.</span></span></a><div><p>Better records. More informed coaching.</p><a className="btn btn--primary" href={SIGN_UP_URL}>Get started <span aria-hidden="true">↗</span></a></div></div>
+        <details className="sources-box"><summary>Research and references</summary><ol className="sources">{SOURCES.map((s, i) => <li key={i}>{s.text}{" "}{s.url && <a href={s.url} target="_blank" rel="noreferrer">Read source</a>}</li>)}</ol></details>
+        <nav className="nav__links" aria-label="Legal"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/delete-account">Delete account</a></nav>
+        <div className="footer__bottom"><span>© 2026 Sinopia</span>{CONTACT_EMAIL && <a href={"mailto:" + CONTACT_EMAIL}>{CONTACT_EMAIL}</a>}<span>Built for the long game.</span></div>
       </footer>
     </div>
   );

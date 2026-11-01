@@ -38,19 +38,16 @@ export function LiveDemo() {
           <span className="demo-score__band">{LABEL[current.level]}</span>
           <span className="demo-score__value">{current.weeklyLoad.toFixed(0)} load units / 7 days</span>
         </div>
-        <div className="demo-chart">
-          <div className="demo-legend"><span>Current 7-day load</span><span>Prior complete-week baseline</span></div>
-          <div className="demo-bars">
-            {visible.map((point, index) => (
-              <div className="demo-bar-group" key={point.date + index} title={point.date}>
-                <div className="demo-bar-pair">
-                  <span className="demo-bar demo-bar--current" style={{ height: Math.max(2, (point.weeklyLoad / maxLoad) * 140) + "px" }} />
-                  <span className="demo-bar demo-bar--baseline" style={{ height: Math.max(2, (point.baseline / maxLoad) * 140) + "px" }} />
-                </div>
-                <span className="demo-bar-date">{shortDate(point.date)}</span>
-              </div>
-            ))}
+        <div className="demo-chart demo-chart--simple">
+          <div className="demo-comparison">
+            <div className="demo-comparison__heading"><span>Current 7-day load</span><strong>{current.weeklyLoad.toFixed(0)}</strong></div>
+            <div className="demo-comparison__track"><span className="demo-comparison__fill" style={{ width: (current.weeklyLoad / maxLoad * 100) + "%" }} /></div>
           </div>
+          <div className="demo-comparison">
+            <div className="demo-comparison__heading"><span>Prior complete-week baseline</span><strong>{current.baseline.toFixed(0)}</strong></div>
+            <div className="demo-comparison__track"><span className="demo-comparison__fill demo-comparison__fill--baseline" style={{ width: (current.baseline / maxLoad * 100) + "%" }} /></div>
+          </div>
+          <p className="demo-comparison__note">Each bar shows one number. Compare the current week with the previous complete-week baseline.</p>
         </div>
         <ul className="demo-explanation">
           {current.level === "building" ? (

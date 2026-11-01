@@ -19,9 +19,9 @@
   --accent: #C2391C;
   --accent-ink: #FFFFFF;
   --line: rgba(94, 43, 28, 0.22);
-  --radius-lg: 24px;
-  --radius-md: 16px;
-  --radius-pill: 999px;
+  --radius-lg: var(--radius-card);
+  --radius-md: var(--radius-card);
+  --radius-pill: var(--radius);
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
@@ -181,3 +181,8 @@ p { margin: 0 0 1rem; }
 /* Item 4: same fixed theme-control position as the coach app */
 .theme-toggle { position: fixed; top: 18px; right: 18px; z-index: 1000; width: var(--control-height); min-width: var(--control-height); height: var(--control-height); min-height: var(--control-height); padding: 0; }
 .nav__actions { padding-right: 0; }
+
+
+/* Consistency pass 1: use the shared radius tokens throughout the landing page. */
+.card, .steps li, .demo-session-card { border-radius: var(--radius-card); }
+.btn, input, select, textarea, .theme-toggle { border-radius: var(--radius); }

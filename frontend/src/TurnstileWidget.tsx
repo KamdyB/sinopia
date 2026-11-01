@@ -38,14 +38,19 @@ export function TurnstileWidget({ action, onToken }: {
     let widgetId: string | null = null;
     const render = () => {
       if (cancelled || !hostRef.current || !window.turnstile || widgetId) return;
-      widgetId = window.turnstile.render(hostRef.current, {
-        sitekey,
-        action,
-        callback: (token) => { setError(null); callbackRef.current(token); },
-        "expired-callback": () => { callbackRef.current(null); setError("Bot check expired. Complete it again."); },
-        "error-callback": () => { callbackRef.current(null); setError("Bot check could not load. Try again."); },
-        theme: "auto",
-      });
+      try {
+        widgetId = window.turnstile.render(hostRef.current, {
+          sitekey,
+          action,
+          callback: (token) => { setError(null); callbackRef.current(token); },
+          "expired-callback": () => { callbackRef.current(null); setError("Bot check expired. Complete it again."); },
+          "error-callback": () => { callbackRef.current(null); setError("Bot check could not load. Try again."); },
+          theme: document.documentElement.dataset.theme === "dark" ? "dark" : "light",
+        });
+      } catch {
+        callbackRef.current(null);
+        setError("Bot check could not start. Try again.");
+      }
     };
     let existing = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
     if (existing?.dataset.failed === "true" && !window.turnstile) {
@@ -54,8 +59,21 @@ export function TurnstileWidget({ action, onToken }: {
     }
     if (window.turnstile) render();
     else if (existing) {
-      existing.addEventListener("load", render, { once: true });
-      existing.addEventListener("error", () => setError("Bot check could not load. Try again."), { once: true });
+      const onLoad = () => {
+        existing?.removeEventListener("error", onError);
+        render();
+        if (!window.turnstile) {
+          callbackRef.current(null);
+          setError("Bot check could not load. Try again.");
+        }
+      };
+      const onError = () => {
+        existing?.removeEventListener("load", onLoad);
+        callbackRef.current(null);
+        setError("Bot check could not load. Try again.");
+      };
+      existing.addEventListener("load", onLoad, { once: true });
+      existing.addEventListener("error", onError, { once: true });
     } else {
       const script = document.createElement("script");
       script.id = SCRIPT_ID;

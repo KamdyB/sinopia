@@ -139,9 +139,15 @@ export default function App() {
     { level: "act", label: "Act", colour: "var(--elevated)" },
     { level: "refer", label: "Refer", colour: "var(--elevated)" },
   ].map((group) => ({ ...group, count: statuses.filter((entry) => entry.level === group.level).length }));
-  const reviewQueue = statuses.filter((entry) =>
-    entry.numbers.pain === true || ["watch", "act", "refer"].includes(entry.level)
-  ).slice(0, 4);
+  const reviewQueue = statuses
+    .filter((entry) => entry.numbers.pain === true || ["watch", "act", "refer"].includes(entry.level))
+    .sort((a, b) => {
+      const priority = (entry: AthleteStatus) =>
+        (entry.numbers.pain === true ? 100 : 0) +
+        (entry.level === "refer" ? 30 : entry.level === "act" ? 20 : entry.level === "watch" ? 10 : 0);
+      return priority(b) - priority(a) || a.name.localeCompare(b.name);
+    })
+    .slice(0, 4);
 
   return (
     <div className="page">

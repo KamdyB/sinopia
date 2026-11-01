@@ -17,6 +17,33 @@ const SOURCES: { text: string; url: string | null }[] = [
   { text: "Impellizzeri, F. M., et al. (2020). Acute:Chronic Workload Ratio: conceptual issues and fundamental pitfalls. International Journal of Sports Physiology and Performance.", url: null },
 ];
 
+function SiloBall() {
+  const [progress, setProgress] = useState(0);
+  useEffect(() => {
+    let frame = 0;
+    const update = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+        setProgress(Math.min(1, Math.max(0, window.scrollY / max)));
+      });
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => { cancelAnimationFrame(frame); window.removeEventListener("scroll", update); window.removeEventListener("resize", update); };
+  }, []);
+  return <button type="button" className="silo-ball" style={{ top: `calc(22vh + ${progress * 54}vh)` }} aria-label="Silo, Sinopia’s football companion. Back to top" title="I’m Silo. Tap to head back up." onClick={() => window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" })}>
+    <svg viewBox="0 0 100 100" aria-hidden="true">
+      <defs><radialGradient id="silo-shell" cx="28%" cy="20%" r="80%"><stop offset="0" stopColor="#fffdf5"/><stop offset=".46" stopColor="#f2e6d4"/><stop offset=".8" stopColor="#d4bca4"/><stop offset="1" stopColor="#9e8069"/></radialGradient></defs>
+      <circle cx="50" cy="50" r="45" fill="url(#silo-shell)" stroke="#fff5e7" strokeWidth="2"/>
+      <path d="m50 32 13 9-5 15H42l-5-15 13-9Zm0 0-1-17M37 41 22 36M42 56l-8 16M58 56l8 16M63 41l15-5M34 72l-9 8M66 72l9 8" fill="#30231d" stroke="#6f4d38" strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round"/>
+      <ellipse cx="43" cy="48" rx="3.4" ry="5" fill="#30231d"/><ellipse cx="57" cy="48" rx="3.4" ry="5" fill="#30231d"/><path d="M43 63q7 7 14 0" fill="none" stroke="#9a6048" strokeWidth="2.5" strokeLinecap="round"/>
+      <path d="M20 24A39 39 0 0 1 56 12" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" opacity=".8"/>
+    </svg><span className="silo-ball__name">Silo</span>
+  </button>;
+}
+
 function PitchMark() {
   return <svg className="pitch-mark" viewBox="0 0 360 250" fill="none" aria-hidden="true">
     <rect x="18" y="18" width="324" height="214" rx="5" />
@@ -80,12 +107,13 @@ export default function App() {
           <div className="hero__copy">
             <p className="eyebrow enter enter--one"><span className="eyebrow__dot" /> For the people building the game</p>
             <h1 className="enter enter--two">Better records.<br /><em>More informed</em> coaching.</h1>
-            <p className="hero-sub enter enter--three">A calmer way to keep training sessions, athlete check-ins and workload history in one place — built for grassroots sport.</p>
+            <p className="hero-sub enter enter--three">A calmer way to keep training sessions, athlete check-ins and workload history in one place, built for grassroots sport.</p>
             <div className="hero-cta enter enter--four">
               <a className="btn btn--primary btn--lg" href={SIGN_UP_URL}>Get started</a>
               <a className="text-link" href="#how">See how it works</a>
             </div>
             <p className="hero-note enter enter--four">Made for real teams, on the devices they already have.</p>
+            <p className="silo-intro enter enter--four"><span aria-hidden="true">●</span> I’m Silo, your little match-day companion. Ready when you are.</p>
           </div>
           <div className="hero__visual enter enter--three" aria-label="Illustrated football pitch at night">
             <div className="visual__halo" />
@@ -136,27 +164,7 @@ export default function App() {
         <nav className="nav__links" aria-label="Legal"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/delete-account">Delete account</a></nav>
         <div className="footer__bottom"><span>© 2026 Sinopia</span>{CONTACT_EMAIL && <a href={"mailto:" + CONTACT_EMAIL}>{CONTACT_EMAIL}</a>}<span>Built for the long game.</span></div>
       </footer>
-      <button
-        type="button"
-        className="back-to-top-ball"
-        aria-label="Back to top"
-        title="Back to top"
-        onClick={() => window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" })}
-      >
-        <svg viewBox="0 0 64 64" aria-hidden="true">
-          <defs>
-            <radialGradient id="sinopia-ball-shade" cx="28%" cy="22%" r="78%">
-              <stop offset="0%" stopColor="#fff5e7" />
-              <stop offset="48%" stopColor="#e8c6a6" />
-              <stop offset="82%" stopColor="#b98563" />
-              <stop offset="100%" stopColor="#754832" />
-            </radialGradient>
-          </defs>
-          <circle cx="32" cy="32" r="28" fill="url(#sinopia-ball-shade)" stroke="#f9dfc7" strokeWidth="1.5" />
-          <path d="m32 20 10 7-4 12H26l-4-12 10-7Zm0 0-1-9M22 27 12 24M26 39l-6 10M38 39l6 10M42 27l10-3" fill="none" stroke="#70452f" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-          <path d="M13 16A27 27 0 0 1 49 12" fill="none" stroke="#fffaf1" strokeWidth="2" strokeLinecap="round" opacity=".7" />
-        </svg>
-      </button>
+      <SiloBall />
     </div>
   );
 }

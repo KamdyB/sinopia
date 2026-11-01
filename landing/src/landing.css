@@ -170,3 +170,10 @@ p { margin: 0 0 1rem; }
 .btn { min-height: var(--control-height); padding: var(--space-2) var(--control-padding-x); border-radius: var(--radius); }
 .btn--lg { font-size: var(--text-base); }
 .card, .steps li, .demo-session-card { border-radius: var(--radius-card); }
+
+/* Item 3: shared primary and secondary button states */
+.btn, .btn--primary { transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease; }
+.btn:hover:not(:disabled) { transform: none; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn--primary { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); }
+.btn:not(.btn--primary):not(.theme-toggle) { background: var(--card); color: var(--ink); border-color: var(--line); }

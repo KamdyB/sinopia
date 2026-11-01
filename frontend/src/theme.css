@@ -779,3 +779,9 @@ body {
 .page .panel { border-radius: var(--radius-card); }
 .page input:not([type="checkbox"]):not([type="radio"]), .page select { width: 100%; min-height: var(--control-height); padding: var(--space-2) var(--control-padding-x); }
 .page .turnstile-check iframe { max-width: 100%; }
+
+/* Item 3: shared primary and secondary button states */
+.page .record-btn, .page .checkin__submit { min-height: var(--control-height); padding: var(--space-2) var(--control-padding-x); border-radius: var(--radius); font: inherit; font-weight: 600; box-shadow: none; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease; }
+.page .copy-link, .page .close-btn { min-height: var(--control-height); padding: var(--space-2) var(--control-padding-x); border-radius: var(--radius); font: inherit; font-weight: 600; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease; }
+.page .record-btn:disabled, .page .checkin__submit:disabled, .page .copy-link:disabled, .page .close-btn:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; transform: none; }
+.page .record-btn:hover:not(:disabled), .page .checkin__submit:hover:not(:disabled) { transform: none; box-shadow: none; }

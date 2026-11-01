@@ -19,9 +19,6 @@
   --accent: #C2391C;
   --accent-ink: #FFFFFF;
   --line: rgba(94, 43, 28, 0.22);
-  --radius-lg: var(--radius-card);
-  --radius-md: var(--radius-card);
-  --radius-pill: var(--radius);
 }
 :root[data-theme="dark"] {
   color-scheme: dark;

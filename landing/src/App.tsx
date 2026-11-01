@@ -43,12 +43,21 @@ const SOURCES: { text: string; url: string | null }[] = [
 ];
 
 export default function App() {
-  const [theme, setTheme] = useState<"light" | "dark">(() =>
-    window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
-  );
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    try {
+      const saved = window.localStorage.getItem("sinopia-theme");
+      if (saved === "light" || saved === "dark") return saved;
+    } catch {
+      // Fall back to the system preference when storage is unavailable.
+    }
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
+    try { window.localStorage.setItem("sinopia-theme", theme); } catch {
+      // Theme still updates for this page when storage is unavailable.
+    }
   }, [theme]);
 
   if (window.location.pathname === "/privacy") return <LegalPage kind="privacy" />;

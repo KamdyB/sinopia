@@ -164,3 +164,9 @@ p { margin: 0 0 1rem; }
 .card, .steps li, .demo-session-card { border-radius: var(--radius-card); }
 .theme-toggle { position: fixed; top: 18px; right: 18px; z-index: 1000; width: var(--control-height); min-width: var(--control-height); height: var(--control-height); }
 .nav { padding-right: calc(var(--control-height) + var(--space-5)); }
+
+/* Item 2: auth and landing control geometry */
+.hero h1 { font-size: clamp(var(--text-xl), 5vw, 40px); line-height: 1.1; letter-spacing: -0.02em; }
+.btn { min-height: var(--control-height); padding: var(--space-2) var(--control-padding-x); border-radius: var(--radius); }
+.btn--lg { font-size: var(--text-base); }
+.card, .steps li, .demo-session-card { border-radius: var(--radius-card); }

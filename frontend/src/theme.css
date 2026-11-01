@@ -772,3 +772,10 @@ body {
 .page button, .page a.copy-link { min-height: var(--control-height); }
 .turnstile-check { max-width: 100%; overflow-x: auto; }
 .turnstile-error { margin-top: var(--space-2); }
+
+/* Item 2: auth and landing control geometry */
+.page { max-width: var(--container-width); }
+.page .display-title { font-size: clamp(var(--text-xl), 5vw, 40px); line-height: 1.1; }
+.page .panel { border-radius: var(--radius-card); }
+.page input:not([type="checkbox"]):not([type="radio"]), .page select { width: 100%; min-height: var(--control-height); padding: var(--space-2) var(--control-padding-x); }
+.page .turnstile-check iframe { max-width: 100%; }

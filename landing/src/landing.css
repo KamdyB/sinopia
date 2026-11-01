@@ -177,3 +177,7 @@ p { margin: 0 0 1rem; }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
 .btn--primary { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); }
 .btn:not(.btn--primary):not(.theme-toggle) { background: var(--card); color: var(--ink); border-color: var(--line); }
+
+/* Item 4: same fixed theme-control position as the coach app */
+.theme-toggle { position: fixed; top: 18px; right: 18px; z-index: 1000; width: var(--control-height); min-width: var(--control-height); height: var(--control-height); min-height: var(--control-height); padding: 0; }
+.nav__actions { padding-right: 0; }

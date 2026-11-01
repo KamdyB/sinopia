@@ -785,3 +785,7 @@ body {
 .page .copy-link, .page .close-btn { min-height: var(--control-height); padding: var(--space-2) var(--control-padding-x); border-radius: var(--radius); font: inherit; font-weight: 600; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease; }
 .page .record-btn:disabled, .page .checkin__submit:disabled, .page .copy-link:disabled, .page .close-btn:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; transform: none; }
 .page .record-btn:hover:not(:disabled), .page .checkin__submit:hover:not(:disabled) { transform: none; box-shadow: none; }
+
+/* Item 4: fixed theme control without layout participation */
+.theme-control { position: fixed; top: 18px; right: 18px; width: var(--control-height); height: var(--control-height); min-width: var(--control-height); min-height: var(--control-height); }
+.theme-page { min-height: 100vh; }

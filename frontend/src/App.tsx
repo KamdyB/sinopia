@@ -36,6 +36,7 @@ export default function App() {
   const [exportError, setExportError] = useState<string | null>(null);
   const [dataError, setDataError] = useState<string | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -131,6 +132,16 @@ export default function App() {
   };
 
   const detailPlayer = players.find((p) => p.player_id === detailId) ?? null;
+  const statusGroups = [
+    { level: "building", label: "Building baseline", colour: "var(--muted)" },
+    { level: "ok", label: "OK", colour: "var(--stable)" },
+    { level: "watch", label: "Watch", colour: "var(--watch)" },
+    { level: "act", label: "Act", colour: "var(--elevated)" },
+    { level: "refer", label: "Refer", colour: "var(--elevated)" },
+  ].map((group) => ({ ...group, count: statuses.filter((entry) => entry.level === group.level).length }));
+  const reviewQueue = statuses.filter((entry) =>
+    entry.numbers.pain === true || ["watch", "act", "refer"].includes(entry.level)
+  ).slice(0, 4);
 
   return (
     <div className="page">
@@ -159,15 +170,60 @@ export default function App() {
               onClose={() => setDetailId(null)}
             />
           )}
+          <section className="panel" aria-labelledby="team-picture-title">
+            <p className="section-title" id="team-picture-title">Team picture</p>
+            <p className="empty-note">Select a bar to focus the roster on that recorded status. These are monitoring prompts, not medical conclusions.</p>
+            {dataLoading ? <p className="empty-note">Loading team picture…</p> : dataError ? null : statuses.length === 0 ? (
+              <p className="empty-note">Your team picture will appear after athletes are registered and status records are available.</p>
+            ) : <>
+              <div className="team-picture__total"><strong>{statuses.length}</strong><span>athletes with a current status record</span></div>
+              <div className="team-picture__bar" role="group" aria-label="Filter team status by category">
+                {statusGroups.filter((group) => group.count > 0).map((group) => (
+                  <button
+                    key={group.level}
+                    type="button"
+                    title={group.label + ": " + group.count + ". Select to filter the roster."}
+                    aria-label={group.label + ": " + group.count + " athletes. Filter roster."}
+                    aria-pressed={statusFilter === group.level}
+                    onClick={() => setStatusFilter(statusFilter === group.level ? null : group.level)}
+                    style={{ width: (group.count / statuses.length * 100) + "%", background: group.colour }}
+                  />
+                ))}
+              </div>
+              <div className="team-picture__legend">
+                {statusGroups.map((group) => (
+                  <button key={group.level} type="button" className="team-picture__key"
+                    aria-pressed={statusFilter === group.level}
+                    onClick={() => setStatusFilter(statusFilter === group.level ? null : group.level)}>
+                    <span style={{ background: group.colour }} />{group.label}<strong>{group.count}</strong>
+                  </button>
+                ))}
+              </div>
+              {statusFilter && <p className="team-picture__filter">Showing {statusGroups.find((group) => group.level === statusFilter)?.label} · <button type="button" className="copy-link" onClick={() => setStatusFilter(null)}>Show all statuses</button></p>}
+              <div className="team-picture__review">
+                <p className="team-picture__review-title">Worth a closer look</p>
+                {reviewQueue.length === 0 ? <p className="empty-note">No current watch, act, refer or recorded pain flags in the loaded status records.</p> : reviewQueue.map((entry) => (
+                  <div className="team-picture__review-row" key={entry.player_id}>
+                    <button type="button" className="status-row__name" onClick={() => setDetailId(entry.player_id)}>{entry.name}</button>
+                    <span className="status-row__level" data-level={entry.level}>{entry.numbers.pain === true ? "Pain reported · " : ""}{TEAM_TITLES[teamType].replace(" team status", "")} · {entry.level.toUpperCase()}</span>
+                    <button type="button" className="copy-link" onClick={() => setDetailId(entry.player_id)}>Open history</button>
+                  </div>
+                ))}
+              </div>
+            </>}
+          </section>
           <PlayerDirectory players={players} statuses={statuses} onAdd={handleAddPlayer} onCreateCheckinLink={handleCreateCheckinLink} onDeletePlayer={handleDeletePlayer} />
           <div className="panel">
-            <p className="section-title">Team status</p>
+            <p className="section-title">Team status{statusFilter ? " · " + (statusGroups.find((group) => group.level === statusFilter)?.label ?? statusFilter) : ""}</p>
             {!dataLoading && !dataError && statuses.length === 0 ? (
               <p className="empty-note">
                 No athletes registered yet. Add each athlete once in the directory.
               </p>
             ) : !dataLoading && !dataError ? (
-              <DashboardTable entries={statuses} onSelect={setDetailId} onAcknowledgePain={handleAcknowledgePain} />
+              <>
+                {statusFilter && <button type="button" className="copy-link" onClick={() => setStatusFilter(null)}>Clear status filter</button>}
+                <DashboardTable entries={statusFilter ? statuses.filter((entry) => entry.level === statusFilter) : statuses} onSelect={setDetailId} onAcknowledgePain={handleAcknowledgePain} />
+              </>
             ) : null}
           </div>
         </div>

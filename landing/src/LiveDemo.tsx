@@ -39,15 +39,16 @@ export function LiveDemo() {
           <span className="demo-score__value">{current.weeklyLoad.toFixed(0)} load units / 7 days</span>
         </div>
         <div className="demo-chart demo-chart--simple">
-          <div className="demo-comparison">
-            <div className="demo-comparison__heading"><span>Current 7-day load</span><strong>{current.weeklyLoad.toFixed(0)}</strong></div>
-            <div className="demo-comparison__track"><span className="demo-comparison__fill" style={{ width: (current.weeklyLoad / maxLoad * 100) + "%" }} /></div>
+          <div className="demo-comparison__heading"><span>Training load · last 7 days</span><strong>{current.weeklyLoad.toFixed(0)} units</strong></div>
+          <div className="demo-single-track" role="img" aria-label={`Current seven-day load ${current.weeklyLoad.toFixed(0)} units. Previous complete-week baseline ${current.baseline.toFixed(0)} units.`}>
+            <span className="demo-single-track__fill" style={{ width: (current.weeklyLoad / maxLoad * 100) + "%" }} />
+            <span className="demo-single-track__baseline" style={{ left: (current.baseline / maxLoad * 100) + "%" }} />
           </div>
-          <div className="demo-comparison">
-            <div className="demo-comparison__heading"><span>Prior complete-week baseline</span><strong>{current.baseline.toFixed(0)}</strong></div>
-            <div className="demo-comparison__track"><span className="demo-comparison__fill demo-comparison__fill--baseline" style={{ width: (current.baseline / maxLoad * 100) + "%" }} /></div>
+          <div className="demo-single-summary">
+            <span><i className="demo-single-summary__dot" />This week <strong>{current.weeklyLoad.toFixed(0)}</strong></span>
+            <span><i className="demo-single-summary__mark" />Usual baseline <strong>{current.baseline.toFixed(0)}</strong></span>
           </div>
-          <p className="demo-comparison__note">Each bar shows one number. Compare the current week with the previous complete-week baseline.</p>
+          <p className="demo-comparison__note">One view, two reference points. The baseline marker is context, not a target.</p>
         </div>
         <ul className="demo-explanation">
           {current.level === "building" ? (

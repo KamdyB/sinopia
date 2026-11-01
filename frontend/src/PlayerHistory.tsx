@@ -18,8 +18,21 @@ function TrendChart({ title, points, value, colour, unit, note }: {
     y: top + plotH - ((v - min) / (max - min || 1)) * plotH,
     value: v, date: points[i].date,
   }));
-  const path = coords.filter((p) => p !== null).map((p, i) => (i ? "L " : "M ") + p!.x.toFixed(1) + " " + p!.y.toFixed(1)).join(" ");
-  const labels = coords.filter((p): p is NonNullable<typeof p> => p !== null).filter((_, i, arr) => i === 0 || i === arr.length - 1 || i === Math.floor(arr.length / 2));
+  // Keep separate line segments when a date has no value; never imply missing data was measured.
+  const segments: NonNullable<typeof coords[number]>[][] = [];
+  coords.forEach((point) => {
+    if (!point) return;
+    const last = segments[segments.length - 1];
+    const previousIndex = last?.length ? coords.indexOf(last[last.length - 1]) : -2;
+    const currentIndex = coords.indexOf(point);
+    if (!last || currentIndex !== previousIndex + 1) segments.push([point]);
+    else last.push(point);
+  });
+  const paths = segments.map((segment) => segment.map((point, i) =>
+    (i ? "L " : "M ") + point.x.toFixed(1) + " " + point.y.toFixed(1)
+  ).join(" "));
+  const labels = coords.filter((p): p is NonNullable<typeof p> => p !== null)
+    .filter((_, i, arr) => i === 0 || i === arr.length - 1 || i === Math.floor((arr.length - 1) / 2));
   return <section className="history-chart">
     <h3>{title}</h3>
     <div className="chart-scroll">
@@ -28,7 +41,7 @@ function TrendChart({ title, points, value, colour, unit, note }: {
           const y = top + plotH * fraction, label = (max - (max - min) * fraction).toFixed(0);
           return <g key={fraction}><line x1={left} x2={width-right} y1={y} y2={y} stroke="currentColor" opacity="0.15" /><text x={left-8} y={y+4} textAnchor="end" fill="currentColor" opacity="0.7" fontSize="10">{label}</text></g>;
         })}
-        <path d={path} fill="none" stroke={colour} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+        {paths.map((path, i) => <path key={i} d={path} fill="none" stroke={colour} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />)}
         {coords.map((p, i) => p && <circle key={p.date + "-" + i} cx={p.x} cy={p.y} r="3.5" fill={colour}><title>{p.date + ": " + p.value + " " + unit}</title></circle>)}
         {labels.map((p) => <text key={"label-" + p.date} x={p.x} y={height-8} textAnchor="middle" fill="currentColor" opacity="0.7" fontSize="10">{p.date.slice(5)}</text>)}
       </svg>

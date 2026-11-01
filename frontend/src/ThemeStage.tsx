@@ -31,7 +31,8 @@ export function ThemeStage({ children }: { children: ReactNode }) {
 
   return (
     <div className="theme-stage">
-      <div className="theme-page">
+      <header className="app-nav">
+        <a className="app-nav__brand" href="/" aria-label="Sinopia home"><span className="app-nav__mark">S</span><span>sinopia<span>.</span></span></a>
         <button
           type="button"
           className="theme-control"
@@ -40,18 +41,18 @@ export function ThemeStage({ children }: { children: ReactNode }) {
           aria-pressed={theme === "dark"}
         >
           {theme === "light" ? (
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
               <circle cx="12" cy="12" r="4.2" />
               <path d="M12 2.5v2.4M12 19.1v2.4M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.6 19.4l1.7-1.7M17.7 6.3l1.7-1.7" />
             </svg>
           ) : (
-            <svg viewBox="0 0 24 24" fill="currentColor">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z" />
             </svg>
           )}
         </button>
-        {children}
-      </div>
+      </header>
+      <div className="theme-page">{children}</div>
     </div>
   );
 }

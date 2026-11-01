@@ -1001,3 +1001,21 @@ input, select, textarea { border-radius: 16px; }
 button, .btn, a { -webkit-tap-highlight-color: transparent; }
 ::selection { background: var(--team-soft); color: var(--ink); }
 @media (max-width: 600px) { .back-to-top-ball { width: 60px; height: 60px; right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); } }
+
+
+/* Silo, the football companion, is visible in the coach app as well as the landing page. */
+.silo-companion {
+  position: fixed; right: max(1.15rem, env(safe-area-inset-right)); bottom: max(1.15rem, env(safe-area-inset-bottom));
+  z-index: 800; width: 72px; height: 72px; min-height: 72px; padding: 0;
+  display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent;
+  box-shadow: none; filter: drop-shadow(0 9px 12px rgba(38,24,17,.2));
+  -webkit-tap-highlight-color: transparent; transition: transform 220ms ease, filter 220ms ease;
+}
+.silo-companion svg { display: block; width: 100%; height: 100%; overflow: visible; animation: silo-companion-drift 5.5s ease-in-out infinite; }
+.silo-companion__name { position: absolute; right: 0; bottom: -5px; padding: .13rem .48rem; border: 1px solid var(--line); border-radius: 999px; background: var(--card); color: var(--ink); font-size: .65rem; font-weight: 750; box-shadow: 0 3px 10px rgba(40,24,17,.08); }
+.silo-companion:hover { transform: translateY(-3px) rotate(3deg); filter: drop-shadow(0 14px 15px rgba(38,24,17,.24)); }
+.silo-companion:active { transform: scale(.96); }
+.silo-companion:focus-visible { outline: 2px solid var(--team-accent); outline-offset: 4px; }
+@keyframes silo-companion-drift { 0%,100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-5px) rotate(4deg); } }
+@media (max-width: 600px) { .silo-companion { width: 62px; height: 62px; right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); } }
+@media (prefers-reduced-motion: reduce) { .silo-companion, .silo-companion svg { transition: none; animation: none; } }

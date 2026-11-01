@@ -815,3 +815,28 @@ body {
   .field-row .field-group { min-width: 0; }
   .turnstile-check { min-width: 0; overflow-x: auto; }
 }
+
+
+/* Consistency pass 3 and 6: shared action and feedback states. */
+.page .record-btn, .page .checkin__submit {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: var(--control-height); padding: var(--space-2) var(--control-padding-x);
+  border: 1px solid var(--primary); border-radius: var(--radius);
+  background: var(--primary); color: var(--primary-ink); font: inherit; font-weight: 600;
+  letter-spacing: normal; text-transform: none; text-align: center; cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+.page .copy-link, .page .close-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: var(--control-height); padding: var(--space-2) var(--control-padding-x);
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--surface); color: var(--ink); font: inherit; font-weight: 600;
+  text-decoration: none; cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+.page .record-btn:hover:not(:disabled), .page .checkin__submit:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); }
+.page .copy-link:hover:not(:disabled), .page .close-btn:hover:not(:disabled) { background: var(--surface-alt); border-color: var(--line-strong); }
+.page .record-btn:disabled, .page .checkin__submit:disabled, .page .copy-link:disabled, .page .close-btn:disabled { opacity: .5; cursor: not-allowed; }
+.page .form-error, .page [role="alert"] { color: var(--elevated-text); }
+.page [role="status"] { margin-block: var(--space-3); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius); color: var(--muted); background: var(--surface-alt); }
+.page .form-error[role="alert"] { margin-block: var(--space-3); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-alt); }

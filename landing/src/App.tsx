@@ -64,7 +64,7 @@ export default function App() {
 
   return (
     <div className="landing">
-      <header className="nav" style={{ position: "sticky", top: 0, zIndex: 20, marginInline: "calc(-1 * clamp(1rem, 4vw, 2rem))", paddingInline: "clamp(1rem, 4vw, 2rem)", background: "var(--paper)", borderBottom: "1px solid var(--line)", backdropFilter: "blur(14px)" }}>
+      <header className="nav nav--sticky">
         <a className="brand" href="#" aria-label="Sinopia home"><span className="brand__mark">S</span><span>sinopia<span className="brand__period">.</span></span></a>
         <nav className="nav__actions" aria-label="Main navigation">
           <a className="nav__text-link" href="#how">How it works</a>
@@ -104,9 +104,9 @@ export default function App() {
         <section id="how" className="section workflow" aria-labelledby="how-title">
           <div className="section-heading"><p className="eyebrow">Simple by design</p><h2 id="how-title">From the session to the next conversation.</h2><p>Less scattered paperwork. More useful context.</p></div>
           <div className="workflow__grid">
-            <article className="workflow-card"><span className="workflow-card__number">01</span><div className="workflow-card__icon" aria-hidden="true">01</div><h3>Record</h3><p>Keep sessions, duration and perceived effort together with the athlete’s training history.</p></article>
-            <article className="workflow-card"><span className="workflow-card__number">02</span><div className="workflow-card__icon" aria-hidden="true">02</div><h3>Notice</h3><p>Bring recorded workload patterns and athlete check-ins into view, without pretending a flag is a diagnosis.</p></article>
-            <article className="workflow-card"><span className="workflow-card__number">03</span><div className="workflow-card__icon" aria-hidden="true">03</div><h3>Follow through</h3><p>Use the record as a starting point for a conversation, a closer look or a practical next step.</p></article>
+            <article className="workflow-card"><span className="workflow-card__number">01</span><h3>Record</h3><p>Keep sessions, duration and perceived effort together with the athlete’s training history.</p></article>
+            <article className="workflow-card"><span className="workflow-card__number">02</span><h3>Notice</h3><p>Bring recorded workload patterns and athlete check-ins into view, without pretending a flag is a diagnosis.</p></article>
+            <article className="workflow-card"><span className="workflow-card__number">03</span><h3>Follow through</h3><p>Use the record as a starting point for a conversation, a closer look or a practical next step.</p></article>
           </div>
         </section>
 

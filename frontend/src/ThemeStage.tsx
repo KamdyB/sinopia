@@ -55,17 +55,19 @@ export function ThemeStage({ children }: { children: ReactNode }) {
       <div className="theme-page">{children}</div>
       <button
         type="button"
-        className="back-to-top-ball"
-        aria-label="Back to top"
-        title="Back to top"
+        className="silo-companion"
+        aria-label="Silo, Sinopia’s football companion. Back to top"
+        title="I’m Silo. Tap to head back up."
         onClick={() => window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" })}
       >
-        <svg viewBox="0 0 64 64" aria-hidden="true">
-          <defs><radialGradient id="app-ball-shade" cx="28%" cy="22%" r="78%"><stop offset="0%" stopColor="#fff8ed" /><stop offset="48%" stopColor="#e8c6a6" /><stop offset="82%" stopColor="#b98563" /><stop offset="100%" stopColor="#754832" /></radialGradient></defs>
-          <circle cx="32" cy="32" r="28" fill="url(#app-ball-shade)" stroke="#f9dfc7" strokeWidth="1.5" />
-          <path d="m32 20 10 7-4 12H26l-4-12 10-7Zm0 0-1-9M22 27 12 24M26 39l-6 10M38 39l6 10M42 27l10-3" fill="none" stroke="#70452f" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-          <path d="M13 16A27 27 0 0 1 49 12" fill="none" stroke="#fffaf1" strokeWidth="2" strokeLinecap="round" opacity=".7" />
+        <svg viewBox="0 0 100 100" aria-hidden="true">
+          <defs><radialGradient id="silo-app-shell" cx="28%" cy="20%" r="80%"><stop offset="0" stopColor="#fffdf5"/><stop offset=".46" stopColor="#f2e6d4"/><stop offset=".8" stopColor="#d4bca4"/><stop offset="1" stopColor="#9e8069"/></radialGradient></defs>
+          <circle cx="50" cy="50" r="45" fill="url(#silo-app-shell)" stroke="#fff5e7" strokeWidth="2"/>
+          <path d="m50 32 13 9-5 15H42l-5-15 13-9Zm0 0-1-17M37 41 22 36M42 56l-8 16M58 56l8 16M63 41l15-5M34 72l-9 8M66 72l9 8" fill="#30231d" stroke="#6f4d38" strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round"/>
+          <ellipse cx="43" cy="48" rx="3.4" ry="5" fill="#30231d"/><ellipse cx="57" cy="48" rx="3.4" ry="5" fill="#30231d"/><path d="M43 63q7 7 14 0" fill="none" stroke="#9a6048" strokeWidth="2.5" strokeLinecap="round"/>
+          <path d="M20 24A39 39 0 0 1 56 12" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" opacity=".8"/>
         </svg>
+        <span className="silo-companion__name">Silo</span>
       </button>
     </div>
   );

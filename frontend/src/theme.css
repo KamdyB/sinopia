@@ -34,7 +34,7 @@
   --elevated-text: #A10D25;
 }
 :root[data-team="girls"] { --team-accent: #FF1688; --team-soft: #FFE0EF; --focus: #C90065; }
-:root[data-team="boys"] { --team-accent: #E9AD00; --team-soft: #FFF0B8; --focus: #8C6500; }
+:root[data-team="boys"] { --team-accent: #2F80ED; --team-soft: #DCEBFF; --focus: #1E5FB7; }
 :root[data-team="mixed"] { --team-accent: #F0B900; --team-soft: #FFF0B8; --focus: #9A5900; }
 
 :root[data-theme="dark"] {
@@ -63,7 +63,7 @@
   --elevated-text: #FF7A8D;
 }
 :root[data-theme="dark"][data-team="girls"] { --team-accent: #FF5AA8; --team-soft: #4A2336; --focus: #FF5AA8; }
-:root[data-theme="dark"][data-team="boys"] { --team-accent: #FFD34D; --team-soft: #493B1A; --focus: #FFD34D; }
+:root[data-theme="dark"][data-team="boys"] { --team-accent: #70AEFF; --team-soft: #1C3554; --focus: #70AEFF; }
 :root[data-theme="dark"][data-team="mixed"] { --team-accent: #FFD34D; --team-soft: #493B1A; --focus: #FFD34D; }
 
 * { box-sizing: border-box; }

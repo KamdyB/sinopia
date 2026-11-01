@@ -183,6 +183,10 @@ p { margin: 0 0 1rem; }
 .nav__actions { padding-right: 0; }
 
 
-/* Consistency pass 1: use the shared radius tokens throughout the landing page. */
+/* Consistency pass 1: normalize the shared radius aliases. */
+:root {
+  --radius-lg: var(--radius-card);
+  --radius-md: var(--radius-card);
+  --radius-pill: var(--radius);
+}
 .card, .steps li, .demo-session-card { border-radius: var(--radius-card); }
-.btn, input, select, textarea, .theme-toggle { border-radius: var(--radius); }

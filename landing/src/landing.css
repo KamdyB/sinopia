@@ -223,3 +223,47 @@ p { margin-bottom: 1rem; }
 .demo-comparison__fill { display: block; height: 100%; border-radius: inherit; background: var(--ink-strong); transition: width .35s ease; }
 .demo-comparison__fill--baseline { background: var(--accent); opacity: .8; }
 .demo-comparison__note { margin: 0; color: var(--muted); font-size: .76rem; line-height: 1.55; }
+
+/* Quiet, rounded landing experience: no decorative arrow-like workflow glyphs. */
+.nav--sticky {
+  position: sticky; top: 0; z-index: 30;
+  margin-inline: calc(-1 * clamp(1rem, 4vw, 2rem));
+  padding-inline: clamp(1rem, 4vw, 2rem);
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+}
+.workflow-card { border-radius: 30px; padding: clamp(1.5rem, 4vw, 2.4rem); }
+.workflow-card__number { display: block; margin-bottom: 1.1rem; }
+.workflow-card__icon { display: none; }
+.hero__visual { border-radius: 38px; }
+.demo, .demo-session-card, .demo-score { border-radius: 28px; }
+.demo-chart--simple { gap: .75rem; }
+.demo-single-track {
+  position: relative; height: 18px; overflow: visible;
+  border-radius: 999px; background: var(--surface-alt);
+  margin: .9rem 0 .65rem;
+}
+.demo-single-track__fill {
+  display: block; height: 100%; border-radius: inherit;
+  background: var(--ink-strong); transition: width .35s ease;
+}
+.demo-single-track__baseline {
+  position: absolute; top: -5px; bottom: -5px; width: 3px;
+  border-radius: 3px; background: var(--accent);
+  box-shadow: 0 0 0 3px var(--paper);
+}
+.demo-single-summary { display: flex; flex-wrap: wrap; gap: .7rem 1.2rem; color: var(--muted); font-size: .8rem; }
+.demo-single-summary span { display: inline-flex; align-items: center; gap: .4rem; }
+.demo-single-summary strong { color: var(--ink); font-variant-numeric: tabular-nums; }
+.demo-single-summary__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-strong); }
+.demo-single-summary__mark { width: 3px; height: 12px; border-radius: 3px; background: var(--accent); }
+.btn, .theme-toggle, .nav__cta { border-radius: 999px; -webkit-tap-highlight-color: transparent; }
+button:focus:not(:focus-visible), a:focus:not(:focus-visible) { outline: none; }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+::selection { background: var(--surface-alt); color: var(--ink); }
+@media (max-width: 430px) {
+  .workflow-card { border-radius: 25px; }
+  .hero__visual { border-radius: 28px; }
+  .demo, .demo-session-card, .demo-score { border-radius: 23px; }
+}

@@ -206,3 +206,12 @@ p { margin: 0 0 1rem; }
   .nav__cta { padding-inline: var(--space-2); }
   .card, .steps li { overflow-wrap: anywhere; }
 }
+
+
+/* Consistency pass 3: one primary and one secondary landing action style. */
+.btn, .btn--primary { display: inline-flex; align-items: center; justify-content: center; min-height: var(--control-height); padding: var(--space-2) var(--control-padding-x); border-radius: var(--radius); font: inherit; font-weight: 600; text-decoration: none; cursor: pointer; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease; }
+.btn--primary { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); }
+.btn:not(.btn--primary):not(.theme-toggle) { background: var(--card); border-color: var(--line); color: var(--ink); }
+.btn--primary:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); }
+.btn:not(.btn--primary):not(.theme-toggle):hover:not(:disabled) { background: var(--surface-alt); border-color: var(--line); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }

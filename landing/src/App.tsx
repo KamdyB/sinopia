@@ -42,6 +42,22 @@ export default function App() {
     try { window.localStorage.setItem("sinopia-theme", theme); } catch { /* Theme still works for this visit. */ }
   }, [theme]);
 
+  useEffect(() => {
+    const targets = Array.from(document.querySelectorAll<HTMLElement>(".section-heading, .purpose__statement, .workflow-card, .demo, .impact__art, .impact__copy, .trust__items article"));
+    if (!("IntersectionObserver" in window) || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    targets.forEach((target) => target.classList.add("reveal-ready"));
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    targets.forEach((target) => observer.observe(target));
+    return () => observer.disconnect();
+  }, []);
+
   if (window.location.pathname === "/privacy") return <LegalPage kind="privacy" />;
   if (window.location.pathname === "/terms") return <LegalPage kind="terms" />;
   if (window.location.pathname === "/delete-account") return <LegalPage kind="delete-account" />;
@@ -66,8 +82,8 @@ export default function App() {
             <h1 className="enter enter--two">Better records.<br /><em>More informed</em> coaching.</h1>
             <p className="hero-sub enter enter--three">A calmer way to keep training sessions, athlete check-ins and workload history in one place — built for grassroots sport.</p>
             <div className="hero-cta enter enter--four">
-              <a className="btn btn--primary btn--lg" href={SIGN_UP_URL}>Get started <span aria-hidden="true">↗</span></a>
-              <a className="text-link" href="#how">Take a look <span aria-hidden="true">↓</span></a>
+              <a className="btn btn--primary btn--lg" href={SIGN_UP_URL}>Get started</a>
+              <a className="text-link" href="#how">See how it works</a>
             </div>
             <p className="hero-note enter enter--four">Made for real teams, on the devices they already have.</p>
           </div>
@@ -88,9 +104,9 @@ export default function App() {
         <section id="how" className="section workflow" aria-labelledby="how-title">
           <div className="section-heading"><p className="eyebrow">Simple by design</p><h2 id="how-title">From the session to the next conversation.</h2><p>Less scattered paperwork. More useful context.</p></div>
           <div className="workflow__grid">
-            <article className="workflow-card"><span className="workflow-card__number">01</span><div className="workflow-card__icon" aria-hidden="true">↗</div><h3>Record</h3><p>Keep sessions, duration and perceived effort together with the athlete’s training history.</p></article>
-            <article className="workflow-card"><span className="workflow-card__number">02</span><div className="workflow-card__icon" aria-hidden="true">◎</div><h3>Notice</h3><p>Bring recorded workload patterns and athlete check-ins into view, without pretending a flag is a diagnosis.</p></article>
-            <article className="workflow-card"><span className="workflow-card__number">03</span><div className="workflow-card__icon" aria-hidden="true">↗</div><h3>Follow through</h3><p>Use the record as a starting point for a conversation, a closer look or a practical next step.</p></article>
+            <article className="workflow-card"><span className="workflow-card__number">01</span><div className="workflow-card__icon" aria-hidden="true">01</div><h3>Record</h3><p>Keep sessions, duration and perceived effort together with the athlete’s training history.</p></article>
+            <article className="workflow-card"><span className="workflow-card__number">02</span><div className="workflow-card__icon" aria-hidden="true">02</div><h3>Notice</h3><p>Bring recorded workload patterns and athlete check-ins into view, without pretending a flag is a diagnosis.</p></article>
+            <article className="workflow-card"><span className="workflow-card__number">03</span><div className="workflow-card__icon" aria-hidden="true">03</div><h3>Follow through</h3><p>Use the record as a starting point for a conversation, a closer look or a practical next step.</p></article>
           </div>
         </section>
 
@@ -101,7 +117,7 @@ export default function App() {
 
         <section className="impact section" aria-labelledby="impact-title">
           <div className="impact__art" aria-hidden="true"><PitchMark /><span className="impact__orbit impact__orbit--one" /><span className="impact__orbit impact__orbit--two" /></div>
-          <div className="impact__copy"><p className="eyebrow">Why this matters</p><h2 id="impact-title">Sports insight shouldn’t start with expensive infrastructure.</h2><p>For a community team, better support can begin with a reliable record, a simple check-in and a coach who has time to listen. Sinopia is being built to make that everyday process easier to sustain.</p><a className="text-link" href="#limits">What Sinopia can — and can’t — tell you <span aria-hidden="true">↓</span></a></div>
+          <div className="impact__copy"><p className="eyebrow">Why this matters</p><h2 id="impact-title">Sports insight shouldn’t start with expensive infrastructure.</h2><p>For a community team, better support can begin with a reliable record, a simple check-in and a coach who has time to listen. Sinopia is being built to make that everyday process easier to sustain.</p><a className="text-link" href="#limits">What Sinopia can — and can’t — tell you</a></div>
         </section>
 
         <section id="limits" className="trust section" aria-labelledby="limits-title">
@@ -115,7 +131,7 @@ export default function App() {
       </main>
 
       <footer className="footer">
-        <div className="footer__top"><a className="brand" href="#" aria-label="Sinopia home"><span className="brand__mark">S</span><span>sinopia<span className="brand__period">.</span></span></a><div><p>Better records. More informed coaching.</p><a className="btn btn--primary" href={SIGN_UP_URL}>Get started <span aria-hidden="true">↗</span></a></div></div>
+        <div className="footer__top"><a className="brand" href="#" aria-label="Sinopia home"><span className="brand__mark">S</span><span>sinopia<span className="brand__period">.</span></span></a><div><p>Better records. More informed coaching.</p><a className="btn btn--primary" href={SIGN_UP_URL}>Get started</a></div></div>
         <details className="sources-box"><summary>Research and references</summary><ol className="sources">{SOURCES.map((s, i) => <li key={i}>{s.text}{" "}{s.url && <a href={s.url} target="_blank" rel="noreferrer">Read source</a>}</li>)}</ol></details>
         <nav className="nav__links" aria-label="Legal"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/delete-account">Delete account</a></nav>
         <div className="footer__bottom"><span>© 2026 Sinopia</span>{CONTACT_EMAIL && <a href={"mailto:" + CONTACT_EMAIL}>{CONTACT_EMAIL}</a>}<span>Built for the long game.</span></div>

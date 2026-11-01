@@ -64,7 +64,7 @@ export default function App() {
 
   return (
     <div className="landing">
-      <header className="nav">
+      <header className="nav" style={{ position: "sticky", top: 0, zIndex: 20, marginInline: "calc(-1 * clamp(1rem, 4vw, 2rem))", paddingInline: "clamp(1rem, 4vw, 2rem)", background: "var(--paper)", borderBottom: "1px solid var(--line)", backdropFilter: "blur(14px)" }}>
         <a className="brand" href="#" aria-label="Sinopia home"><span className="brand__mark">S</span><span>sinopia<span className="brand__period">.</span></span></a>
         <nav className="nav__actions" aria-label="Main navigation">
           <a className="nav__text-link" href="#how">How it works</a>
@@ -136,6 +136,27 @@ export default function App() {
         <nav className="nav__links" aria-label="Legal"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/delete-account">Delete account</a></nav>
         <div className="footer__bottom"><span>© 2026 Sinopia</span>{CONTACT_EMAIL && <a href={"mailto:" + CONTACT_EMAIL}>{CONTACT_EMAIL}</a>}<span>Built for the long game.</span></div>
       </footer>
+      <button
+        type="button"
+        className="back-to-top-ball"
+        aria-label="Back to top"
+        title="Back to top"
+        onClick={() => window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" })}
+      >
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <defs>
+            <radialGradient id="sinopia-ball-shade" cx="28%" cy="22%" r="78%">
+              <stop offset="0%" stopColor="#fff5e7" />
+              <stop offset="48%" stopColor="#e8c6a6" />
+              <stop offset="82%" stopColor="#b98563" />
+              <stop offset="100%" stopColor="#754832" />
+            </radialGradient>
+          </defs>
+          <circle cx="32" cy="32" r="28" fill="url(#sinopia-ball-shade)" stroke="#f9dfc7" strokeWidth="1.5" />
+          <path d="m32 20 10 7-4 12H26l-4-12 10-7Zm0 0-1-9M22 27 12 24M26 39l-6 10M38 39l6 10M42 27l10-3" fill="none" stroke="#70452f" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+          <path d="M13 16A27 27 0 0 1 49 12" fill="none" stroke="#fffaf1" strokeWidth="2" strokeLinecap="round" opacity=".7" />
+        </svg>
+      </button>
     </div>
   );
 }

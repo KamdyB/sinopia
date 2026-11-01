@@ -214,3 +214,12 @@ p { margin-bottom: 1rem; }
   .nav__actions { gap: .4rem; }
   .nav__cta { padding-inline: .75rem; }
 }
+
+/* The demo compares two meaningful values instead of a dense cluster of bars. */
+.demo-chart--simple { display: grid; gap: 1.2rem; }
+.demo-comparison__heading { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: .55rem; color: var(--muted); font-size: .82rem; }
+.demo-comparison__heading strong { color: var(--ink); font-family: var(--font-mono); font-size: 1rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+.demo-comparison__track { height: 10px; overflow: hidden; border-radius: 999px; background: var(--surface-alt); }
+.demo-comparison__fill { display: block; height: 100%; border-radius: inherit; background: var(--ink-strong); transition: width .35s ease; }
+.demo-comparison__fill--baseline { background: var(--accent); opacity: .8; }
+.demo-comparison__note { margin: 0; color: var(--muted); font-size: .76rem; line-height: 1.55; }

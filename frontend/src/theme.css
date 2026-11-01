@@ -791,14 +791,10 @@ body {
 .theme-page { min-height: 100vh; }
 
 
-/* Consistency pass 1: normalize legacy values to the shared scale. */
+/* Consistency pass 1: normalize the shared radius aliases. */
 :root {
   --radius-lg: var(--radius-card);
   --radius-md: var(--radius-card);
   --radius-pill: var(--radius);
 }
-.panel, .log-session, .check-today, .athlete-row, .metric-block, .calculated-load,
-.directory-card, .status-row, .status-row__level { border-radius: var(--radius-card); }
-button, input, select, textarea, .copy-link, .record-btn, .checkin__submit, .close-btn {
-  border-radius: var(--radius);
-}
+.panel, .log-session, .check-today, .athlete-row, .metric-block, .calculated-load, .status-row, .status-row__level { border-radius: var(--radius-card); }

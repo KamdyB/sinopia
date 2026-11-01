@@ -964,10 +964,10 @@ button:active:not(:disabled) { transform: scale(.985); }
 button, a, input, select, summary { -webkit-tap-highlight-color: transparent; }
 :root[data-theme="light"] { --team-accent: #E04A28; }
 :root[data-theme="light"][data-team="girls"] { --team-accent: #FF1688; --team-soft: #FFE0EF; --focus: #C90065; }
-:root[data-theme="light"][data-team="boys"] { --team-accent: #E9AD00; --team-soft: #FFF0B8; --focus: #8C6500; }
+:root[data-theme="light"][data-team="boys"] { --team-accent: #2F80ED; --team-soft: #DCEBFF; --focus: #1458A6; }
 :root[data-theme="light"][data-team="mixed"] { --team-accent: #F0B900; --team-soft: #FFF0B8; --focus: #9A5900; }
 :root[data-theme="dark"][data-team="girls"] { --team-accent: #FF5AA8; --team-soft: #4A2336; --focus: #FF5AA8; }
-:root[data-theme="dark"][data-team="boys"] { --team-accent: #FFD34D; --team-soft: #493B1A; --focus: #FFD34D; }
+:root[data-theme="dark"][data-team="boys"] { --team-accent: #70AEFF; --team-soft: #203650; --focus: #70AEFF; }
 :root[data-theme="dark"][data-team="mixed"] { --team-accent: #FFD34D; --team-soft: #493B1A; --focus: #FFD34D; }
 .app-nav { border-radius: 0 0 24px 24px; padding-inline: max(1rem, env(safe-area-inset-left)); }
 .app-nav__brand { min-height: 44px; }
@@ -1019,3 +1019,18 @@ button, .btn, a { -webkit-tap-highlight-color: transparent; }
 @keyframes silo-companion-drift { 0%,100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-5px) rotate(4deg); } }
 @media (max-width: 600px) { .silo-companion { width: 62px; height: 62px; right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); } }
 @media (prefers-reduced-motion: reduce) { .silo-companion, .silo-companion svg { transition: none; animation: none; } }
+
+
+/* Remove mobile browser tap-flash on every element, including nested SVGs.
+   Keep keyboard focus visible and use each team's own accent for it. */
+*, *::before, *::after { -webkit-tap-highlight-color: transparent; }
+html { -webkit-tap-highlight-color: transparent; }
+button, a, [role="button"], input, select, textarea, summary {
+  -webkit-tap-highlight-color: transparent !important;
+}
+button:focus:not(:focus-visible), a:focus:not(:focus-visible), [role="button"]:focus:not(:focus-visible) {
+  outline: none;
+}
+button:active, a:active, [role="button"]:active {
+  -webkit-tap-highlight-color: transparent !important;
+}

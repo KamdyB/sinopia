@@ -184,3 +184,33 @@ p { margin-bottom: 1rem; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
   .enter { opacity: 1; transform: none; }
 }
+
+/* Final polish: sticky navigation, quieter actions and scroll-led entrance. */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  margin-inline: calc(-1 * clamp(1rem, 4vw, 2rem));
+  padding: .8rem clamp(1rem, 4vw, 2rem);
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.brand { gap: .6rem; }
+.nav__actions { flex-shrink: 0; }
+.nav__cta { min-height: 40px; }
+.nav .theme-toggle { flex: 0 0 42px; }
+.workflow-card__icon { font-family: var(--font-mono); font-size: .78rem; font-weight: 700; }
+.text-link { display: inline-flex; align-items: center; gap: .4rem; }
+.reveal-ready { opacity: 0; transform: translateY(16px); transition: opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1); }
+.reveal-ready.is-visible { opacity: 1; transform: translateY(0); }
+@media (prefers-reduced-motion: reduce) {
+  .reveal-ready { opacity: 1; transform: none; transition: none; }
+}
+@media (max-width: 430px) {
+  .nav { margin-inline: -1rem; padding-inline: 1rem; }
+  .brand { font-size: 1.05rem; }
+  .nav__actions { gap: .4rem; }
+  .nav__cta { padding-inline: .75rem; }
+}

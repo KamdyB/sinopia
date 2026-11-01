@@ -1,4 +1,11 @@
 /* landing/src/landing.css: matches the Sinopia coach app palette */
+/* Shared consistency tokens */
+:root {
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px;
+  --text-xs: 12px; --text-sm: 14px; --text-base: 16px; --text-lg: 20px; --text-xl: 28px;
+  --radius: 8px; --radius-card: 16px; --control-height: 44px; --control-padding-x: var(--space-4); --container-width: 960px;
+}
+
 :root {
   color-scheme: light;
   --ink: #2B1410;
@@ -149,3 +156,11 @@ p { margin: 0 0 1rem; }
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* Shared control and layout sizing */
+.landing { max-width: var(--container-width); }
+.btn { min-height: var(--control-height); padding: var(--space-2) var(--control-padding-x); border-radius: var(--radius); }
+.btn--lg { min-height: var(--control-height); padding: var(--space-2) var(--control-padding-x); font-size: var(--text-base); }
+.card, .steps li, .demo-session-card { border-radius: var(--radius-card); }
+.theme-toggle { position: fixed; top: 18px; right: 18px; z-index: 1000; width: var(--control-height); min-width: var(--control-height); height: var(--control-height); }
+.nav { padding-right: calc(var(--control-height) + var(--space-5)); }
